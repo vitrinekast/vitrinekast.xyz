@@ -1,0 +1,43 @@
+.accordion {
+	list-style-type: none;
+	padding: 0 0;
+
+	&__tab {
+		display: flex;
+		flex-direction: column;
+		margin-bottom: $gutter--md;
+
+		.button {
+			padding: $gutter--md 0;
+		}
+	}
+
+	.tab {
+		&__content {
+			overflow: hidden;
+			max-height: 0;
+			transition: $transition--bezier;
+			margin: 0 0;
+			opacity: 0;
+			& > h2 {
+				display: none;
+			}
+		}
+
+		&__checkbox {
+			display: none;
+
+			&:checked {
+				& ~ .tab__content {
+					max-height: 500px;
+					opacity: 1;
+					margin: $gutter--lg 0;
+				}
+
+				& ~ .button .icon--plus {
+					@extend %icon--plus-active;
+				}
+			}
+		}
+	}
+}

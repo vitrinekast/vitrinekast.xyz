@@ -1,0 +1,167 @@
+@font-face {
+  font-family: "SpaceGrotesk";
+  src: url("#{$folder--fonts}SpaceGrotesk-Bold.otf") format("otf"),
+    url("#{$folder--fonts}SpaceGrotesk-Bold.ttf") format("ttf"),
+    url("#{$folder--fonts}SpaceGrotesk-Bold.woff2") format("woff2");
+  font-weight: $font-weight--bold;
+}
+
+@font-face {
+  font-family: "SpaceGrotesk";
+  src: url("#{$folder--fonts}SpaceGrotesk-Regular.otf") format("otf"),
+    url("#{$folder--fonts}SpaceGrotesk-Regular.ttf") format("ttf"),
+    url("#{$folder--fonts}SpaceGrotesk-Regular.woff2") format("woff2");
+  font-weight: $font-weight--base;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  font-smooth: always;
+  moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -moz-font-feature-settings: “liga” on;
+}
+
+:root {
+  --font-size--base: 1.25rem;
+  --font-size--heading-mult: 1.5;
+
+  @include break("md", "max") {
+    --font-size--base: 1rem;
+    --font-size--heading-mult: 1.25;
+  }
+
+  @include break("md", "max") {
+    --font-size--base: 1rem;
+    --font-size--heading-mult: 1;
+  }
+}
+
+body {
+  font-family: $font--main;
+  color: $color--text-base;
+  line-height: $line-height--base;
+  font-size: var(--font-size--base);
+}
+
+#{$headings} {
+  font-family: $font--display;
+  line-height: $line-height--heading;
+  font-weight: $font-weight--heading;
+  margin: 0 0;
+  color: $color--text-heading;
+  letter-spacing: -0.051rem;
+}
+
+h1,
+h2 {
+  text-transform: $font--transform-heading;
+}
+
+button,
+input,
+select,
+optgroup,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+h1,
+.h1 {
+  font-size: calc(
+    var(--font-size--base) * 2.5 * var(--font-size--heading-mult)
+  );
+}
+
+h2,
+.h2 {
+  font-size: calc(var(--font-size--base) * 2 * var(--font-size--heading-mult));
+}
+
+h3,
+.h3 {
+  font-size: calc(
+    var(--font-size--base) * 1.5 * var(--font-size--heading-mult)
+  );
+}
+
+h4,
+.h4 {
+  font-size: calc(
+    var(--font-size--base) * 1.25 * var(--font-size--heading-mult)
+  );
+}
+
+h5,
+.h5,
+h6,
+.h6 {
+  font-size: calc(
+    var(--font-size--base) * 1.1 * var(--font-size--heading-mult)
+  );
+}
+
+small {
+  font-size: $font-size--sm;
+}
+
+b,
+strong {
+  font-weight: $font-weight--bold;
+}
+
+dfn,
+cite,
+em,
+i {
+  font-style: italic;
+}
+
+code,
+pre,
+kbd,
+tt,
+var {
+  font-family: $font--code;
+}
+
+ul {
+  list-style: none;
+  padding: 0 0;
+  margin: 0 0;
+}
+
+li {
+  font-size: inherit;
+}
+
+article {
+  p {
+    max-width: 40em;
+  }
+
+  a {
+    position: relative;
+    color: inherit;
+    transition: $transition--bezier;
+    &:before {
+      content: "";
+      position: absolute;
+      width: calc(100% + 2px);
+      height: 2px;
+      left: -1px;
+      bottom: 0;
+      background-color: color(black, base);
+      transition: $transition--bezier;
+      z-index: -1;
+    }
+    &:hover {
+      color: color(white, base);
+      &:before {
+        height: 100%;
+      }
+    }
+  }
+}

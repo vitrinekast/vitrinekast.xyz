@@ -1,0 +1,15 @@
+.badge {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	font-size: $font-size--xs;
+	padding: $gutter--sm/2 $gutter--sm;
+	background-color: $color--bg-badge;
+	color: $color--text-badge;
+	z-index: 2;
+	&--position {
+		position: absolute;
+		top: $gutter--sm/2;
+		right: $gutter--sm/2;
+	}
+}

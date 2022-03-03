@@ -1,8 +1,11 @@
 title: Default Page
 preset: page
 fields:
-  text:
-    label: Text
+  body_nl:
+    label: Text NL
     type: textarea
     size: large
-
+  body_en:
+    label: Text ENG
+    type: textarea
+    size: large

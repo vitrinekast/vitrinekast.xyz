@@ -1,0 +1,50 @@
+$break--sm: 767px;
+$break--md: 992px;
+$break--lg: 1400px;
+$break--xl: 1900px;
+
+$breakpoints: (
+	'xl': $break--xl,
+	'lg': $break--lg,
+	'md': $break--md,
+	'sm': $break--sm,
+) !default;
+
+/// Mixin to manage responsive breakpoints
+/// @author Kitty Giraudel
+/// @param {String} $breakpoint - Breakpoint name
+/// @require $breakpoints
+@mixin break($breakpoint, $type: 'max') {
+	// If the key exists in the map
+	$break_value: $breakpoint;
+
+	@if map-has-key($breakpoints, $breakpoint) {
+		$break_value: map-get($breakpoints, $breakpoint);
+	}
+	// Prints a media query based on the value
+	@if ($type == 'max') {
+		@media only screen and (max-width: $break_value) {
+			@content;
+		}
+	} @else {
+		@media only screen and (min-width: $break_value) {
+			@content;
+		}
+	}
+}
+
+// usage:
+
+// @include break("sm") {
+// 	color: blue;
+// }
+
+// OR:
+
+// @each $breakpoint in map-keys($breakpoints) {
+// 	&--#{$breakpoint} {
+// 		@include break(#{$breakpoint}) {
+// 			grid-column-end: span #{$col};
+// 		}
+// 	}
+// }

@@ -1,0 +1,40 @@
+.list {
+	&--posts {
+		.list__item {
+			margin: $gutter--lg 0;
+		}
+		.list__item:nth-of-type(odd) {
+			// transform:
+		}
+	}
+
+	&--news {
+		.list__item {
+			border-bottom: 1px solid rgba(black, 0.5);
+			padding: 16px 0;
+			display: flex;
+			align-items: center;
+
+			p {
+				flex-basis: 150px;
+				margin: 0 0;
+			}
+		}
+	}
+
+	&--filters {
+		.list__sub {
+			margin-left: $gutter--md;
+		}
+
+		.list__title {
+			margin-bottom: $gutter--sm;
+			margin-top: $gutter--lg;
+		}
+
+		.list__item {
+			margin-bottom: $gutter--sm;
+			font-weight: normal;
+		}
+	}
+}

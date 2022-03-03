@@ -18,6 +18,7 @@ Icon
 # Editors
 # (sensitive workspace files)
 # ---------------------------
+*.sublime-workspace
 /.vscode
 /.idea
 
@@ -47,3 +48,4 @@ Icon
 # ---------------
 
 /site/config/.license
+node_modules

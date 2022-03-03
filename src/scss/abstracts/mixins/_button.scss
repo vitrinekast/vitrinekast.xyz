@@ -1,0 +1,29 @@
+@mixin button($background, $color, $theme: 'light', $border: false) {
+	background-color: $background;
+	color: $color;
+	opacity: 1;
+
+	@if $border {
+		border: 1px solid $border;
+	}
+	&:before {
+		content: none;
+	}
+
+	&:active,
+	&:hover {
+		@if $theme == 'light' {
+			background-color: darken($background, 80%);
+			color: lighten($color, 80%);
+		} @else if $theme == 'opacity' {
+			opacity: 0.5;
+		} @else {
+			background-color: lighten($background, 10%);
+		}
+	}
+}
+
+@mixin button-underline($background, $color) {
+	background-color: $background;
+	color: $color;
+}

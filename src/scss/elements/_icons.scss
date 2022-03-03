@@ -1,0 +1,141 @@
+.icon,
+%icon {
+	width: $icon-size--base;
+	height: $icon-size--base;
+	display: inline-block;
+
+	mask-size: cover;
+	background-repeat: no-repeat;
+	background-position: 50%;
+	background-size: 100%;
+	position: relative;
+
+	&--lg {
+		width: $icon-size--lg;
+		height: $icon-size--lg;
+	}
+
+	&--sm {
+		width: $icon-size--sm;
+		height: $icon-size--sm;
+	}
+
+	&--left {
+		position: absolute;
+		content: '';
+	}
+
+	@each $icon in $icons {
+		&--#{$icon} {
+			mask-image: url(#{$icon-url + 'icon--' + $icon + '.svg' });
+		}
+	}
+
+	&--light {
+		background-color: $icon-color--light !important;
+	}
+
+	&--dark {
+		background-color: $icon-color--dark !important;
+	}
+
+	&--svg {
+		background-color: transparent;
+	}
+
+	&--plus {
+		background-color: transparent !important;
+		transition: $transition--base;
+		&:before,
+		&:after {
+			@extend .icon__bar;
+			content: '';
+			top: calc(50% - #{$icon-size--base/16});
+			opacity: 1;
+		}
+
+		&:after {
+			transform: translate3d(0, 0, 0) rotate(-90deg);
+		}
+		&-active {
+			transform: rotate(90deg);
+			&:before {
+				transform: translate3d(0, 0, 0) rotate(-90deg);
+				opacity: 0;
+			}
+		}
+	}
+
+	&__bar {
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: color(primary, base);
+		height: $icon-size--base/8;
+		position: absolute;
+		transition: $transition--bezier;
+		opacity: 1;
+	}
+
+	&--hamburger {
+		position: relative;
+		transform: scale(1);
+		transition: $transition--bezier;
+		background-color: transparent !important;
+
+		.bar {
+			top: calc(50% - #{$icon-size--base/16});
+			@extend .icon__bar;
+
+			&:nth-of-type(1) {
+				transform: translate3d(0, 0, 0);
+			}
+
+			&:nth-of-type(2) {
+				transform: translate3d(0, -200%, 0);
+			}
+
+			&:nth-of-type(3) {
+				transform: translate3d(0, 200%, 0);
+			}
+
+			body[nav-open='true'] & {
+				background-color: color(white, base);
+			}
+		}
+
+		// TODO add will changes
+		&:hover .bar {
+			opacity: 0.8;
+
+			&:nth-of-type(1) {
+				transform: scaleX(0.7);
+			}
+
+			&:nth-of-type(2) {
+				transform: translate3d(2px, -200%, 0);
+			}
+
+			&:nth-of-type(3) {
+				transform: translate3d(-2px, 200%, 0);
+			}
+		}
+
+		@at-root body[nav-open='true'] & {
+			transform: rotate(90deg);
+			.bar {
+				&:nth-of-type(1) {
+					transform: scaleX(0);
+				}
+
+				&:nth-of-type(2) {
+					transform: translate3d(0, 0, 0) rotate(45deg);
+				}
+
+				&:nth-of-type(3) {
+					transform: translate3d(0, 0%, 0) rotate(-45deg);
+				}
+			}
+		}
+	}
+}

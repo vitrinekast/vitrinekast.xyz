@@ -1,0 +1,47 @@
+{
+    "name": "supertheme",
+    "version": "4.0.45",
+    "description": "",
+    "main": "gulpFile.js",
+    "scripts": {
+        "start": "gulp serve",
+        "release": "gulp --production --patch",
+        "release-major": "gulp --production --major",
+        "release-minor": "gulp --production --minor"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "autoprefixer": "^10.2.6",
+        "browser-sync": "^2.26.14",
+        "cssnano": "^5.0.6",
+        "del": "^6.0.0",
+        "elastique-stretch-core": "^0.2.5",
+        "fs": "0.0.1-security",
+        "gulp": "^4.0.2",
+        "gulp-autoprefixer": "^8.0.0",
+        "gulp-bump": "^3.2.0",
+        "gulp-chmod": "^3.0.0",
+        "gulp-concat": "^2.6.1",
+        "gulp-eslint": "^6.0.0",
+        "gulp-if": "^3.0.0",
+        "gulp-imagemin": "^7.1.0",
+        "gulp-mode": "^1.1.0",
+        "gulp-newer": "^1.4.0",
+        "gulp-plumber": "^1.2.1",
+        "gulp-postcss": "^9.0.0",
+        "gulp-rename": "^2.0.0",
+        "gulp-sass": "^4.1.0",
+        "gulp-sourcemaps": "^3.0.0",
+        "gulp-uglify": "^3.0.2",
+        "gulp-uglifycss": "^1.1.0",
+        "gulp-wp-pot": "^2.5.0",
+        "gulp-zip": "^5.1.0",
+        "node-sass": "^6.0.0",
+        "semver": "^7.3.5",
+        "yargs": "^17.3.1"
+    },
+    "dependencies": {
+        "virtual-scroll": "^2.1.1"
+    }
+}
