@@ -1,0 +1,9 @@
+title: TV Item
+preset: page
+
+fields:
+  visual:
+    label: Select a file...
+    type: files
+    multiple: false
+    layout: cards

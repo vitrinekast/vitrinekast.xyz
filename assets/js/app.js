@@ -7,7 +7,10 @@ var screenController = (function () {
   const VIDEO_SELECTOR = ".fn-video";
   const PLAYER_SELECTOR = ".fn-videoplayer";
 
+  let effectTimeout = false;
+
   let videoplayerEl, videoEL;
+  let playlist = [];
 
   let screenEffects = {
     snow: {},
@@ -24,8 +27,14 @@ var screenController = (function () {
     videoplayerEl = document.querySelectorAll(PLAYER_SELECTOR)[0];
     if (!videoplayerEl) return false;
 
-    window.addEventListener("resize", onResize, false);
-    onResize();
+    document.querySelectorAll(VIDEO_SELECTOR).forEach((videoEl) => {
+      playlist.push({
+        el: videoEl,
+        url: videoEl.src,
+        slug: videoEl.getAttribute("data-show-slug"),
+        isPlaying: false,
+      });
+    });
 
     screenEffects.snow.canvas = document.querySelector(SNOW_SELECTOR);
     screenEffects.snow.ctx = screenEffects.snow.canvas.getContext("2d");
@@ -34,14 +43,6 @@ var screenController = (function () {
     screenEffects.vcr.ctx = screenEffects.vcr.canvas.getContext("2d");
 
     animate();
-  };
-
-  var onResize = function () {
-    videoEl = document.querySelector(VIDEO_SELECTOR);
-    const rect = videoEl.getBoundingClientRect();
-
-    videoplayerEl.style.width = `${rect.width}px`;
-    videoplayerEl.style.height = `${rect.height}px`;
   };
 
   const generateVCRNoise = (radius = 2) => {
@@ -114,13 +115,44 @@ var screenController = (function () {
     generateVCRNoise();
     requestAnimationFrame(animate);
   };
+
+  var playItem = function (show) {
+    console.log("playItem", show);
+    stopAllItems();
+
+    let target = playlist.filter(
+      (item) => item.slug.toLowerCase() === show.toLowerCase()
+    );
+    target[0]?.el.play();
+    target[0]?.el.setAttribute("active", "true");
+
+    toggleTVStateClass("on");
+  };
+  var toggleTVStateClass = function (className) {
+    videoplayerEl.classList.remove("on");
+    videoplayerEl.classList.remove("off");
+
+    videoplayerEl.classList.add(className);
+  };
+  var stopAllItems = function () {
+    console.log("stopAllItems");
+    toggleTVStateClass("off");
+    playlist.forEach((item) => {
+      item.el.pause();
+      item.el.setAttribute("active", "false");
+    });
+  };
+
+  var stopItem = function (show) {
+    console.log("stopItem: " + show);
+    stopAllItems();
+  };
   return {
     init: init,
+    playItem: playItem,
+    stopItem: stopItem,
   };
 })();
-
-// TODO: enable wobbleX
-// add on/off class when loading a video
 
 function getRandomInt(min, max) {
   min = Math.ceil(min);
@@ -128,10 +160,42 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+var tvItemController = (function () {
+  const MOUSE_OVER_SELECTOR = "article a[rel]";
+
+  var init = function () {
+    console.log("tvItemController.init");
+
+    let projectLinks = document.querySelectorAll(MOUSE_OVER_SELECTOR);
+    projectLinks.forEach((link) => {
+      link.addEventListener("mouseenter", onMouseEnter);
+      link.addEventListener("mouseleave", onMouseLeave);
+    });
+    console.log(projectLinks);
+
+    fetch("/tvitems.json")
+      .then((response) => response.json())
+      .then((data) => console.log(data));
+  };
+
+  var onMouseEnter = function (e) {
+    screenController.playItem(this.getAttribute("rel"));
+  };
+
+  var onMouseLeave = function (e) {
+    screenController.stopItem(this.getAttribute("rel"));
+  };
+
+  return {
+    init: init,
+  };
+})();
+
 window.onload = function () {
   console.log("app.js loaded");
 
   screenController.init();
+  tvItemController.init();
 
   document.body.classList.add("js-loaded");
 };
