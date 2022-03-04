@@ -1,5 +1,6 @@
 <?php snippet('header') ?>
-<div class="fn-screen"></div>
+<?php snippet('project-videos'); ?>
+
 
 <article class='container container--full container--static'>
     <header class='col col--12'>
