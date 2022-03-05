@@ -1,9 +1,9 @@
-@import 'variables/color';
-@import 'variables/typography.scss';
+@import "variables/color";
+@import "variables/typography.scss";
 
 @function color($base, $shade: base) {
-	$color: map-get(map-get($colors, $base), $shade);
-	@return $color;
+  $color: map-get(map-get($colors, $base), $shade);
+  @return $color;
 }
 
 $border-width: 2px;
@@ -19,20 +19,21 @@ $gutter--sm: 0.5rem;
 $gutter--md: 1rem;
 $gutter--lg: 2rem;
 $gutter--xl: 4rem;
-
 $logo--base: 3.125rem;
 
-$icon-url: 'assets/icons/';
+$icon-url: "assets/icons/";
 $icon-size--base: 1.5rem;
 $icon-size--lg: $icon-size--base * 1.5;
 $icon-size--sm: $icon-size--base * 0.75;
-$icon-color: call(get-function('color'), primary, base);
-$icon-color--light: call(get-function('color'), light, base);
-$icon-color--dark: call(get-function('color'), dark, base);
+$icon-color: call(get-function("color"), primary, base);
+$icon-color--light: call(get-function("color"), light, base);
+$icon-color--dark: call(get-function("color"), dark, base);
 
-$icons: 'link', 'arrow', 'close', 'arrow-back', 'expand';
+$icons: "link", "arrow", "close", "arrow-back", "expand";
 
 $text--width: 40em;
+
+$responsive_grid: false;
 
 // to clean up
 $color__background-body: #fff;

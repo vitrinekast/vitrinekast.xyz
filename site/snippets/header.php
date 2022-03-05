@@ -22,6 +22,7 @@
     <meta name="msapplication-TileColor" content="#000000">
     <meta name="theme-color" content="#ffffff">
 
+
     <meta name="author" content="[[author]]">
     <meta name="description" content="[[description]]">
     <meta name="keywords" content="">
@@ -30,7 +31,7 @@
     <meta property="og:title" content="[[OGTITLE]]">
 
     <meta property="og:image" content="[[OGTITLE]]">
-    <meta property="og:description" content="[[OGTITLE]]">
+    <meta property="og:description" content="<?= $site->description(); ?>">
     <meta property="og:url" content="OGURL">
 
 

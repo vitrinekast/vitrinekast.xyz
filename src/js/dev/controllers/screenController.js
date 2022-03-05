@@ -123,10 +123,12 @@ var screenController = (function () {
     let target = playlist.filter(
       (item) => item.slug.toLowerCase() === show.toLowerCase()
     );
-    target[0]?.el.play();
-    target[0]?.el.setAttribute("active", "true");
+    if (target.length > 0) {
+      target[0]?.el.play();
+      target[0]?.el.setAttribute("active", "true");
 
-    toggleTVStateClass("on");
+      toggleTVStateClass("on");
+    }
   };
   var toggleTVStateClass = function (className) {
     videoplayerEl.classList.remove("on");

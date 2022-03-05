@@ -1,135 +1,138 @@
 $grid--col-count: 12;
 $grid--gutter: 32px;
-$grid--container: 1200px;
+$grid--container: var(--wp--custom--spacing--wide-size);
 
 @mixin col-width($cols, $full: false) {
-	$col_size: $grid--container / $grid--col-count;
-	max-width: calc(
-		#{(100% / $grid--col-count) * $cols} - #{round(
-				($grid--gutter * 2)/ ($grid--col-count/2)
-			)}
-	);
+  $col_size: $grid--container / $grid--col-count;
+  max-width: calc(
+    #{(100% / $grid--col-count) * $cols} - #{round(
+        ($grid--gutter * 2)/ ($grid--col-count/2)
+      )}
+  );
 }
 :root {
-	--grid-gap: #{$grid--gutter};
+  --grid-gap: #{$grid--gutter};
 
-	@include break('md', 'max') {
-		--grid-gap: #{$grid--gutter/2};
-	}
+  @include break("md", "max") {
+    --grid-gap: #{$grid--gutter/2};
+  }
 }
 .container,
 %container {
-	max-width: $grid--container;
-	margin-left: auto;
-	margin-right: auto;
-	width: 100%;
-	display: grid;
-	width: calc(100% - var(--col--grid-gap));
-	grid-template-columns: repeat(#{$grid--col-count}, 1fr);
-	grid-gap: var(--grid-gap);
-	position: relative;
+  max-width: $grid--container;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  display: grid;
+  // width: calc(100% - var(--col--grid-gap));
+  width: 100%;
+  grid-template-columns: repeat(#{$grid--col-count}, 1fr);
+  grid-gap: var(--grid-gap);
+  position: relative;
 
-	// behave like a container full on smaller screen sizes
-	// as soon as the viewport is as big was the container + padding;
-	@include break(#{($grid--container + ($grid--gutter * 2))}, 'max') {
-		margin-left: var(--grid-gap);
-		margin-right: var(--grid-gap);
-		max-width: calc(100% - #{var(--grid-gap)} * 2);
-	}
+  // behave like a container full on smaller screen sizes
+  // as soon as the viewport is as big was the container + padding;
+  @include break(#{($grid--container + ($grid--gutter * 2))}, "max") {
+    margin-left: var(--grid-gap);
+    margin-right: var(--grid-gap);
+    max-width: calc(100% - #{var(--grid-gap)} * 2);
+  }
 
-	&--static {
-		max-width: $grid--container;
-		margin-left: auto;
-		margin-right: auto;
-		width: 100%;
-	}
+  &--static {
+    max-width: $grid--container;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
 
-	&--full {
-		margin-left: var(--grid-gap);
-		margin-right: var(--grid-gap);
-		max-width: calc(100% - #{var(--grid-gap)} * 2);
-	}
+  &--full {
+    margin-left: var(--grid-gap);
+    margin-right: var(--grid-gap);
+    max-width: calc(100% - #{var(--grid-gap)} * 2);
+  }
 
-	&--stretch {
-		max-width: 100%;
-		margin-left: 0;
-		margin-right: 0;
-	}
-	&--grey {
-		background-color: color(grey, base);
-		padding: $gutter--xl 0;
-	}
+  &--stretch {
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  &--grey {
+    background-color: color(grey, base);
+    padding: $gutter--xl 0;
+  }
 }
 
 .col,
 %col {
-	grid-column-end: span $grid--col-count;
-	max-width: 100%;
+  grid-column-end: span $grid--col-count;
+  max-width: 100%;
 
-	@for $col from 1 to ($grid--col-count + 1) {
-		&--#{$col} {
-			grid-column-end: span #{$col};
-			@include break('sm', 'max') {
-				grid-column-end: span 12;
-			}
-		}
-		&--s-#{$col} {
-			grid-column-start: #{$col};
-		}
-	}
+  @for $col from 1 to ($grid--col-count + 1) {
+    &--#{$col} {
+      grid-column-end: span #{$col};
+    }
+    &--s-#{$col} {
+      grid-column-start: #{$col};
+    }
+  }
+  @include break("sm", "max") {
+    @for $col from 1 to ($grid--col-count + 1) {
+      &--#{$col} {
+        grid-column-end: span 12;
+      }
+    }
+  }
 
-	@each $breakpoint in map-keys($breakpoints) {
-		@for $col from 1 to ($grid--col-count + 1) {
-			&--#{$col}--#{$breakpoint} {
-				@include break(#{$breakpoint}, 'max') {
-					grid-column-end: span #{$col};
-				}
-			}
-		}
-	}
+  @each $breakpoint in map-keys($breakpoints) {
+    @include break(#{$breakpoint}, "max") {
+      @for $col from 1 to ($grid--col-count + 1) {
+        &--#{$col}--#{$breakpoint} {
+          grid-column-end: span #{$col};
+        }
+      }
+    }
+  }
 
-	&--sticky {
-		position: sticky;
-		top: ($gutter--lg * 2);
-		align-self: start;
-	}
+  &--sticky {
+    position: sticky;
+    top: ($gutter--lg * 2);
+    align-self: start;
+  }
 }
 
 .row,
 %row {
-	position: relative;
+  position: relative;
 
-	@for $row from 1 to 4 {
-		&--#{$row} {
-			grid-row-end: span #{$row};
+  @for $row from 1 to 4 {
+    &--#{$row} {
+      grid-row-end: span #{$row};
+    }
 
-			@each $breakpoint in map-keys($breakpoints) {
-				&--#{$breakpoint} {
-					@include break(#{$breakpoint}, 'max') {
-						grid-row-end: span #{$row};
-					}
-				}
-			}
-		}
+    &--s-#{$row} {
+      grid-row-start: #{$row};
+    }
+  }
 
-		&--s-#{$row} {
-			grid-row-start: #{$row};
+  @each $breakpoint in map-keys($breakpoints) {
+    @include break(#{$breakpoint}, "max") {
+      @for $row from 1 to 4 {
+        &--#{$row}--#{$breakpoint} {
+          grid-row-end: span #{$row};
+        }
 
-			@each $breakpoint in map-keys($breakpoints) {
-				&--#{$breakpoint} {
-					@include break(#{$breakpoint}, 'max') {
-						grid-row-start: #{$row};
-					}
-				}
-			}
-		}
-	}
+        &--s-#{$row}--#{$breakpoint} {
+          grid-row-start: #{$row};
+        }
+      }
+    }
+  }
 
-	&--end {
-		align-self: end;
-	}
+  &--end {
+    align-self: end;
+  }
 
-	&--start {
-		align-self: start;
-	}
+  &--start {
+    align-self: start;
+  }
 }

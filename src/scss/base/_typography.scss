@@ -26,6 +26,11 @@ html {
   --font-size--base: 1.25rem;
   --font-size--heading-mult: 1.5;
 
+  @include break("lg", "min") {
+    --font-size--base: 1.5rem;
+    --font-size--heading-mult: 1.7;
+  }
+
   @include break("md", "max") {
     --font-size--base: 1rem;
     --font-size--heading-mult: 1.25;
@@ -140,6 +145,12 @@ li {
 article {
   p {
     max-width: 40em;
+  }
+
+  #{$headings},
+  p {
+    margin-top: $gutter--lg;
+    color: ola;
   }
 
   a {

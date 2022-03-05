@@ -2,14 +2,15 @@
 <?php snippet('project-videos'); ?>
 
 
-<article class='container container--full container--static'>
+<div class='container container--full container--static'>
     <header class='col col--12'>
         <h1 class='h6'><?= $page->title() ?>
         </h1>
     </header>
     <div class="col col--12">
-        <?= $page->body_nl()->kirbytext() ?>
+        <article><?= $page->body_nl()->kirbytext() ?>
+        </article>
     </div>
-</article>
+</div>
 
 <?php snippet('footer');
