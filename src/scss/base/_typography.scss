@@ -25,15 +25,17 @@ html {
 :root {
   --font-size--base: 1.25rem;
   --font-size--heading-mult: 1.5;
+  --font-size--margin: #{$gutter--lg};
 
   @include break("lg", "min") {
     --font-size--base: 1.5rem;
-    --font-size--heading-mult: 1.7;
+    --font-size--heading-mult: 1.5;
   }
 
   @include break("md", "max") {
     --font-size--base: 1rem;
     --font-size--heading-mult: 1.25;
+    --font-size--margin: #{$gutter--md};
   }
 
   @include break("md", "max") {
@@ -73,43 +75,37 @@ textarea {
   color: inherit;
 }
 
-h1,
-.h1 {
-  font-size: calc(
-    var(--font-size--base) * 2.5 * var(--font-size--heading-mult)
-  );
-}
-
-h2,
-.h2 {
-  font-size: calc(var(--font-size--base) * 2 * var(--font-size--heading-mult));
-}
-
-h3,
-.h3 {
+h1 {
   font-size: calc(
     var(--font-size--base) * 1.5 * var(--font-size--heading-mult)
   );
 }
 
-h4,
-.h4 {
+h2 {
+  font-size: calc(var(--font-size--base) * 2 * var(--font-size--heading-mult));
+}
+
+h3 {
+  font-size: calc(
+    var(--font-size--base) * 1.5 * var(--font-size--heading-mult)
+  );
+}
+
+h4 {
   font-size: calc(
     var(--font-size--base) * 1.25 * var(--font-size--heading-mult)
   );
 }
 
 h5,
-.h5,
-h6,
-.h6 {
+h6 {
   font-size: calc(
     var(--font-size--base) * 1.1 * var(--font-size--heading-mult)
   );
 }
 
 small {
-  font-size: $font-size--sm;
+  font-size: calc(var(--font-size--base) * 0.7);
 }
 
 b,
@@ -147,31 +143,43 @@ article {
     max-width: 40em;
   }
 
-  #{$headings},
-  p {
+  #{$headings} {
     margin-top: $gutter--lg;
-    color: ola;
+  }
+  p {
+    margin-top: $gutter--md;
   }
 
   a {
     position: relative;
     color: inherit;
-    transition: $transition--bezier;
+    transition: color 0.5s $transition--bezier-timing;
+    z-index: 0;
+    text-decoration: none;
+    will-change: color;
+    margin-right: 2px;
+
     &:before {
       content: "";
       position: absolute;
       width: calc(100% + 2px);
-      height: 2px;
+      height: 100%;
+      transform: scale3d(1, 0.1, 1);
+      transform-origin: bottom;
       left: -1px;
       bottom: 0;
-      background-color: color(black, base);
-      transition: $transition--bezier;
+      background-color: color(white, base);
+      transition: transform 0.5s $transition--bezier-timing;
       z-index: -1;
+      will-change: transform;
     }
-    &:hover {
-      color: color(white, base);
+
+    &:hover,
+    &.active {
+      color: color(black, base);
+
       &:before {
-        height: 100%;
+        transform: scale3d(1, 1, 1);
       }
     }
   }

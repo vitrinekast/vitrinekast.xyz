@@ -1,27 +1,77 @@
 var tvItemController = (function () {
   const MOUSE_OVER_SELECTOR = "article a[rel]";
+  const LOOP_SELECTOR = ".fn-video-loop";
+  const LOOP_DELAY = 4000;
+
+  let loopInterval = false;
+  let projectLinks = [];
+  let loopIndex = 0;
+
+  var loopToggle;
 
   var init = function () {
-    console.log("tvItemController.init");
-
-    let projectLinks = document.querySelectorAll(MOUSE_OVER_SELECTOR);
-    projectLinks.forEach((link) => {
-      link.addEventListener("mouseenter", onMouseEnter);
-      link.addEventListener("mouseleave", onMouseLeave);
+    document.querySelectorAll(MOUSE_OVER_SELECTOR).forEach((link) => {
+      if (screenController.getPlayableItem(link.href)) {
+        link.addEventListener("mouseenter", onMouseEnter);
+        link.addEventListener("mouseleave", onMouseLeave);
+        projectLinks.push(link);
+      }
     });
-    console.log(projectLinks);
 
-    fetch("/tvitems.json")
-      .then((response) => response.json())
-      .then((data) => console.log(data));
+    loopToggle = document.querySelector(LOOP_SELECTOR);
+    loopToggle.addEventListener("click", function (e) {
+      e.preventDefault();
+      toggleLooptimer();
+    });
+  };
+
+  var clearTimer = function () {
+    removeAllActiveStates();
+    loopToggle.removeAttribute("active");
+    loopInterval = window.clearInterval(loopInterval);
+  };
+
+  var toggleLooptimer = function (forceStop = false) {
+    if (loopInterval || forceStop) {
+      clearTimer();
+
+      screenController.stopAllItems();
+    } else {
+      loopToggle.setAttribute("active", true);
+      playFromLoopindex();
+      loopInterval = window.setInterval(() => {
+        playFromLoopindex();
+      }, LOOP_DELAY);
+    }
+  };
+
+  var removeAllActiveStates = function () {
+    console.log("removeAllActiveStates");
+    projectLinks.forEach((el) => {
+      el.classList.remove("active");
+    });
+  };
+
+  var playFromLoopindex = function () {
+    removeAllActiveStates();
+    var link = projectLinks[loopIndex];
+    link.classList.add("active");
+    screenController.playItem(link.href);
+
+    if (loopIndex === projectLinks.length - 1) {
+      loopIndex = 0;
+    } else {
+      loopIndex++;
+    }
   };
 
   var onMouseEnter = function (e) {
-    screenController.playItem(this.getAttribute("rel"));
+    clearTimer();
+    screenController.playItem(this.getAttribute("href"));
   };
 
   var onMouseLeave = function (e) {
-    screenController.stopItem(this.getAttribute("rel"));
+    toggleLooptimer((forceStop = true));
   };
 
   return {

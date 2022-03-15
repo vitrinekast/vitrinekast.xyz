@@ -96,6 +96,7 @@ function assets() {
 // Copy scss files
 function copyCss() {
   if (!config.copyCSS) return src(".");
+  console.log("run copycss");
   return src(config.scss.src.concat(config.scss.files), { allowEmpty: true })
     .pipe(dest(config.assets.dest + "scss"))
     .pipe(browsersync.stream());
@@ -104,7 +105,7 @@ function copyCss() {
 // CSS task
 // TODO: autoprefixer,
 function css() {
-  return src(config.scss.src, { allowEmpty: true })
+  return src(config.scss.src, { allowEmpty: false })
     .pipe(mode.development(sourcemaps.init()))
     .pipe(plumber())
     .pipe(sass({ outputStyle: "expanded" }).on("error", sass.logError))
@@ -166,31 +167,15 @@ function templates() {
 
 // Bump the version
 function bumpVersion() {
-  var constant = `_${config.theme_name}_VERSION`;
   var pkg = getPackageJson();
   var newVer = semver.inc(pkg.version, getType());
 
   return src(config.version.src, { base: "./", allowEmpty: true })
     .pipe(
       mode.production(
-        gulpif(
-          (file) => {
-            if (file.extname == ".php") return true;
-          },
-          bump({
-            version: newVer,
-            key: constant,
-            regex: new RegExp(
-              "([<|'|\"]?(" +
-                constant +
-                ")[>|'|\"]?[ ]*[:=,]?[ ]*['|\"]?[a-z]?)(\\d+.\\d+.\\d+)(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z\\.-]+)?(['|\"|<]?)",
-              "i"
-            ),
-          }),
-          bump({
-            version: newVer,
-          })
-        )
+        bump({
+          version: newVer,
+        })
       )
     )
     .pipe(dest(config.version.dest));

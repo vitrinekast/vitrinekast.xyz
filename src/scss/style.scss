@@ -43,10 +43,10 @@ Nicolas Gallagher and Jonathan Neal https://necolas.github.io/normalize.css/
 
 // @import "elements/badge";
 // @import "elements/media";
-// @import "elements/buttons";
-// @import "elements/icons";
+@import "elements/buttons";
+@import "elements/icons";
 
-// @import "components/header";
+@import "components/header";
 // @import "components/footer";
 // @import "components/navigation";
 // @import "components/form";

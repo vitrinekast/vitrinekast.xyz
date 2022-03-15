@@ -1,13 +1,8 @@
-// checkout: https://codepen.io/Mobius1/pen/ZNgwbr?editors=0010
-// checkout :https://codepen.io/cRckls/pen/DJvZXo
-
 var screenController = (function () {
   const SNOW_SELECTOR = ".fn-snow";
   const VCR_SELECTOR = ".fn-vcr";
   const VIDEO_SELECTOR = ".fn-video";
   const PLAYER_SELECTOR = ".fn-videoplayer";
-
-  let effectTimeout = false;
 
   let videoplayerEl, videoEL;
   let playlist = [];
@@ -31,7 +26,7 @@ var screenController = (function () {
       playlist.push({
         el: videoEl,
         url: videoEl.src,
-        slug: videoEl.getAttribute("data-show-slug"),
+        link: videoEl.getAttribute("data-show-link"),
         isPlaying: false,
       });
     });
@@ -116,17 +111,23 @@ var screenController = (function () {
     requestAnimationFrame(animate);
   };
 
-  var playItem = function (show) {
-    console.log("playItem", show);
-    stopAllItems();
-
-    let target = playlist.filter(
-      (item) => item.slug.toLowerCase() === show.toLowerCase()
+  var getPlayableItem = function (link) {
+    let filteredPlaylist = playlist.filter(
+      (item) => cleanURL(item.link) === cleanURL(link)
     );
-    if (target.length > 0) {
-      target[0]?.el.play();
-      target[0]?.el.setAttribute("active", "true");
+    return filteredPlaylist.length === 0 ? false : filteredPlaylist[0];
+  };
+  var cleanURL = function (url) {
+    url = url.replace(/.+\/\/|www.|\..+/g, "");
+    return url.toLowerCase();
+  };
 
+  var playItem = function (link) {
+    stopAllItems();
+    let video = getPlayableItem(link);
+    if (video) {
+      video.el.play();
+      video.el.setAttribute("active", "true");
       toggleTVStateClass("on");
     }
   };
@@ -137,22 +138,17 @@ var screenController = (function () {
     videoplayerEl.classList.add(className);
   };
   var stopAllItems = function () {
-    console.log("stopAllItems");
     toggleTVStateClass("off");
     playlist.forEach((item) => {
       item.el.pause();
       item.el.setAttribute("active", "false");
     });
   };
-
-  var stopItem = function (show) {
-    console.log("stopItem: " + show);
-    stopAllItems();
-  };
   return {
     init: init,
     playItem: playItem,
-    stopItem: stopItem,
+    stopAllItems: stopAllItems,
+    getPlayableItem: getPlayableItem,
   };
 })();
 

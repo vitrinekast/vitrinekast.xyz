@@ -1,46 +1,27 @@
 $buttons: "input[type='button'], input[type='reset'], input[type='submit']";
 
 :root {
-  --button-color: black;
-  --button-padding-x: 0;
 }
 
-.button,
-%button {
+.button {
   font-family: inherit;
   font-size: $font-size--md;
-  display: inline-flex !important;
+  display: inline-flex;
   justify-content: center;
   align-items: center;
-  padding: $gutter--sm var(--button-padding-x);
+  padding: $gutter--sm;
   cursor: pointer;
   transition: $transition--bezier;
   font-weight: 600;
   border: none;
   position: relative;
-  @include button-underline(transparent, $color--text-dark);
-  --button-underline: "";
-  .icon,
-  &:after,
-  &:before {
-    background-color: currentColor;
-    transition: $transition--bezier;
-  }
+  text-decoration: none;
+  color: $color--white;
+  font-size: calc(var(--font-size--base) * 0.5);
+  flex-direction: column;
 
-  &:before {
-    position: absolute;
-    height: 0.1rem;
-    left: 0;
-    width: 0;
-    bottom: 0;
-    content: var(--button-underline, "");
-  }
-
-  &:active,
   &:hover {
-    &:before {
-      width: 100%;
-    }
+    color: darken($color--white, 50%);
   }
 
   &__label {
@@ -52,152 +33,67 @@ $buttons: "input[type='button'], input[type='reset'], input[type='submit']";
     text-align: inherit;
   }
 
-  .icon,
-  &:after {
-    margin-left: $gutter--sm;
+  .icon {
     transition: $transition--bezier;
     transform: translate3d(0, 0, 0);
   }
-
-  &--sm {
-    text-transform: none;
-    font-weight: $font-weight--base;
-    font-size: $font-size--sm;
-    padding: $gutter--sm $gutter--sm;
-  }
-
-  // buttons without the underline
-  &--dark,
-  &--secondary,
-  &--tertiary {
-    --button-underline: none;
-    --button-padding-x: #{$gutter--md};
-  }
-
   &--primary {
     // @include button-underline(transparent, $color--text-dark);
   }
 
-  &--secondary {
-    @include button(transparent, $color--text-dark, "opacity");
-  }
-
-  &--tertiary {
-    @include button(
-      color(white, base),
-      $color--text-dark,
-      "light",
-      rgba($color--text-dark, 1)
-    );
-    --button-underline: none;
-  }
-
-  &--light {
-    color: color(white, base);
-  }
-
-  &--icon {
-    .icon {
-      margin-left: 0;
-    }
-    &:before {
-      content: none;
-    }
-  }
-
-  &--cta {
-    &:after {
-      content: "";
-      @extend %icon;
-      @extend %icon--arrow;
-      // @extend .button__icon;
-    }
-
-    &:hover {
-      &:after {
-        transform: translate3d($gutter--sm, 0, 0);
-      }
-    }
-  }
-
-  &--wide {
-    width: 100%;
-    justify-content: center;
-
-    &.button--icon {
-      justify-content: space-between;
-    }
-  }
-
   &--icon {
     padding: $gutter--sm;
-  }
 
-  &[disabled] {
-    pointer-events: none;
-    opacity: 0.5;
-    &:hover {
-      cursor: not-allowed;
+    &[active] .button__icon {
+      animation: rotating 2s linear infinite;
     }
   }
 }
 
-.button-group,
-%button-group,
-.badge-group,
-%badge-group {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  list-style-type: none;
-  margin: 0 0;
-  padding-left: 0;
-
-  & > * {
-    margin-left: $gutter--sm;
-
-    &:first-child {
-      margin-left: 0;
-    }
+@keyframes rotating {
+  from {
+    transform: rotate(360deg);
   }
-
-  &--center {
-    @extend %button-group;
-  }
-
-  &--left {
-    @extend %button-group;
-    justify-content: flex-start;
-  }
-
-  &--right {
-    @extend %button-group;
-    justify-content: flex-end;
-  }
-
-  &--between {
-    @extend %button-group;
-    justify-content: space-between;
+  to {
+    transform: rotate(0deg);
   }
 }
-button,
-#{$buttons} {
-  @extend %button;
-}
 
-input[type="submit"],
-button[type="submit"] {
-  @extend .button--cta;
-}
+// .button-group,
+// %button-group,
+// .badge-group,
+// %badge-group {
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+//   list-style-type: none;
+//   margin: 0 0;
+//   padding-left: 0;
 
-input:not([type="hidden"]) + button[type="submit"],
-input:not([type="hidden"]) + input[type="submit"] {
-  content: "";
-  font-size: 0px;
-  line-height: $font-size--base;
-  @extend .button--cta;
+//   & > * {
+//     margin-left: $gutter--sm;
 
-  &:after {
-    margin-left: 0;
-  }
-}
+//     &:first-child {
+//       margin-left: 0;
+//     }
+//   }
+
+//   &--center {
+//     @extend %button-group;
+//   }
+
+//   &--left {
+//     @extend %button-group;
+//     justify-content: flex-start;
+//   }
+
+//   &--right {
+//     @extend %button-group;
+//     justify-content: flex-end;
+//   }
+
+//   &--between {
+//     @extend %button-group;
+//     justify-content: space-between;
+//   }
+// }

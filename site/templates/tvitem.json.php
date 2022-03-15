@@ -1,7 +1,7 @@
 <?php
 $data =$pages->find('tvitems')->children()->published()->flip();
 $json = [];
-
+echo "oi";
 foreach ($data as $item) {
     $json[] = [
       'url'    => (string)$item->url(),

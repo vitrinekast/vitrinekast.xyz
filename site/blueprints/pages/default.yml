@@ -9,3 +9,6 @@ fields:
     label: Text ENG
     type: textarea
     size: large
+options:
+  changeTemplate:
+    - tvitem

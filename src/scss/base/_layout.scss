@@ -7,4 +7,8 @@ body {
   padding-top: var(--grid-gap);
   padding-bottom: var(--grid-gap);
   background-color: color(black, base);
+
+  &:not(.js-loaded) * {
+    transition: none;
+  }
 }

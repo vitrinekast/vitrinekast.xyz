@@ -71,9 +71,9 @@ $grid--container: var(--wp--custom--spacing--wide-size);
     &--#{$col} {
       grid-column-end: span #{$col};
     }
-    &--s-#{$col} {
-      grid-column-start: #{$col};
-    }
+    // &--s-#{$col} {
+    //   grid-column-start: #{$col};
+    // }
   }
   @include break("sm", "max") {
     @for $col from 1 to ($grid--col-count + 1) {
@@ -109,9 +109,9 @@ $grid--container: var(--wp--custom--spacing--wide-size);
       grid-row-end: span #{$row};
     }
 
-    &--s-#{$row} {
-      grid-row-start: #{$row};
-    }
+    // &--s-#{$row} {
+    //   grid-row-start: #{$row};
+    // }
   }
 
   @each $breakpoint in map-keys($breakpoints) {
@@ -121,9 +121,9 @@ $grid--container: var(--wp--custom--spacing--wide-size);
           grid-row-end: span #{$row};
         }
 
-        &--s-#{$row}--#{$breakpoint} {
-          grid-row-start: #{$row};
-        }
+        // &--s-#{$row}--#{$breakpoint} {
+        //   grid-row-start: #{$row};
+        // }
       }
     }
   }

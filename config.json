@@ -7,10 +7,7 @@
     "multilang": false,
     "version": {
         "src": [
-            "./package.json",
-            "./src/scss/style.scss",
-            "./site/snippets/header.php",
-            "./site/snippets/footer.php"
+            "./package.json"
         ],
         "dest": "."
     },
