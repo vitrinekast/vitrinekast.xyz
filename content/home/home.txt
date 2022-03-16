@@ -1,5 +1,0 @@
-Title: Homey
-
-----
-
-Text: hi there

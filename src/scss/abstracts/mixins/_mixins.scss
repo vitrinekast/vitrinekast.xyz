@@ -1,0 +1,31 @@
+// Center block
+@mixin center-block {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+// Column width with margin
+@mixin column-width($numberColumns: 3) {
+	width: map-get($columns, $numberColumns) -
+		(($columns__margin * ($numberColumns - 1)) / $numberColumns);
+}
+
+@mixin aspect-ratio($width, $height) {
+	position: relative;
+	&:before {
+		display: block;
+		content: '';
+		width: 100%;
+		padding-top: ($height / $width) * 100%;
+	}
+}
+
+@function strip-unit($num) {
+	@return $num / ($num * 0 + 1);
+}
+
+@function toPx($value) {
+	$pxValue: (strip-unit($value) * 16);
+	@return $pxValue;
+}

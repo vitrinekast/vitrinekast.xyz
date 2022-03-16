@@ -1,0 +1,79 @@
+$color--primary: #151515;
+$color--white: white;
+$color--black: #151515;
+$color--red: #a00;
+$color--error: #a00;
+$color--secondary: lightgrey;
+$color--grey: #e6e6e6;
+
+$color--lighten: 10%;
+$color--darken: 10%;
+
+$colors: (
+  primary: (
+    base: $color--primary,
+    light: lighten($color--primary, $color--lighten),
+    dark: darken($color--primary, $color--darken),
+  ),
+  black: (
+    base: $color--black,
+    light: lighten($color--black, $color--lighten),
+    dark: darken($color--black, $color--darken),
+  ),
+  white: (
+    base: $color--white,
+    light: lighten($color--white, $color--lighten),
+    dark: darken($color--white, $color--darken),
+  ),
+  red: (
+    base: $color--red,
+    light: lighten($color--red, $color--lighten),
+    dark: darken($color--red, $color--darken),
+  ),
+  dark: (
+    base: $color--black,
+    light: lighten($color--black, $color--lighten),
+    dark: darken($color--black, $color--darken),
+  ),
+  light: (
+    base: $color--white,
+    light: lighten($color--white, $color--lighten),
+    dark: darken($color--white, $color--darken),
+  ),
+  secondary: (
+    base: $color--secondary,
+    light: lighten($color--secondary, $color--lighten),
+    dark: darken($color--secondary, $color--darken),
+  ),
+  error: (
+    base: $color--error,
+    light: lighten($color--error, $color--lighten),
+    dark: darken($color--error, $color--darken),
+  ),
+  grey: (
+    base: $color--grey,
+    light: lighten($color--grey, $color--lighten/2),
+    dark: darken($color--grey, $color--darken),
+  ),
+);
+
+$color--text-base: $color--white;
+$color--text-heading: inherit;
+$color--text-highlight: $color--primary;
+
+$color--bg-pre: lightgrey;
+$color--bg-body: #f7f7f7;
+$color--bg-body: white;
+
+$color--bg-badge: $color--black;
+$color--text-badge: $color--white;
+
+$color--text-light: $color--white;
+$color--text-dark: $color--black;
+
+$grid--color: rgba(#6077a0, 0.2);
+$grid--color: rgba(#93989e, 0.3);
+
+$border--color: $grid--color;
+
+// accent linear-gradient(315deg, #bdd4e7 0%, #8693ab 74%)

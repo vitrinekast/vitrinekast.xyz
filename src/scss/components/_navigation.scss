@@ -1,0 +1,28 @@
+.nav {
+	&--filters {
+		display: flex;
+
+		.nav__item {
+			padding: $gutter--sm/2 $gutter--sm $gutter--sm/2 0;
+			opacity: 0.15;
+			transition: $transition--bezier;
+			white-space: nowrap;
+
+			&:hover,
+			&.active {
+				opacity: 1;
+			}
+		}
+	}
+}
+
+.posts-navigation,
+.post-navigation {
+	.nav-links {
+		@extend %button-group--between;
+	}
+
+	a {
+		@extend %button;
+	}
+}

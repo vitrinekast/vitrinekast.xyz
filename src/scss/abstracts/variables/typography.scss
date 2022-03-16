@@ -1,0 +1,37 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;&display=swap");
+
+$folder--fonts: "./assets/fonts/";
+
+// stylelint-disable value-keyword-case
+$font--main: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+  Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+$font--display: "SpaceGrotesk", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+// stylelint-enable value-keyword-case
+$font--code: monaco, consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+$font--pre: "Courier 10 Pitch", courier, monospace;
+
+$line-height--base: 1.5;
+$line-height--heading: 1.25;
+$line-height--lg: 1.125;
+
+$font-size--base: 1.25rem;
+$font-size--xs: 0.8rem;
+$font-size--sm: 1rem;
+$font-size--md: 1.25rem;
+$font-size--lg: 1.5rem;
+$font-size--h4: 1.75rem;
+$font-size--h3: 1.75rem;
+$font-size--h2: 3rem;
+$font-size--h1: 3rem;
+
+$font-size--break-sizing: 0.8;
+
+$font-weight--light: 200;
+$font-weight--base: 400;
+$font-weight--bold: 700;
+$font-weight--heading: 600;
+$font--transform-heading: none;
+
+$font--baseline: $line-height--base * 0.5rem;
+$headings: "h1, h2, h3, h4, h5, h6";

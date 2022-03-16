@@ -1,0 +1,23 @@
+.icon,
+%icon {
+  width: $icon-size--base;
+  height: $icon-size--base;
+  display: inline-block;
+
+  &--light {
+    background-color: $icon-color--light;
+  }
+
+  &--dark {
+    background-color: $icon-color--dark;
+  }
+
+  &--svg {
+    background-color: transparent;
+
+    svg {
+      fill: currentColor;
+      width: 100%;
+    }
+  }
+}

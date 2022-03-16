@@ -1,0 +1,56 @@
+/*!
+Theme Name: ST
+Theme URI: http://underscores.me/
+Author: Underscores.me
+Author URI: http://underscores.me/
+Description: Description
+Version: 4.0.45
+Tested up to: 5.4
+Requires PHP: 5.6
+License: GNU General Public License v2 or later
+License URI: LICENSE
+Text Domain: ST
+Tags: custom-background, custom-logo, custom-menu, featured-images, threaded-comments, translation-ready
+
+This theme, like WordPress, is licensed under the GPL.
+Use it to make something cool, have fun, and share what you've learned.
+
+dimitri is based on Underscores https://underscores.me/, (C) 2012-2020 Automattic, Inc.
+Underscores is distributed under the terms of the GNU GPL v2 or later.
+
+Normalizing styles have been helped along thanks to the fine work of
+Nicolas Gallagher and Jonathan Neal https://necolas.github.io/normalize.css/
+*/
+
+@import "abstracts/variables";
+@import "abstracts/mixins/mixins";
+@import "abstracts/mixins/breakpoints";
+@import "abstracts/mixins/colors";
+@import "abstracts/mixins/button";
+
+@import "abstracts/utilities/accessibility";
+@import "abstracts/utilities/alignments";
+@import "abstracts/utilities/box-sizing";
+@import "abstracts/generic/normalize-wp";
+@import "abstracts/generic/normalize";
+@import "abstracts/generic/positioning";
+@import "abstracts/generic/grid";
+@import "abstracts/generic/grid-flex";
+
+@import "base/typography";
+// @import "base/flex";
+@import "base/layout";
+
+// @import "elements/badge";
+// @import "elements/media";
+@import "elements/buttons";
+@import "elements/icons";
+
+@import "components/header";
+// @import "components/footer";
+// @import "components/navigation";
+// @import "components/form";
+// @import "components/accordion";
+// @import "components/lists";
+// @import "components/card";
+@import "components/screencontroller";

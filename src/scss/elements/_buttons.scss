@@ -1,0 +1,99 @@
+$buttons: "input[type='button'], input[type='reset'], input[type='submit']";
+
+:root {
+}
+
+.button {
+  font-family: inherit;
+  font-size: $font-size--md;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: $gutter--sm;
+  cursor: pointer;
+  transition: $transition--bezier;
+  font-weight: 600;
+  border: none;
+  position: relative;
+  text-decoration: none;
+  color: $color--white;
+  font-size: calc(var(--font-size--base) * 0.5);
+  flex-direction: column;
+
+  &:hover {
+    color: darken($color--white, 50%);
+  }
+
+  &__label {
+    font-size: inherit;
+    color: inherit;
+    background: inherit;
+    padding: 0 0;
+    border-radius: none;
+    text-align: inherit;
+  }
+
+  .icon {
+    transition: $transition--bezier;
+    transform: translate3d(0, 0, 0);
+  }
+  &--primary {
+    // @include button-underline(transparent, $color--text-dark);
+  }
+
+  &--icon {
+    padding: $gutter--sm;
+
+    &[active] .button__icon {
+      animation: rotating 2s linear infinite;
+    }
+  }
+}
+
+@keyframes rotating {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+// .button-group,
+// %button-group,
+// .badge-group,
+// %badge-group {
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+//   list-style-type: none;
+//   margin: 0 0;
+//   padding-left: 0;
+
+//   & > * {
+//     margin-left: $gutter--sm;
+
+//     &:first-child {
+//       margin-left: 0;
+//     }
+//   }
+
+//   &--center {
+//     @extend %button-group;
+//   }
+
+//   &--left {
+//     @extend %button-group;
+//     justify-content: flex-start;
+//   }
+
+//   &--right {
+//     @extend %button-group;
+//     justify-content: flex-end;
+//   }
+
+//   &--between {
+//     @extend %button-group;
+//     justify-content: space-between;
+//   }
+// }

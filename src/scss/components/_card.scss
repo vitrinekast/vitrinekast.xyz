@@ -1,0 +1,71 @@
+.card {
+	&--static {
+		background-color: color(black, base);
+		color: color(white, base);
+		padding: $gutter--lg;
+		box-shadow: $box-shadow--base;
+	}
+
+	&--light {
+		background-color: color(white, base);
+		padding: $gutter--lg;
+		box-shadow: $box-shadow--base;
+	}
+
+	&--cart {
+		background-color: #e6e6e666;
+		padding: $gutter--lg;
+		background-color: color(black, base);
+		color: color(white, base);
+		max-width: $text--width;
+	}
+
+	&--login {
+		background-color: white;
+		padding: $gutter--lg;
+		border: 2px solid color(black, base);
+		max-width: $text--width;
+		box-shadow: $box-shadow--base;
+	}
+
+	&--active {
+		.card__arrow {
+			opacity: 1;
+			transform: translate3d($gutter--md, 0, 0);
+		}
+	}
+
+	&--post {
+		display: flex;
+		flex-direction: column;
+		position: relative;
+		margin-bottom: $gutter--lg;
+
+		&:hover {
+			@extend .card--active;
+		}
+	}
+
+	&--product {
+		display: flex;
+		flex-direction: column;
+		position: relative;
+		margin-bottom: $gutter--lg;
+	}
+
+	&__img {
+		overflow: hidden;
+		margin-bottom: $gutter--md;
+		min-height: 200px;
+		max-height: 500px;
+		background-color: color(grey, light);
+	}
+
+	&__arrow {
+		opacity: 0.2;
+		transition: $transition--bezier;
+		transform: translate3d(0, 0, 0);
+		margin-left: $gutter--sm;
+		vertical-align: text-bottom;
+	}
+}

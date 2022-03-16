@@ -1,0 +1,14 @@
+.header {
+  &--fixed {
+    position: fixed;
+    top: var(--grid-gap);
+    right: var(--grid-gap);
+    z-index: 2;
+    height: calc(
+      var(--font-size--base) * 1.5 * var(--font-size--heading-mult) * #{$line-height--heading}
+    );
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
+}
