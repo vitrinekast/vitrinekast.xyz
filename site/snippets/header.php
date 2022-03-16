@@ -34,6 +34,7 @@
     <meta property="og:description" content="<?= $site->description(); ?>">
     <meta property="og:url" content="OGURL">
 
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;&display=swap" />
 
     <?= css(['assets/style.css?v=' . date('h:i:sa') ,'@auto']) ?>
     <?= css('assets/css/print.css', 'print') ?>

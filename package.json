@@ -1,6 +1,6 @@
 {
     "name": "supertheme",
-    "version": "4.0.58",
+    "version": "4.0.60",
     "description": "",
     "main": "gulpFile.js",
     "scripts": {
