@@ -1,2 +1,14 @@
-preset: pages
 unlisted: true
+
+tabs:
+  content:
+    label: Content
+    icon: text
+    preset: pages
+    drafts:
+      extends: sections/articles
+    unlisted:
+      extends: sections/articles
+    listed:
+      extends: sections/articles
+  seotab: seo

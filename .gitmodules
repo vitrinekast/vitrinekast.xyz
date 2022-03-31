@@ -1,0 +1,3 @@
+[submodule "site/plugins/kirby-meta-knight"]
+	path = site/plugins/kirby-meta-knight
+	url = https://github.com/diesdasdigital/kirby-meta-knight.git
