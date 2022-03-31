@@ -1,5 +1,5 @@
 var tvItemController = (function () {
-  const MOUSE_OVER_SELECTOR = "article a[rel]";
+  const MOUSE_OVER_SELECTOR = ".fn-tv-link";
   const LOOP_SELECTOR = ".fn-video-loop";
   const LOOP_DELAY = 4000;
 
@@ -11,14 +11,13 @@ var tvItemController = (function () {
 
   var init = function () {
     document.querySelectorAll(MOUSE_OVER_SELECTOR).forEach((link) => {
-      if (screenController.getPlayableItem(link.href)) {
-        link.addEventListener("mouseenter", onMouseEnter);
-        link.addEventListener("mouseleave", onMouseLeave);
-        projectLinks.push(link);
-      }
+      link.addEventListener("mouseenter", onMouseEnter);
+      link.addEventListener("mouseleave", onMouseLeave);
+      projectLinks.push(link);
     });
 
     loopToggle = document.querySelector(LOOP_SELECTOR);
+
     loopToggle.addEventListener("click", function (e) {
       e.preventDefault();
       toggleLooptimer();
@@ -32,6 +31,7 @@ var tvItemController = (function () {
   };
 
   var toggleLooptimer = function (forceStop = false) {
+
     if (loopInterval || forceStop) {
       clearTimer();
 
@@ -54,9 +54,10 @@ var tvItemController = (function () {
 
   var playFromLoopindex = function () {
     removeAllActiveStates();
+
     var link = projectLinks[loopIndex];
     link.classList.add("active");
-    screenController.playItem(link.href);
+    screenController.playItem(link.getAttribute('data-video'));
 
     if (loopIndex === projectLinks.length - 1) {
       loopIndex = 0;
@@ -67,7 +68,7 @@ var tvItemController = (function () {
 
   var onMouseEnter = function (e) {
     clearTimer();
-    screenController.playItem(this.getAttribute("href"));
+    screenController.playItem(this.getAttribute("data-video"));
   };
 
   var onMouseLeave = function (e) {

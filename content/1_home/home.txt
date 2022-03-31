@@ -2,7 +2,19 @@ Title: Vitrinekast
 
 ----
 
-Body-nl: I should write something
+Text:
+
+I'm a Digital Creative, in the past I've worked for (project: link: https://wetteloos.nl text: Wetteloos video: moshed-2022-3-2-10-55-30.mp4)/(project: link: https://elastique.nl text: Elastique video: moshed-2022-3-2-10-55-30.mp4) (🤘), where we, as I remember, actively blurred the boundaries between reality and fiction. Here, I've worked for clients like (project: link: https://fifpro.org text: FIFPRO video: moshed-2022-3-2-10-55-30.mp4), (project: link: https://airmiles.nl text: Air Miles video: moshed-2022-3-2-10-55-30.mp4), (project: link: https://NPO3.nl text: NPO3 video: moshed-2022-3-2-10-55-30.mp4), (project: link: https://bnnvara.nl text: BNNVARA video: moshed-2022-3-2-10-55-30.mp4), (project: link: https://wwf.nl text: WWF video: video.mp4), (project: link: https://www.magnolia.today/ text: Magnolia video: moshed-2022-3-2-10-55-30.mp4), and many more, both as a Creative and a Front-End Developer.
+
+**Get in touch**
+Tel. (link: tel:+31630512026 text: +316 3051 2026)
+Email. (link: mailto:rosa@vitrinekast.xyz text: rosa@vitrinekast.xyz)
+
+plz checkout this: https://css-tricks.com/grainy-gradients/ . thought to give a grainy vibe over the whole page in general.
+
+----
+
+Body-nl: I should **write** something (wikipedia) (project: link: https://nu.nl text:nieuwelink video: moshed-2022-3-2-10-55-30.mp4)
 
 ----
 

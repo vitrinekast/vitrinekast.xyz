@@ -1,5 +1,8 @@
 <?php
-    $data = $pages->find('tvitems')->children()->published()->flip();
+    $videos = $page->videos();
+    if ($page->hasVideos() === false) {
+        return false;
+    }
 ?>
 
 <header class="header--fixed">
@@ -18,15 +21,12 @@
 <div class="videoplayer__wrapper">
     <div class="fn-videoplayer videoplayer">
         <div class="videoplayer__video videoeffect--wobble">
-            <?php
-                foreach ($data as $item):
-                    if ($video = $item->visual()->toFile()): ?>
-            <video class="videoplayer__video fn-video" data-show-link="<?= $item->link(); ?>" src="<?= $video->url() ?>"
-                muted="true" loop="true" lazy="true"></video>
-            <?php
-                    endif;
-                endforeach;
-            ?>
+            <?php foreach ($page->videos() as $video): ?>
+            <video class="videoplayer__video fn-video" muted="true" loop="true" lazy="true"
+                data-file="<?= $video->filename(); ?>">
+                <source src=" <?= $video->url() ?>" type="<?= $video->mime() ?>">
+            </video>
+            <?php endforeach ?>
         </div>
         <canvas class="videoeffect--snow videoplayer__canvas fn-snow"></canvas>
         <canvas class="videoeffect--vcr videoplayer__canvas fn-vcr"></canvas>

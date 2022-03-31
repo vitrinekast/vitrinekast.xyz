@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-    <!-- TODO insert Google Analytics via Fields-->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=Edge">
     <meta name="viewport"
@@ -39,7 +38,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
     <?= css(['assets/style.css?v=' . date('h:i:sa') ,'@auto']) ?>
-    <?= css('assets/css/print.css', 'print') ?>
+    <?= css('assets/print.css', 'print') ?>
 
 
     <!-- Matomo -->
@@ -61,7 +60,8 @@
     })();
     </script>
     <!-- End Matomo Code -->
-
+    <?php snippet('meta_information'); ?>
+    <?php snippet('robots'); ?>
 </head>
 
 <body>

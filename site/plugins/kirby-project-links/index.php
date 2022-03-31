@@ -1,0 +1,16 @@
+<?php
+// Usage:  (project: link: https://nu.nl text:nieuwelink video: moshed-2022-3-2-10-55-30.mp4)
+Kirby::plugin('kirby/project-links', [
+  'tags' => [
+    'project' => [
+      'attr' => [
+        'link',
+        'text',
+        'video'
+      ],
+      'html' => function ($tag) {
+          return '<a class="fn-tv-link" data-video="' . $tag->video . '" href="' . $tag->link . '" target="_blank">' . $tag->text .'</a>';
+      }
+    ]
+  ]
+]);

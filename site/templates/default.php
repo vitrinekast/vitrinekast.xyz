@@ -8,7 +8,7 @@
         </h1>
     </header>
     <div class="col col--12">
-        <article><?= $page->body_nl()->kirbytext() ?>
+        <article><?= $page->text()->kirbytext() ?>
         </article>
     </div>
 </div>

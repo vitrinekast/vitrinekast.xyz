@@ -1,14 +1,7 @@
 title: Default Page
 preset: page
 fields:
-  body_nl:
-    label: Text NL
+  text:
+    label: Body
     type: textarea
     size: large
-  body_en:
-    label: Text ENG
-    type: textarea
-    size: large
-options:
-  changeTemplate:
-    - tvitem

@@ -4,6 +4,10 @@ var screenController = (function () {
   const VIDEO_SELECTOR = ".fn-video";
   const PLAYER_SELECTOR = ".fn-videoplayer";
 
+  const STATE_ON = "on";
+  const STATE_OFF = "off";
+  const STATE_ACTIVE = "active";
+
   let videoplayerEl, videoEL;
   let playlist = [];
 
@@ -26,7 +30,7 @@ var screenController = (function () {
       playlist.push({
         el: videoEl,
         url: videoEl.src,
-        link: videoEl.getAttribute("data-show-link"),
+        fileName: videoEl.getAttribute("data-file"),
         isPlaying: false,
       });
     });
@@ -111,44 +115,34 @@ var screenController = (function () {
     requestAnimationFrame(animate);
   };
 
-  var getPlayableItem = function (link) {
-    let filteredPlaylist = playlist.filter(
-      (item) => cleanURL(item.link) === cleanURL(link)
-    );
-    return filteredPlaylist.length === 0 ? false : filteredPlaylist[0];
-  };
-  var cleanURL = function (url) {
-    url = url.replace(/.+\/\/|www.|\..+/g, "");
-    return url.toLowerCase();
-  };
 
-  var playItem = function (link) {
+  var playItem = function (file) {
     stopAllItems();
-    let video = getPlayableItem(link);
+    let video = playlist.find((video) => video.fileName === file);
     if (video) {
       video.el.play();
-      video.el.setAttribute("active", "true");
-      toggleTVStateClass("on");
+      video.el.setAttribute(STATE_ACTIVE, true);
+      toggleTVStateClass(STATE_ON);
     }
   };
-  var toggleTVStateClass = function (className) {
-    videoplayerEl.classList.remove("on");
-    videoplayerEl.classList.remove("off");
 
+  var toggleTVStateClass = function (className) {
+    videoplayerEl.classList.remove(STATE_ON);
+    videoplayerEl.classList.remove(STATE_OFF);
     videoplayerEl.classList.add(className);
   };
+
   var stopAllItems = function () {
-    toggleTVStateClass("off");
+    toggleTVStateClass(STATE_OFF);
     playlist.forEach((item) => {
       item.el.pause();
-      item.el.setAttribute("active", "false");
+      item.el.removeAttribute(STATE_ACTIVE);
     });
   };
   return {
     init: init,
     playItem: playItem,
-    stopAllItems: stopAllItems,
-    getPlayableItem: getPlayableItem,
+    stopAllItems: stopAllItems
   };
 })();
 
