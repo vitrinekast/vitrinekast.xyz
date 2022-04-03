@@ -31,7 +31,7 @@ var tvItemController = (function () {
   };
 
   var toggleLooptimer = function (forceStop = false) {
-
+  loopIndex = 0;
     if (loopInterval || forceStop) {
       clearTimer();
 
@@ -54,6 +54,7 @@ var tvItemController = (function () {
 
   var playFromLoopindex = function () {
     removeAllActiveStates();
+    console.log("playFromLoopindex " + loopIndex);
 
     var link = projectLinks[loopIndex];
     link.classList.add("active");

@@ -48,6 +48,16 @@ $buttons: "input[type='button'], input[type='reset'], input[type='submit']";
       animation: rotating 2s linear infinite;
     }
   }
+
+  &--link {
+    opacity: .5;
+    transition: $transition--base;
+    cursor: pointer;
+    &:hover, &[active] {
+      opacity: 1;
+      color: #ff00bf;
+    }
+  }
 }
 
 @keyframes rotating {
