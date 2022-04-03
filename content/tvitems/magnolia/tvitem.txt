@@ -1,7 +1,0 @@
-Title: magnolia
-
-----
-
-Visual:
-
-- video.mp4
