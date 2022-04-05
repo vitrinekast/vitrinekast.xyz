@@ -136,7 +136,12 @@ function scriptsDev() {
   return src(config.js.src, { allowEmpty: true })
     .pipe(concat("app.js"))
     .pipe(plumber())
-    .pipe(mode.production(uglify()))
+    .pipe(mode.production(uglify({
+      compress:{
+        drop_console: true,
+        drop_debugger: true
+      }
+    })))
     .pipe(dest(config.js.dest))
     .pipe(browsersync.stream());
 }

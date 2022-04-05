@@ -751,18 +751,6 @@ template {
   align-self: start;
 }
 
-@font-face {
-  font-family: "SpaceGrotesk";
-  src: url("./assets/fonts/SpaceGrotesk-Bold.otf") format("otf"), url("./assets/fonts/SpaceGrotesk-Bold.ttf") format("ttf"), url("./assets/fonts/SpaceGrotesk-Bold.woff2") format("woff2");
-  font-weight: 700;
-}
-
-@font-face {
-  font-family: "SpaceGrotesk";
-  src: url("./assets/fonts/SpaceGrotesk-Regular.otf") format("otf"), url("./assets/fonts/SpaceGrotesk-Regular.ttf") format("ttf"), url("./assets/fonts/SpaceGrotesk-Regular.woff2") format("woff2");
-  font-weight: 400;
-}
-
 html {
   -webkit-font-smoothing: antialiased;
   font-smooth: always;
