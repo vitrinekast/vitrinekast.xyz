@@ -5,3 +5,7 @@ fields:
     label: Body
     type: textarea
     size: large
+  hidden_text:
+    label: Hidden body
+    type: textarea
+    size: large
