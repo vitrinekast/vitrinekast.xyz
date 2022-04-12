@@ -12,6 +12,12 @@
     background-color: $icon-color--dark;
   }
 
+
+  @each $icon in $icons {
+		&--#{$icon} {
+			mask-image: url(#{$icon-url + 'icon--' + $icon + '.svg' });
+		}
+	}
   &--svg {
     background-color: transparent;
 

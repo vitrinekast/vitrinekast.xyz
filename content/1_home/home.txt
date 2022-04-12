@@ -4,18 +4,24 @@ Title: Vitrinekast
 
 Text:
 
-I'm (project: text: Rosa video: portfolioweb_profile.mp4) - a Digital Creative / Front-end Developer based in Rotterdam.
+Hi - I'm (project: text: Rosa video: portfolioweb_profile.mp4), a Digital Creative / Front-end Developer from Rotterdam.
 
-:before {
-	Active at (project: link: https://elastique.nl text: Elastique video: portfolioweb_elastique.mp4) and (project: link: https://wetteloos.nl text: Wetteloos video: portfolioweb_wetteloos.mp4)(🤘), where I've worked for clients like (project: link: https://fifpro.org text: FIFPRO video: logo_fifpro.mp4), (project: link: https://npo3.nl text: NPO3 video: portfolioweb_npo3.mp4), (project: link: https://magnolia.today text: Magnolia video: logo_magnolia.mp4), (project: link: https://wnf.nl text: WNF video: portfolioweb_wnf.mp4), (project: link: https://omroepflevoland.nl text: Omroep Flevoland video: portfolioweb_of.mp4), (project: link: https://airmiles.nl text: Air Miles video: portfolioweb_airmiles.mp4) and many more.
-}
+After (and during) my bachelor Communication & Multimedia Design at the HvA, I worked at (project: link: https://elastique.nl text: Elastique video: portfolioweb_elastique.mp4) and (project: link: https://wetteloos.nl text: Wetteloos video: portfolioweb_wetteloos.mp4)(🤘), where we created unique interactive experiences for a wide variety of clients/mediums. To name a few, I've worked with clients like (project: link: https://fifpro.org text: FIFPRO video: logo_fifpro.mp4), (project: link: https://npo3.nl text: NPO3 video: portfolioweb_npo3.mp4), (project: link: https://magnolia.today text: Magnolia video: logo_magnolia.mp4), (project: link: https://wnf.nl text: WNF video: portfolioweb_wnf.mp4), (project: link: https://omroepflevoland.nl text: Omroep Flevoland video: portfolioweb_of.mp4), (project: link: https://airmiles.nl text: Air Miles video: portfolioweb_airmiles.mp4).
 
-:now {
-	Available as a Freelance Front-end Developer. Give me a call;
-	Tel. (link: tel:+31630512026 text: +316 3051 2026)
-	Email. (link: mailto:rosa@vitrinekast.xyz text: rosa@vitrinekast.xyz)
-CV. (file: cv_rschuurmans.pdf text: download)
-}
+In 2022 I've started as a Freelancer under the name Vitrinekast. Anything I can help you out with? Don't hesitate to message me via any of the following mediums:
+
+- Tel. (link: tel:+31630512026 text: +316 3051 2026)
+- Email. (link: mailto:rosa@vitrinekast.xyz text: rosa@vitrinekast.xyz)
+- CV. (file: cv_rschuurmans.pdf text: download)
+
+----
+
+Hidden-text:
+
+Honestly - the sole reason to create this website is to validate my web presence, and namedrop the clients I've worked for during my time at Elastique. Why? To find gigs and make some extra $$$.
+
+Maybe I should also namedrop some *tech buzz words*? Let's go:
+HTML, CSS, Vanilla Javascript, SCSS, Angular, React, PHP, node.js, Wordpress/Kirby, Cordova, Design Systems, Design Sprints, Scrum, Prototyping using Framer, Design Thinking, User Testing, QA Testing, UX Copy
 
 ----
 
@@ -23,7 +29,7 @@ Body-nl: I should **write** something (wikipedia) (project: link: https://nu.nl 
 
 ----
 
-Body-en: 
+Body-en:
 
 ----
 

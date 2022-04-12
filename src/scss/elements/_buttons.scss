@@ -17,8 +17,7 @@ $buttons: "input[type='button'], input[type='reset'], input[type='submit']";
   position: relative;
   text-decoration: none;
   color: $color--white;
-  font-size: calc(var(--font-size--base) * 0.5);
-  flex-direction: column;
+  font-size: calc(var(--font-size--base) * 1);
 
   &:hover {
     color: darken($color--white, 50%);
@@ -36,9 +35,24 @@ $buttons: "input[type='button'], input[type='reset'], input[type='submit']";
   .icon {
     transition: $transition--bezier;
     transform: translate3d(0, 0, 0);
+    margin-left: $gutter--md;
   }
   &--primary {
     // @include button-underline(transparent, $color--text-dark);
+  }
+
+  &--light {
+    background-color: $color--white;
+    color: $color--black;
+
+
+    .button__icon {
+      background-color: $icon-color--dark;
+    }
+
+    &:hover {
+      background-color: darken($color--white, 50%);
+    }
   }
 
   &--icon {
@@ -50,10 +64,11 @@ $buttons: "input[type='button'], input[type='reset'], input[type='submit']";
   }
 
   &--link {
-    opacity: .5;
+    opacity: 0.5;
     transition: $transition--base;
     cursor: pointer;
-    &:hover, &[active] {
+    &:hover,
+    &[active] {
       opacity: 1;
       color: #ff00bf;
     }
