@@ -11,13 +11,13 @@
     <div class="col col--12">
         <article>
             <?= $page->text()->kirbytext() ?>
-
-            <section hidden>
-                <?= $page->hidden_text()->kirbytext() ?>
-            </section>
         </article>
 
     </div>
 </main>
+
+<section hidden>
+    <?= $page->hidden_text()->kirbytext() ?>
+</section>
 
 <?php snippet('footer');
