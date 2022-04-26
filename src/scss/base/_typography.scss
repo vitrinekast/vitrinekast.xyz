@@ -142,6 +142,7 @@ article {
     text-decoration: none;
     will-change: color;
     margin-right: 2px;
+    display: inline-block;
 
     &:before {
       content: "";
