@@ -115,13 +115,12 @@ var screenController = (function () {
     requestAnimationFrame(animate);
   };
 
-
   var playItem = function (file) {
     stopAllItems();
 
     console.info("GA: event trigger");
-    window.dataLayer.push({
-      event: "watch_video",
+    gtag("event", "watch_video", {
+      app_name: "vitrinekast",
       source: file,
     });
 
@@ -149,7 +148,7 @@ var screenController = (function () {
   return {
     init: init,
     playItem: playItem,
-    stopAllItems: stopAllItems
+    stopAllItems: stopAllItems,
   };
 })();
 

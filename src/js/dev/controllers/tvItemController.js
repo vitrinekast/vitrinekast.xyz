@@ -35,8 +35,8 @@ var tvItemController = (function () {
       e.preventDefault();
       toggleLooptimer();
       console.info("GA: event trigger")
-      window.dataLayer.push({
-        event: "watch_video",
+      gtag("event", "watch_video", {
+        app_name: "vitrinekast",
         source: "toggle_timer",
       });
 
