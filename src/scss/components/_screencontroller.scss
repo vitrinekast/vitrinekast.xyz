@@ -25,13 +25,20 @@ $rotate-value: 0;
 .videoplayer {
   overflow: hidden;
   position: relative;
+  display: none;
   background: transparent linear-gradient(to bottom, #85908c 0%, #323431 100%)
     repeat scroll 0 0;
   background-size: cover;
   width: 100%;
-  max-width: 70vw;
-  max-height: 70vh;
+  max-width: 40vw;
   @include aspect-ratio(4, 3);
+
+  @supports (aspect-ratio: 4 / 3) {
+    aspect-ratio: 4 / 3;
+    &:before {
+      content: none;
+    }
+  }
 
   &__wrapper {
     display: flex;
@@ -73,17 +80,19 @@ $rotate-value: 0;
   }
 
   // @include break("md", "min") {
-    // states
-    &.on {
-      animation: 300ms $bezier 0ms normal forwards 1 paused onBlink;
-      animation-play-state: running;
-    }
+  // states
+  &.on {
+    animation: 300ms $bezier 0ms normal forwards 1 paused onBlink;
+    animation-play-state: running;
+    display: block;
+  }
 
-    &.off {
-      animation: 750ms $bezier 0ms reverse forwards 1 paused offBlink;
-      animation-play-state: running;
-      animation-direction: normal;
-    }
+  &.off {
+    animation: 750ms $bezier 0ms reverse forwards 1 paused offBlink;
+    animation-play-state: running;
+    animation-direction: normal;
+    display: block;
+  }
   // }
 }
 
@@ -118,7 +127,6 @@ $rotate-value: 0;
     z-index: 2;
     border: 10px solid $screen-background;
     transform: scale(1.01);
-
   }
 
   &--vcr {

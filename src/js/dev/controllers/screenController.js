@@ -118,6 +118,13 @@ var screenController = (function () {
 
   var playItem = function (file) {
     stopAllItems();
+
+    console.info("GA: event trigger");
+    window.dataLayer.push({
+      event: "watch_video",
+      source: file,
+    });
+
     let video = playlist.find((video) => video.fileName === file);
     if (video) {
       video.el.play();

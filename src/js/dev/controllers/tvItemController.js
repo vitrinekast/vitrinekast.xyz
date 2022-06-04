@@ -34,6 +34,12 @@ var tvItemController = (function () {
     loopToggle.addEventListener("click", function (e) {
       e.preventDefault();
       toggleLooptimer();
+      console.info("GA: event trigger")
+      window.dataLayer.push({
+        event: "watch_video",
+        source: "toggle_timer",
+      });
+
     });
   };
 

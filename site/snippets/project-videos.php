@@ -6,7 +6,7 @@
 ?>
 
 <div class="videoplayer__wrapper">
-    <div class="fn-videoplayer videoplayer off">
+    <div class="fn-videoplayer videoplayer">
         <div class="videoplayer__video videoeffect--wobble">
             <?php foreach ($page->videos() as $video): ?>
             <video class="videoplayer__video fn-video" muted="true" loop="true" lazy="true" preload="metadata"

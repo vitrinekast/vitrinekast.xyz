@@ -118,6 +118,13 @@ var screenController = (function () {
 
   var playItem = function (file) {
     stopAllItems();
+
+    console.info("GA: event trigger");
+    window.dataLayer.push({
+      event: "watch_video",
+      source: file,
+    });
+
     let video = playlist.find((video) => video.fileName === file);
     if (video) {
       video.el.play();
@@ -188,6 +195,12 @@ var tvItemController = (function () {
     loopToggle.addEventListener("click", function (e) {
       e.preventDefault();
       toggleLooptimer();
+      console.info("GA: event trigger")
+      window.dataLayer.push({
+        event: "watch_video",
+        source: "toggle_timer",
+      });
+
     });
   };
 

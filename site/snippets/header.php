@@ -54,7 +54,9 @@
     }
     gtag('js', new Date());
 
-    gtag('config', 'G-6FM1YBVTSX');
+    gtag('config', 'G-6FM1YBVTSX', {
+        'debug_mode': true
+    });
     </script>
     <?php snippet('meta_information'); ?>
     <?php snippet('robots'); ?>
