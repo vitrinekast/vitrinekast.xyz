@@ -6,7 +6,7 @@ Meta-title: Vitrinekast
 
 ----
 
-Meta-description: This is the description
+Meta-description: Hi - I'm Rosa, a Digital Creative / Front-end Developer from Rotterdam.
 
 ----
 
@@ -18,7 +18,9 @@ Meta-author: R Schuurmans
 
 ----
 
-Meta-image: 
+Meta-image:
+
+- android-chrome-96x96.png
 
 ----
 
@@ -110,7 +112,7 @@ Twitter-creator:
 
 ----
 
-Robots-noindex: 
+Robots-noindex: disabled
 
 ----
 
@@ -118,11 +120,11 @@ Robots-nofollow:
 
 ----
 
-Robots-noarchive: 
+Robots-noarchive: enabled
 
 ----
 
-Robots-noimageindex: 
+Robots-noimageindex: enabled
 
 ----
 
