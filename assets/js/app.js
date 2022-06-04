@@ -1,1 +1,298 @@
-var screenController=function(){const n="on",e="off",o="active";let r,i=[],f={snow:{},vcr:{opacity:1,miny:220,miny2:220,num:30,fps:60}};const l=(t=2)=>{if(!f.vcr)return!1;const e=f.vcr.canvas,n=f.vcr.ctx;let o=f.vcr.miny||0;var r=f.vcr.maxy||e.height;let i=f.vcr.miny2||0;var s=f.vcr.num||20,d=e.width;e.height;e.style.filter="blur(.1px)",n.clearRect(0,0,e.width,e.height),n.fillStyle="#fff",n.beginPath();for(var c=0;c<=s;c++){var a=Math.random(c)*d,l=getRandomInt(o+=3,r),u=getRandomInt(0,i-=3);n.fillRect(a,l,t,t),n.fillRect(a,u,t,t),n.fill(),v(n,a,l,t/5),v(n,a,u,t/5)}n.closePath()},v=(e,n,o,r)=>{var i=getRandomInt(1,50),t=[1,-1];let c=r;var a=t[Math.floor(Math.random()*t.length)];for(let t=0;t<i;t++){var l=getRandomInt(c-=.01,r),u=getRandomInt(1,4);r-=.1,u*=a,e.fillRect(n+=u,o,l,l),e.fill()}};function c(){a(e),i.forEach(t=>{t.el.pause(),t.el.removeAttribute(o)})}var u=t=>{if(!f.snow)return!1;for(var e=f.snow.ctx.canvas.width,n=f.snow.ctx.canvas.height,e=f.snow.ctx.createImageData(e,n),o=new Uint32Array(e.data.buffer),r=o.length,i=0;i<r;i++)o[i]=(255*Math.random()|0)<<24;f.snow.ctx.putImageData(e,0,0)},t=function(){u(),l(),requestAnimationFrame(t)},a=function(t){r.classList.remove(n),r.classList.remove(e),r.classList.add(t)};return{init:function(){if(!(r=document.querySelectorAll(".fn-videoplayer")[0]))return!1;document.querySelectorAll(".fn-video").forEach(t=>{i.push({el:t,url:t.src,fileName:t.getAttribute("data-file"),isPlaying:!1})}),f.snow.canvas=document.querySelector(".fn-snow"),f.snow.ctx=f.snow.canvas.getContext("2d"),f.vcr.canvas=document.querySelector(".fn-vcr"),f.vcr.ctx=f.vcr.canvas.getContext("2d"),t()},playItem:function(e){c();let t=i.find(t=>t.fileName===e);t&&(t.el.play(),t.el.setAttribute(o,!0),a(n))},stopAllItems:c}}();function getRandomInt(t,e){return t=Math.ceil(t),e=Math.floor(e),Math.floor(Math.random()*(e-t+1))+t}var tvItemController=function(){const d=4e3;let e=!1,n=[],o=0;function r(){n.forEach(t=>{t.classList.remove("active")})}function f(t){a(),screenController.playItem(this.getAttribute("data-video"))}function v(t){t.preventDefault(),a(),document.body.removeAttribute("footer-visible"),""!==t.target.getAttribute("href")&&window.setTimeout(function(){document.body.querySelector(".fn-tv-footer").href=t.target.getAttribute("href"),document.body.querySelector(".fn-project-name").textContent=t.target.textContent,document.body.setAttribute("footer-visible",!0)},100),screenController.playItem(t.target.getAttribute("data-video")),document.body.addEventListener("click",s,!0)}function m(t){l(forceStop=!0)}var i,c,a=function(){r(),i.removeAttribute("active"),e=window.clearInterval(e)},l=function(t=!1){o=0,e||t?(a(),screenController.stopAllItems()):(i.setAttribute("active",!0),u(),e=window.setInterval(()=>{u()},d))},u=function(){r();var t=n[o];t.classList.add("active"),screenController.playItem(t.getAttribute("data-video")),o===n.length-1?o=0:o++},s=function(){document.body.setAttribute("footer-visible",!1),l(forceStop=!0),document.body.removeEventListener("click",s,!0)};return{init:function(){c=utils.isTouchDevice(),document.body.querySelector(".fn-tv-footer"),document.querySelectorAll(".fn-tv-link").forEach(t=>{c?t.addEventListener("click",v):(t.addEventListener("mouseenter",f),t.addEventListener("mouseleave",m)),n.push(t)}),(i=document.querySelector(".fn-video-loop")).addEventListener("click",function(t){t.preventDefault(),l()})}}}(),utils={isTouchDevice:function(){return"ontouchstart"in window||0<navigator.maxTouchPoints||0<navigator.msMaxTouchPoints}};window.onload=function(){screenController.init(),tvItemController.init(),document.body.classList.add("js-loaded")};
+var screenController = (function () {
+  const SNOW_SELECTOR = ".fn-snow";
+  const VCR_SELECTOR = ".fn-vcr";
+  const VIDEO_SELECTOR = ".fn-video";
+  const PLAYER_SELECTOR = ".fn-videoplayer";
+
+  const STATE_ON = "on";
+  const STATE_OFF = "off";
+  const STATE_ACTIVE = "active";
+
+  let videoplayerEl, videoEL;
+  let playlist = [];
+
+  let screenEffects = {
+    snow: {},
+    vcr: {
+      opacity: 1,
+      miny: 220,
+      miny2: 220,
+      num: 30,
+      fps: 60,
+    },
+  };
+
+  var init = function () {
+    videoplayerEl = document.querySelectorAll(PLAYER_SELECTOR)[0];
+    if (!videoplayerEl) return false;
+
+    document.querySelectorAll(VIDEO_SELECTOR).forEach((videoEl) => {
+      playlist.push({
+        el: videoEl,
+        url: videoEl.src,
+        fileName: videoEl.getAttribute("data-file"),
+        isPlaying: false,
+      });
+    });
+
+    screenEffects.snow.canvas = document.querySelector(SNOW_SELECTOR);
+    screenEffects.snow.ctx = screenEffects.snow.canvas.getContext("2d");
+
+    screenEffects.vcr.canvas = document.querySelector(VCR_SELECTOR);
+    screenEffects.vcr.ctx = screenEffects.vcr.canvas.getContext("2d");
+
+    animate();
+  };
+
+  const generateVCRNoise = (radius = 2) => {
+    if (!screenEffects.vcr) return false;
+    const canvas = screenEffects.vcr.canvas;
+    const ctx = screenEffects.vcr.ctx;
+    let posy1 = screenEffects.vcr.miny || 0;
+    let posy2 = screenEffects.vcr.maxy || canvas.height;
+    let posy3 = screenEffects.vcr.miny2 || 0;
+    const num = screenEffects.vcr.num || 20;
+    const xmax = canvas.width;
+    const ymax = canvas.height;
+    // TODO add below to CSS
+    canvas.style.filter = `blur(.1px)`;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = `#fff`;
+
+    ctx.beginPath();
+    for (var i = 0; i <= num; i++) {
+      var x = Math.random(i) * xmax;
+      var y1 = getRandomInt((posy1 += 3), posy2);
+      var y2 = getRandomInt(0, (posy3 -= 3));
+      ctx.fillRect(x, y1, radius, radius);
+      ctx.fillRect(x, y2, radius, radius);
+      ctx.fill();
+
+      drawVCRLine(ctx, x, y1, radius / 5);
+      drawVCRLine(ctx, x, y2, radius / 5);
+    }
+    ctx.closePath();
+  };
+
+  const drawVCRLine = (ctx, x, y, radius) => {
+    const n = getRandomInt(1, 50);
+
+    const dirs = [1, -1];
+    let rd = radius;
+    const dir = dirs[Math.floor(Math.random() * dirs.length)];
+    for (let i = 0; i < n; i++) {
+      const step = 0.01;
+      let r = getRandomInt((rd -= step), radius);
+      let dx = getRandomInt(1, 4);
+
+      radius -= 0.1;
+
+      dx *= dir;
+
+      ctx.fillRect((x += dx), y, r, r);
+      ctx.fill();
+    }
+  };
+
+  var generateSnow = (ctx) => {
+    if (!screenEffects.snow) return false;
+    var w = screenEffects.snow.ctx.canvas.width,
+      h = screenEffects.snow.ctx.canvas.height,
+      d = screenEffects.snow.ctx.createImageData(w, h),
+      b = new Uint32Array(d.data.buffer),
+      len = b.length;
+
+    for (var i = 0; i < len; i++) {
+      b[i] = ((255 * Math.random()) | 0) << 24;
+    }
+
+    screenEffects.snow.ctx.putImageData(d, 0, 0);
+  };
+
+  var animate = function () {
+    generateSnow();
+    generateVCRNoise();
+    requestAnimationFrame(animate);
+  };
+
+
+  var playItem = function (file) {
+    stopAllItems();
+    let video = playlist.find((video) => video.fileName === file);
+    if (video) {
+      video.el.play();
+      video.el.setAttribute(STATE_ACTIVE, true);
+      toggleTVStateClass(STATE_ON);
+    }
+  };
+
+  var toggleTVStateClass = function (className) {
+    videoplayerEl.classList.remove(STATE_ON);
+    videoplayerEl.classList.remove(STATE_OFF);
+    videoplayerEl.classList.add(className);
+  };
+
+  var stopAllItems = function () {
+    toggleTVStateClass(STATE_OFF);
+    playlist.forEach((item) => {
+      item.el.pause();
+      item.el.removeAttribute(STATE_ACTIVE);
+    });
+  };
+  return {
+    init: init,
+    playItem: playItem,
+    stopAllItems: stopAllItems
+  };
+})();
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+var tvItemController = (function () {
+  const MOUSE_OVER_SELECTOR = ".fn-tv-link";
+  const LOOP_SELECTOR = ".fn-video-loop";
+  const LOOP_DELAY = 4000;
+
+  let loopInterval = false;
+  let projectLinks = [];
+  let loopIndex = 0;
+
+  var loopToggle;
+  var isTouch;
+
+  var footerLink, footerLinkLabel;
+
+
+
+  var init = function () {
+    isTouch = utils.isTouchDevice();
+    footerLink = document.body.querySelector(".fn-tv-footer");
+
+    document.querySelectorAll(MOUSE_OVER_SELECTOR).forEach((link) => {
+
+      if (isTouch) {
+        link.addEventListener("click", onTouch);
+      } else {
+        link.addEventListener("mouseenter", onMouseEnter);
+        link.addEventListener("mouseleave", onMouseLeave);
+      }
+      projectLinks.push(link);
+    });
+
+    loopToggle = document.querySelector(LOOP_SELECTOR);
+
+    loopToggle.addEventListener("click", function (e) {
+      e.preventDefault();
+      toggleLooptimer();
+    });
+  };
+
+  var clearTimer = function () {
+    removeAllActiveStates();
+    loopToggle.removeAttribute("active");
+    loopInterval = window.clearInterval(loopInterval);
+  };
+
+  var toggleLooptimer = function (forceStop = false) {
+    loopIndex = 0;
+    if (loopInterval || forceStop) {
+      clearTimer();
+
+      screenController.stopAllItems();
+    } else {
+      loopToggle.setAttribute("active", true);
+      playFromLoopindex();
+      loopInterval = window.setInterval(() => {
+        playFromLoopindex();
+      }, LOOP_DELAY);
+    }
+  };
+
+  var removeAllActiveStates = function () {
+    console.log("removeAllActiveStates");
+    projectLinks.forEach((el) => {
+      el.classList.remove("active");
+    });
+  };
+
+  var playFromLoopindex = function () {
+    removeAllActiveStates();
+    console.log("playFromLoopindex " + loopIndex);
+
+    var link = projectLinks[loopIndex];
+    link.classList.add("active");
+    screenController.playItem(link.getAttribute("data-video"));
+
+    if (loopIndex === projectLinks.length - 1) {
+      loopIndex = 0;
+    } else {
+      loopIndex++;
+    }
+  };
+
+  var onMouseEnter = function (e) {
+    clearTimer();
+    screenController.playItem(this.getAttribute("data-video"));
+  };
+
+  var onTouch = function (e) {
+    e.preventDefault();
+    clearTimer();
+    document.body.removeAttribute("footer-visible");
+    if (e.target.getAttribute("href") !== "") {
+      window.setTimeout(function () {
+        document.body.querySelector(".fn-tv-footer").href =
+          e.target.getAttribute("href");
+        document.body.querySelector(".fn-project-name").textContent =
+          e.target.textContent;
+        console.log("on touch");
+        document.body.setAttribute("footer-visible", true);
+      }, 100);
+    }
+
+    screenController.playItem(e.target.getAttribute("data-video"));
+    document.body.addEventListener("click", onBodyClick, true);
+  };
+
+  var onBodyClick = function () {
+    console.log("on body click");
+    document.body.setAttribute("footer-visible", false);
+    toggleLooptimer((forceStop = true));
+    document.body.removeEventListener("click", onBodyClick, true);
+  };
+
+  var onMouseLeave = function (e) {
+    toggleLooptimer((forceStop = true));
+  };
+
+  return {
+    init: init,
+  };
+})();
+
+var utils = (function () {
+  var isTouchDevice = function() {
+    return (
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      navigator.msMaxTouchPoints > 0
+    );
+  }
+  return {
+    isTouchDevice: isTouchDevice,
+  };
+})();
+
+window.onload = function () {
+  console.log("app.js loaded");
+
+  console.log(utils.isTouchDevice())
+  screenController.init();
+  tvItemController.init();
+
+  document.body.classList.add("js-loaded");
+};

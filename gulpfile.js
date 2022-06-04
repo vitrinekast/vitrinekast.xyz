@@ -1,5 +1,5 @@
 const { src, dest, series, parallel, watch } = require("gulp");
-const browsersync = require("browser-sync").create();
+const browsersync = require("browser-sync");
 const del = require("del");
 const imagemin = require("gulp-imagemin");
 const newer = require("gulp-newer");
@@ -25,6 +25,8 @@ const semver = require("semver");
 const zip = require("gulp-zip");
 const config = require("./config.json");
 const { NULL } = require("node-sass");
+const connect = require("gulp-connect-php");
+
 
 // Some helper functions
 var getPackageJson = function () {
@@ -39,11 +41,29 @@ var getType = function () {
 // TASKS
 
 // BrowserSync
-function browserSync(done) {
-  browsersync.init({
-    proxy: config.proxy,
-  });
-  done();
+//Start Server
+function browserSync() {
+  return connect.server(
+    {
+      router: "./kirby/router.php",
+      port: 8000,
+      keepalive: true,
+      debug: true,
+    },
+    function () {
+      browsersync({
+        proxy: "127.0.0.1:8000",
+        notify: false,
+        ghostMode: false
+      });
+    }
+  );
+}
+
+//Reload Browser
+function browsersyncReload(cb) {
+    browsersync.reload();
+    cb();
 }
 
 // Clean assets
@@ -188,14 +208,14 @@ function bumpVersion() {
 
 // Watch files
 function watchFiles() {
-  watch(config.scss.files, series(css, copyCss));
-  watch(config.scss.files, css);
-  watch(config.js.src, scriptsDev);
-  watch(config.assets.src, assets);
-  watch(config.js.libs, scriptsLibs);
-  watch(config.js.modules, scriptsModules);
-  watch(config.images.src, images);
-  watch(config.templates.src, templates);
+  watch(config.scss.files, series(css, copyCss, browsersyncReload));
+  watch(config.scss.files, series(css, browsersyncReload));
+  watch(config.js.src, series(scriptsDev, browsersyncReload));
+  watch(config.assets.src, series(assets, browsersyncReload));
+  watch(config.js.libs, series(scriptsLibs, browsersyncReload));
+  watch(config.js.modules, series(scriptsModules, browsersyncReload));
+  watch(config.images.src, series(images, browsersyncReload));
+  watch(config.templates.src, series(templates, browsersyncReload));
 }
 
 const build = series(
