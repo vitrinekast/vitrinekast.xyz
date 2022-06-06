@@ -9,7 +9,11 @@ Kirby::plugin('kirby/project-links', [
         'video'
       ],
       'html' => function ($tag) {
-          return '<a class="fn-tv-link" data-video="' . $tag->video . '" href="' . $tag->link . '" target="_blank">' . $tag->text .'</a>';
+          if ($tag->link) {
+              return '<a class="fn-tv-link" data-video="' . $tag->video . '" href="' . $tag->link . '" target="_blank">' . $tag->text .'</a>';
+          } else {
+              return '<a class="fn-tv-link" data-video="' . $tag->video . '">' . $tag->text .'</a>';
+          }
       }
     ]
   ]

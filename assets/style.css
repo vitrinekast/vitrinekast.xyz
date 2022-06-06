@@ -898,6 +898,7 @@ article a {
   will-change: color;
   margin-right: 2px;
   display: inline-block;
+  cursor: pointer;
 }
 
 article a:before {
