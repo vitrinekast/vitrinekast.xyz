@@ -95,7 +95,8 @@ var tvItemController = (function () {
     e.preventDefault();
     clearTimer();
     document.body.removeAttribute("footer-visible");
-    if (e.target.getAttribute("href") !== "") {
+    var href = e.target.getAttribute("href");
+    if (href !== "" && href !== null) {
       window.setTimeout(function () {
         document.body.querySelector(".fn-tv-footer").href =
           e.target.getAttribute("href");
