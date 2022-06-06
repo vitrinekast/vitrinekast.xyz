@@ -130,8 +130,15 @@ article {
   #{$headings} {
     margin-top: $gutter--lg;
   }
+
   p {
     margin-top: $gutter--lg;
+  }
+
+  ul {
+    li:before {
+      content: '> '
+    }
   }
 
   a {

@@ -55,6 +55,7 @@ $rotate-value: 0;
       align-items: flex-end;
       padding: $gutter--lg;
       justify-content: flex-end;
+      padding-bottom: #{($gutter--sm*2) + $gutter--md + $gutter--lg};
     }
   }
 
