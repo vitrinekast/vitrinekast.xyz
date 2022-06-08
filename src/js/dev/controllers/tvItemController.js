@@ -10,8 +10,6 @@ var tvItemController = (function () {
   var loopToggle;
   var isTouch;
 
-  var footerLink, footerLinkLabel;
-
   var footerLink;
 
   var init = function () {
