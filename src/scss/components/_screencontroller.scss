@@ -55,7 +55,7 @@ $rotate-value: 0;
       align-items: flex-end;
       padding: $gutter--lg;
       justify-content: flex-end;
-      padding-bottom: #{($gutter--sm*2) + $gutter--md + $gutter--lg};
+      padding-bottom: #{($gutter--sm * 2) + $gutter--md + $gutter--lg};
     }
   }
 
@@ -66,7 +66,7 @@ $rotate-value: 0;
       height: 100%;
       object-fit: cover;
       object-position: center center;
-      animation: 3000ms linear 700ms normal forwards infinite paused on;
+      animation: 3000ms linear 2000ms normal forwards infinite paused on;
 
       &[active="true"] {
         display: block;
@@ -83,13 +83,13 @@ $rotate-value: 0;
   // @include break("md", "min") {
   // states
   &.on {
-    animation: 300ms $bezier 0ms normal forwards 1 paused onBlink;
+    animation: 300ms $bezier 0ms normal forwards 1 running onBlink;
     animation-play-state: running;
     display: block;
   }
 
   &.off {
-    animation: 750ms $bezier 0ms reverse forwards 1 paused offBlink;
+    animation: 750ms $bezier 0ms reverse forwards 1 running offBlink;
     animation-play-state: running;
     animation-direction: normal;
     display: block;
@@ -135,40 +135,39 @@ $rotate-value: 0;
   }
 }
 
-.glitch {
-  animation: 5s ease 2000ms normal none infinite running glitch;
-}
+// .glitch {
+//   animation: 5s ease 2000ms normal none infinite running glitch;
+// }
 
-@keyframes glitch {
-  30% {
-  }
-  40% {
-    opacity: 1;
-    transform: scale(1, 1);
-    filter: brightness(1);
-  }
-  41% {
-    filter: brightness(4);
-  }
-  42% {
-    opacity: 0.8;
-    transform: scale(1, 1.2);
-    filter: brightness(1);
-  }
-  42% {
-    opacity: 0.8;
-    transform: scale(1, 1.2);
-    transform: skew(-5deg, 0);
-  }
-  43% {
-    opacity: 1;
-    transform: scale(1, 1);
-    transform: skew(0, 0);
-  }
-  65% {
-  }
-}
-
+// @keyframes glitch {
+//   30% {
+//   }
+//   40% {
+//     opacity: 1;
+//     transform: scale(1, 1);
+//     filter: brightness(1);
+//   }
+//   41% {
+//     filter: brightness(4);
+//   }
+//   42% {
+//     opacity: 0.8;
+//     transform: scale(1, 1.2);
+//     filter: brightness(1);
+//   }
+//   42% {
+//     opacity: 0.8;
+//     transform: scale(1, 1.2);
+//     transform: skew(-5deg, 0);
+//   }
+//   43% {
+//     opacity: 1;
+//     transform: scale(1, 1);
+//     transform: skew(0, 0);
+//   }
+//   65% {
+//   }
+// }
 @keyframes on {
   0% {
     transform: scale(1, 0.3) translate3d(0, 0, 0);
@@ -184,17 +183,17 @@ $rotate-value: 0;
 
   9% {
     transform: scale(1.3, 0.6) translate3d(0, 100%, 0);
-    filter: brightness(40);
+    filter: brightness(2) blur(5px);
   }
 
   11% {
     transform: scale(1, 1) translate3d(0, 0, 0);
-    filter: brightness(1);
+    filter: brightness(1) blur(0px);
   }
 
   100% {
     transform: scale(1, 1) translate3d(0, 0, 0);
-    filter: brightness(1);
+    filter: brightness(1) blur(0px);
   }
 }
 

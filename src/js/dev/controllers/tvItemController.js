@@ -12,9 +12,7 @@ var tvItemController = (function () {
 
   var footerLink, footerLinkLabel;
 
-  var hasPlayed = false;
-
-
+  var footerLink;
 
   var init = function () {
     isTouch = utils.isTouchDevice();
