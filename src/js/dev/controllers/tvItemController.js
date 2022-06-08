@@ -1,7 +1,7 @@
 var tvItemController = (function () {
   const MOUSE_OVER_SELECTOR = ".fn-tv-link";
   const LOOP_SELECTOR = ".fn-video-loop";
-  const LOOP_DELAY = 4000;
+  const LOOP_DELAY = 5000;
 
   let loopInterval = false;
   let projectLinks = [];
@@ -11,6 +11,8 @@ var tvItemController = (function () {
   var isTouch;
 
   var footerLink, footerLinkLabel;
+
+  var hasPlayed = false;
 
 
 
@@ -34,13 +36,27 @@ var tvItemController = (function () {
     loopToggle.addEventListener("click", function (e) {
       e.preventDefault();
       toggleLooptimer();
-      console.info("GA: event trigger")
+      console.info("GA: event trigger: toggle timer")
       gtag("event", "watch_video", {
         app_name: "vitrinekast",
         source: "toggle_timer",
       });
 
     });
+
+    window.setTimeout(function() {
+
+      console.log(screenController.hasPlayed);
+      if(!screenController.hasPlayed) {
+        console.log("start the loop now");
+        toggleLooptimer();
+        console.info("GA: event trigger: timeout_autoplay");
+        gtag("event", "watch_video", {
+          app_name: "vitrinekast",
+          source: "timeout_autoplay",
+        });
+      }
+    }, 5000);
   };
 
   var clearTimer = function () {

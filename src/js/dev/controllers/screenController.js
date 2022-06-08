@@ -24,6 +24,8 @@ var screenController = (function () {
 
   var init = function () {
     videoplayerEl = document.querySelectorAll(PLAYER_SELECTOR)[0];
+    this.hasPlayed = false;
+
     if (!videoplayerEl) return false;
 
     document.querySelectorAll(VIDEO_SELECTOR).forEach((videoEl) => {
@@ -117,6 +119,8 @@ var screenController = (function () {
 
   var playItem = function (file) {
     stopAllItems();
+    this.hasPlayed = true;
+    hasPlayed = true;
 
     console.info("GA: event trigger");
     gtag("event", "watch_video", {
@@ -148,7 +152,7 @@ var screenController = (function () {
   return {
     init: init,
     playItem: playItem,
-    stopAllItems: stopAllItems,
+    stopAllItems: stopAllItems
   };
 })();
 
