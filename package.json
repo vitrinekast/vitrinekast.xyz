@@ -1,4 +1,16 @@
 {
+  "name": "supertheme",
+  "version": "5.0.0",
+  "description": "",
+  "main": "gulpFile.js",
+  "scripts": {
+      "start": "gulp serve",
+      "release": "gulp --production --patch",
+      "release-major": "gulp --production --major",
+      "release-minor": "gulp --production --minor"
+  },
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
     "autoprefixer": "^10.2.6",
     "browser-sync": "^2.27.5",

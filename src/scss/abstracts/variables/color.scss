@@ -1,3 +1,5 @@
+@use "sass:math";
+
 $color--primary: #151515;
 $color--white: white;
 $color--black: #151515;
@@ -52,7 +54,7 @@ $colors: (
   ),
   grey: (
     base: $color--grey,
-    light: lighten($color--grey, $color--lighten/2),
+    light: lighten($color--grey, math.div($color--lighten, 2)),
     dark: darken($color--grey, $color--darken),
   ),
 );

@@ -8,3 +8,23 @@
     height: 100%;
   }
 }
+
+
+article img {
+  max-width: 80vw;;
+}
+
+.list--images {
+  display: flex;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-x: auto;
+
+  img, video {
+    max-width: 100%;
+  }
+  & > * {
+    margin-right: $gutter--md;
+    max-width: 100%;;
+  }
+}

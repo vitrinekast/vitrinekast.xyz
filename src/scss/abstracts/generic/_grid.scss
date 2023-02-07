@@ -1,3 +1,5 @@
+@use "sass:math";
+
 $grid--col-count: 12;
 $grid--gutter: 32px;
 $grid--container: var(--wp--custom--spacing--wide-size);
@@ -14,7 +16,7 @@ $grid--container: var(--wp--custom--spacing--wide-size);
   --grid-gap: #{$grid--gutter};
 
   @include break("md", "max") {
-    --grid-gap: #{$grid--gutter/2};
+    --grid-gap: #{math.div($grid--gutter, 2)};
   }
 }
 .container,

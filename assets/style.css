@@ -894,6 +894,33 @@ main {
   padding-bottom: 128px;
 }
 
+.media--canvas {
+  position: fixed;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+article img {
+  max-width: 80vw;
+}
+
+.list--images {
+  display: flex;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-x: auto;
+}
+.list--images img, .list--images video {
+  max-width: 100%;
+}
+.list--images > * {
+  margin-right: 1rem;
+  max-width: 100%;
+}
+
 .button {
   font-family: inherit;
   font-size: 1.25rem;
@@ -1040,7 +1067,7 @@ body[footer-visible=true] .footer {
   display: block;
   content: "";
   width: 100%;
-  padding-top: 75%;
+  padding-top: 133.3333333333%;
 }
 .videoplayer > * {
   position: absolute;

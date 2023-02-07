@@ -45,6 +45,7 @@
     </noscript>
 
     <!-- Global site tag (gtag.js) - Google Analytics -->
+    
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6FM1YBVTSX"></script>
     <script>
     window.dataLayer = window.dataLayer || [];
@@ -60,4 +61,4 @@
     <?php snippet('robots'); ?>
 </head>
 
-<body><h2>fe</h2>
+<body>

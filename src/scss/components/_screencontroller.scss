@@ -1,3 +1,5 @@
+@use "sass:math";
+
 $screen-background: black;
 $bezier: cubic-bezier(0.23, 1, 0.32, 1);
 // $bezier: linear;
@@ -9,7 +11,7 @@ $rotate-value: 0;
     display: block;
     content: "";
     width: 100%;
-    padding-top: ($height / $width) * 100%;
+    padding-top: (math.div($width, $height)) * 100%;
   }
   > * {
     position: absolute;

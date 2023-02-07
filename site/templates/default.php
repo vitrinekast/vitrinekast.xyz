@@ -1,13 +1,28 @@
-<?php snippet('header') ?>
-<?php snippet('project-videos'); ?>
+<?php
+    snippet('header');
+    snippet('project-videos');
 
+    $children = $page->children();
+    
+?>
 
 <main class='container container--full container--static'>
     <header class='col col--12 flex'>
         <h1 class='h6'>
-            <?= $page->title() ?><span class='fn-video-loop button--link'>.play()</span>
+            <?= $page->title() ?>
         </h1>
     </header>
+
+   <?php if(count($children) !== 0): ?>
+        <article class="col col--12">
+            <ul>
+                <?php foreach($children as $child): ?>
+                    <li><a href="<?= $child->url();?>"><?= $child->title(); ?> </a> </li>
+                <?php endforeach; ?>
+            </ul>
+                </article>
+    <?php endif; ?>
+
     <div class="col col--12">
         <article>
             <?= $page->text()->kirbytext() ?>
