@@ -45,13 +45,13 @@ $children = $page->children();
 </main>
 
 <?php if (count($children) !== 0) : ?>
-    <article class="col col--12">
-        <ul>
+    <div class="col col--12">
+        
             <?php foreach ($children as $child) : ?>
-                <?php snippet('project'); ?>
+                <?php snippet('project', ['project' => $child, 'looped' => true]); ?>
             <?php endforeach; ?>
-        </ul>
-    </article>
+        
+            </div>
 <?php endif; ?>
 
 <section hidden>

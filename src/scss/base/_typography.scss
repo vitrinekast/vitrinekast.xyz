@@ -176,7 +176,18 @@ article {
       display: inline;
     }
   }
-
+  table {
+    border-spacing: 0px;
+    border: .5px solid white;
+    margin: 1rem 0;
+    text-align: left;
+    th, td {
+      padding: 4px 8px;
+      border: .5px solid white;
+      
+    }
+  }
+  
   a {
     position: relative;
     color: inherit;

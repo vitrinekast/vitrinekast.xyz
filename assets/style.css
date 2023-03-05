@@ -869,6 +869,16 @@ article ul ul li {
 article ul p {
   display: inline;
 }
+article table {
+  border-spacing: 0px;
+  border: 0.5px solid white;
+  margin: 1rem 0;
+  text-align: left;
+}
+article table th, article table td {
+  padding: 4px 8px;
+  border: 0.5px solid white;
+}
 article a {
   position: relative;
   color: inherit;

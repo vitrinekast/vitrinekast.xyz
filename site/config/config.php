@@ -4,6 +4,9 @@ return [
     'panel' => [
       'install' => true
     ],
+    'markdown' => [
+      'extra' => true
+    ],
     'routes' => [
       [
         'pattern' => 'sitemap.xml',

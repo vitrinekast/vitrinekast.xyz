@@ -3,7 +3,7 @@ snippet('header');
 snippet('project-videos');
 ?>
 
-<?php snippet('project', ['show_todos' => false]) ; ?>
+<?php snippet('project', ['project' => $page, 'looped' => false]); ?>
 
 
 <section hidden>
