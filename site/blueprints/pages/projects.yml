@@ -8,28 +8,27 @@ icon: 📖
 # More about columns: https://getkirby.com/docs/guide/blueprints/layout#defining-columns
 
 columns:
-  - width: 1/3
-    # In the first column, we reuse the `notes` section
-    # (defined in `/site/blueprints/sections/notes.yml` twice with different page status and headline
+
+  - width: 3/3
     sections:
-      drafts:
-        extends: sections/projects
-        label: Drafts
-        status: draft
-
-      unlisted:
-        extends: sections/projects
-        label: In Review
-        status: unlisted
-
-  - width: 2/3
-    # In the second column, we reuse the same section, this time for listed pages and with a different headline
-    sections:
-      listed:
-        extends: sections/projects
-        label: Published
-        status: listed
-        size: small
-        layout: cards
-
-# More about pages sections: https://getkirby.com/docs/reference/panel/sections/pages
+      pages:
+        label: Projects
+        empty: No projects yet
+        template: project
+        sortable: true
+      fields:
+        todos:
+          label: Todos
+          type: structure
+          fields:
+            status:
+              label: Finished
+              type: toggle
+              width: 1/4
+              text: 
+                - "no"
+                - "yes"
+            task:
+              label: Description
+              width: 3/4
+              type: text

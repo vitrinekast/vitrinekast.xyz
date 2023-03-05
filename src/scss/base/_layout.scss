@@ -16,3 +16,44 @@ body {
 main {
   padding-bottom: 128px;
 }
+:root {
+  --space: #{$gutter--md};
+}
+
+.spacer {
+  margin: var(--space);
+
+  &--x {
+    margin-left: var(--space);
+    margin-right: var(--space);
+  }
+
+  &--y {
+    margin-top: var(--space);
+    margin-bottom: var(--space);
+  }
+
+  &--top {
+    margin-top: var(--space);
+  }
+
+  &--bottom {
+    margin-bottom: var(--space);
+  }
+
+  &--left {
+    margin-left: var(--space);
+  }
+
+  &--right {
+    margin-right: var(--space);
+  }
+
+  &--lg {
+    --space: #{$gutter--lg};
+  }
+
+  &--none {
+    --space: 0px;
+  }
+}

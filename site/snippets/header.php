@@ -34,28 +34,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <?= css(['assets/style.css?v=' . date('h:i:sa') ,'@auto']) ?>
+    <?= css(['assets/style.css?v=' . date('h:i:sa'), '@auto']) ?>
     <!-- <?= css('assets/print.css', 'print') ?>
     -->
 
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" as="style"
-        onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    
+
     <noscript>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
     </noscript>
 
     <!-- Global site tag (gtag.js) - Google Analytics -->
-    
+    <script src="https://rawcdn.githack.com/nextapps-de/spotlight/0.7.8/dist/spotlight.bundle.js"></script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-6FM1YBVTSX"></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
+        window.dataLayer = window.dataLayer || [];
 
-    function gtag() {
-        dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
 
-    gtag('config', 'G-6FM1YBVTSX');
+        gtag('config', 'G-6FM1YBVTSX');
     </script>
     <?php snippet('meta_information'); ?>
     <?php snippet('robots'); ?>

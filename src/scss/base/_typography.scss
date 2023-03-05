@@ -92,6 +92,17 @@ small {
   font-size: calc(var(--font-size--base) * 0.7);
 }
 
+h1, h2, h3, h4, h5, h6 {
+  a {
+    color: inherit;
+  }
+}
+
+figure figcaption {
+  @extend small;
+  opacity: .8;
+}
+
 b,
 strong {
   font-weight: $font-weight--bold;
@@ -120,6 +131,14 @@ ul {
 
 li {
   font-size: inherit;
+   
+  
+}
+
+.t--capitalise {
+  &::first-letter {
+    text-transform: uppercase;
+  }
 }
 
 article {
@@ -135,9 +154,26 @@ article {
     margin-top: $gutter--lg;
   }
 
+  li p {
+    margin-top: 0;
+  }
+
   ul {
     li:before {
-      content: '> '
+      content: '> ';
+      display: inline;
+    }
+
+    ul li:before {
+      content: none;
+    }
+
+    ul li {
+      margin-left: 1ch;
+    }
+
+    p {
+      display: inline;
     }
   }
 

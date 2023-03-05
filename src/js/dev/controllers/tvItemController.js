@@ -17,7 +17,6 @@ var tvItemController = (function () {
     footerLink = document.body.querySelector(".fn-tv-footer");
 
     document.querySelectorAll(MOUSE_OVER_SELECTOR).forEach((link) => {
-
       if (isTouch) {
         link.addEventListener("click", onTouch);
       } else {
@@ -29,21 +28,21 @@ var tvItemController = (function () {
 
     loopToggle = document.querySelector(LOOP_SELECTOR);
 
-    loopToggle.addEventListener("click", function (e) {
-      e.preventDefault();
-      toggleLooptimer();
-      console.info("GA: event trigger: toggle timer")
-      gtag("event", "watch_video", {
-        app_name: "vitrinekast",
-        source: "toggle_timer",
+    if (loopToggle) {
+      loopToggle.addEventListener("click", function (e) {
+        e.preventDefault();
+        toggleLooptimer();
+        console.info("GA: event trigger: toggle timer");
+        gtag("event", "watch_video", {
+          app_name: "vitrinekast",
+          source: "toggle_timer",
+        });
       });
+    }
 
-    });
-
-    window.setTimeout(function() {
-
+    window.setTimeout(function () {
       console.log(screenController.hasPlayed);
-      if(!screenController.hasPlayed) {
+      if (!screenController.hasPlayed) {
         console.log("start the loop now");
         toggleLooptimer();
         console.info("GA: event trigger: timeout_autoplay");

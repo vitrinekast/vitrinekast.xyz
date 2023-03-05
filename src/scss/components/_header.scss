@@ -11,4 +11,9 @@
     justify-content: flex-end;
     align-items: center;
   }
+
+  &__media {
+    max-width: 80vw;
+    max-height: 80vh;
+  }
 }
