@@ -224,3 +224,14 @@ article {
     }
   }
 }
+
+
+@media print {
+  // body {
+  //   --font-size--base: 10pt;
+  // }
+
+  :root {
+    font-size:12px;
+  }
+}

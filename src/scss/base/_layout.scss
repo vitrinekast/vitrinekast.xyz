@@ -57,3 +57,50 @@ main {
     --space: 0px;
   }
 }
+
+.d--print,
+.d--screen {
+  display: none;
+}
+
+@media print {
+  section {
+    page-break-before: always;
+  }
+}
+
+@media print {
+  body {
+    color: #151515;
+    background: inherit;
+  }
+ 
+  .list--images {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;
+    gap: 2rem;
+    display: none !important;
+  }
+
+  .list--images img {
+    max-height: 40vh;
+    object-fit: contain;
+    object-position: left;
+  }
+
+  .d--print {
+    display: inherit;
+  }
+  .d--none-print {
+    display: none;
+  }
+}
+@media screen {
+  .d--screen {
+    display: inherit;
+  }
+  .d--none-screen {
+    display: none;
+  }
+}

@@ -1,4 +1,4 @@
-<footer class='footer footer--project'>
+<footer class='footer footer--project d--none-print'>
     <a href="" target="_blank" class='fn-tv-footer footer__button button button--light'>
         <span class="button__label">Go to <span class='fn-project-name'></span></span>
         <span class="button__icon icon icon--arrow"></span>

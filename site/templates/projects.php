@@ -15,26 +15,19 @@ $children = $page->children();
 
     <?php if (count($children) !== 0) : ?>
         <article class="col col--12">
-            <ul>
+            <ul class='d--print'>
+                <?php foreach ($children as $child) : ?>
+                    <li><a href="#<?= $child->slug(); ?>"><?= $child->title(); ?> </a> </li>
+                <?php endforeach; ?>
+            </ul>
+
+            <ul class='d--screen'>
                 <?php foreach ($children as $child) : ?>
                     <li><a href="<?= $child->url(); ?>"><?= $child->title(); ?> </a> </li>
                 <?php endforeach; ?>
             </ul>
         </article>
     <?php endif; ?>
-
-    <h5>Tasks</h5>
-    <ul class='col col--12'>
-        <?php foreach ($children as $child) : ?>
-            <?php foreach ($child->todos()->toStructure() as $todo) : ?>
-                <li>
-                    <input type="checkbox" id="<?= $child->title() . "-" . $todo->id(); ?>" <?php echo $todo->status()->toBool() ? "checked" : "" ?>>
-                    <label for="<?= $child->title() . "-" . $todo->id(); ?>">(<?= $child->title() ?>) <?= $todo->task() ?> </label>
-                </li>
-            <?php endforeach; ?>
-        <?php endforeach; ?>
-
-    </ul>
 
     <div class="col col--12">
         <article>
