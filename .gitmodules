@@ -1,3 +1,6 @@
 [submodule "site/plugins/kirby-meta-knight"]
 	path = site/plugins/kirby-meta-knight
 	url = https://github.com/diesdasdigital/kirby-meta-knight.git
+[submodule "site/plugins/merx"]
+	path = site/plugins/merx
+	url = https://github.com/wagnerwagner/merx.git
