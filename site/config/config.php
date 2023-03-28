@@ -2,6 +2,7 @@
 
 function sendConfirmationMail($orderPage)
 {
+  
   kirby()->email([
     'from' => 'info@my-shop.com',
     'to' => (string)$orderPage->email(),
@@ -11,7 +12,7 @@ function sendConfirmationMail($orderPage)
 }
 
 return [
-  'debug' => true,
+  'debug' => false,
   'panel' => [
     'install' => true
   ],
