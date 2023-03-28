@@ -80,7 +80,7 @@ $cover = $project->cover()->toFile();
         <section>
             <?php if (count($project->other_files()->toFiles()) > 0) : ?>
 
-                <h5 class='spacer--top spacer--lg'>.Files</h5>
+                <h5 class='spacer--top spacer--lg d--none-print'>.Files</h5>
 
                 <ul class='list--images spacer--y'>
                     <?php foreach ($project->other_files()->toFiles() as $file) : ?>

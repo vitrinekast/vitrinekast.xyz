@@ -974,7 +974,7 @@ main {
 }
 
 @media print {
-  section {
+  .container--full {
     page-break-before: always;
   }
 }
@@ -985,12 +985,12 @@ main {
   }
   .list--images {
     display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    grid-auto-rows: 1fr;
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
     gap: 2rem;
   }
   .list--images img {
-    max-height: 40vh;
+    max-height: 30vh;
     object-fit: contain;
     object-position: left;
   }
