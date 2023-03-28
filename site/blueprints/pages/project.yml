@@ -60,13 +60,6 @@ columns:
           exclude_from_google:
             label: Exclude this page from google?
             type: toggle
-          complete:
-            label: Complete
-            type: toggle
-            default: "no"
-            text: 
-              - "no"
-              - "yes"
           # Fields types can be added using the shortcut `fieldname: true`
           # (however, you can only use a fieldname once per page and this only makes sense for simple fields without configuration)
           tags: true
