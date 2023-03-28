@@ -11,7 +11,7 @@ function sendConfirmationMail($orderPage)
 }
 
 return [
-  'debug' => false,
+  'debug' => true,
   'panel' => [
     'install' => true
   ],
