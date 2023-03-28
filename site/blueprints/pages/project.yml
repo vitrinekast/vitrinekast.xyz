@@ -34,22 +34,6 @@ columns:
         type: files
         multiple: true
         uploads: false
-      todos:
-        label: Todos
-        type: structure
-        fields:
-          status:
-            label: Finished
-            type: toggle
-            width: 1/4
-            text: 
-              - "no"
-              - "yes"
-          task:
-            label: Description
-            width: 3/4
-            type: text
-          
          
         
 

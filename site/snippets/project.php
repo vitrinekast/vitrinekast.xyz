@@ -1,14 +1,6 @@
 <?php
-$todos = $project->todos()->toStructure();
+
 $cover = $project->cover()->toFile();
-
-$has_open_todos = false;
-
-foreach ($todos as $todo) {
-    if ($todo->status()->toBool() == false) {
-        $has_open_todos = true;
-    }
-}
 ?>
 
 
