@@ -8,27 +8,24 @@ icon: 📖
 # More about columns: https://getkirby.com/docs/guide/blueprints/layout#defining-columns
 
 columns:
-
-  - width: 3/3
+  - width: 2/3
     sections:
       pages:
         label: Projects
         empty: No projects yet
         template: project
         sortable: true
-      fields:
-        todos:
-          label: Todos
-          type: structure
-          fields:
-            status:
-              label: Finished
-              type: toggle
-              width: 1/4
-              text: 
-                - "no"
-                - "yes"
-            task:
-              label: Description
-              width: 3/4
-              type: text
+      content:
+        type: fields
+        fields:
+          description:
+            type: blocks
+  - width: 1/3
+    sections:
+      meta:
+        type: fields
+        fields:
+          exclude_from_google:
+            label: Exclude this page from google?
+            type: toggle
+            default: false

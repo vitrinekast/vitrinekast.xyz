@@ -988,7 +988,6 @@ main {
     grid-template-columns: 1fr 1fr;
     grid-auto-rows: 1fr;
     gap: 2rem;
-    display: none !important;
   }
   .list--images img {
     max-height: 40vh;

@@ -33,7 +33,9 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
+    <?php if($page->exclude_from_google()->toBool() === true):?>
+        <meta name="robots" content="noindex">
+    <?php endif;?>
     <?= css(['assets/style.css?v=' . date('h:i:sa'), '@auto']) ?>
     <!-- <?= css('assets/print.css', 'print') ?>
     -->

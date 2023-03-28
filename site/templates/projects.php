@@ -13,6 +13,18 @@ $children = $page->children();
         </h1>
     </header>
 
+    <?php if (count($page->description()->toBlocks()) > 0) : ?>
+        <article class="col col--12">
+                <?php foreach ($page->description()->toBlocks() as $block) : ?>
+                    <div id="<?= $block->id() ?>" class="block block-type-<?= $block->type() ?>">
+                        <?= $block ?>
+                    </div>
+        </article>
+                <?php endforeach ?>
+            <?php else : ?>
+                <?php echo $page->description()->kirbytext(); ?>
+            <?php endif; ?>
+
     <?php if (count($children) !== 0) : ?>
         <article class="col col--12">
             <ul class='d--print'>

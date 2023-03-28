@@ -2,7 +2,7 @@
     "server": "./assets",
     "theme_name": "ST",
     "child_theme_name": false,
-    "proxy": "localhost:8000",
+    "proxy": "localhost:8090",
     "copyCSS": false,
     "multilang": false,
     "version": {

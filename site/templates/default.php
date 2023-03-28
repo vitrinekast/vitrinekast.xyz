@@ -26,6 +26,14 @@
     <div class="col col--12">
         <article>
             <?= $page->text()->kirbytext() ?>
+
+            <?php if (count($page->description()->toBlocks()) > 0) : ?>
+                <?php foreach ($page->description()->toBlocks() as $block) : ?>
+                    <div id="<?= $block->id() ?>" class="block block-type-<?= $block->type() ?>">
+                        <?= $block ?>
+                    </div>
+                <?php endforeach ?>
+            <?php endif; ?>
         </article>
 
     </div>

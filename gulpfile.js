@@ -58,13 +58,13 @@ function browserSync() {
   return connect.server(
     {
       router: "./kirby/router.php",
-      port: 8000,
+      port: 8090,
       keepalive: true,
       debug: true,
     },
     function () {
       browsersync.init({
-        proxy: "127.0.0.1:8000",
+        proxy: "127.0.0.1:8090",
         notify: false,
         ghostMode: false,
       });

@@ -20,7 +20,6 @@ columns:
         type: files
         multiple: false
         uploads: false
-     
       description:
         type: writer
       text:
@@ -74,6 +73,9 @@ columns:
             type: text
           author:
             type: users
+          exclude_from_google:
+            label: Exclude this page from google?
+            type: toggle
           complete:
             label: Complete
             type: toggle

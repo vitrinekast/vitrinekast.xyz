@@ -20,7 +20,7 @@
   <main class="order">
     <div class="grid">
       <h1 data-width="1/1">
-        <?= $page->title() ?>
+        <?= $page->title() ?>This is the order.php template
       </h1>
       <p data-width="1/1">
         <strong><?= t('order.date') ?> <?= $page->invoiceDate()->toIntlDate() ?></strong>
@@ -39,14 +39,14 @@
       </div>
       <div class="text" data-width="1/2">
         <h2><?= t('order.payment') ?></h2>
-        <p><?= tt('order.payment.text', compact('paymentMethod')) ?></p>
+      
         <?php if ($page->paymentMethod()->toString() === 'prepayment'): ?>
           <?php if ($page->paymentComplete()->toBool() === true): ?>
             <p><?= tt('order.payment.text.paid.date', ['datetime' => $page->paidDate()->toIntlDate()]) ?></p>
           <?php else: ?>
             <p>
               <?= t('order.payment.text.not-yet-paid') ?><br>
-              <?= tt('order.payment.text.invoice', compact('sum')) ?>
+           
             </p>
             <table class="table">
               <tr>
@@ -57,10 +57,7 @@
                 <th><?= t('order.invoice.iban') ?></th>
                 <td><?= formatIBAN('DE0000000000000000') ?></td>
               </tr>
-              <tr>
-                <th><?= t('order.invoice.sum') ?></th>
-                <td><?= $sum ?></td>
-              </tr>
+              
               <tr>
                 <th><?= t('order.invoice.purpose') ?></th>
                 <td><?= $page->title() ?></td>

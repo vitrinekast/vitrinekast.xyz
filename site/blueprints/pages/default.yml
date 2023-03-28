@@ -1,10 +1,16 @@
 title: Default Page
 preset: page
 fields:
+  exclude_from_google:
+    label: Exclude this page from google?
+    type: toggle
   text:
     label: Body
     type: textarea
     size: large
+  description:
+    label: Description
+    type: blocks
   hidden_text:
     label: Hidden body
     type: textarea
