@@ -973,6 +973,10 @@ main {
   display: none;
 }
 
+.container--full + .container--full {
+  margin-top: 8rem;
+}
+
 @media print {
   .container--full {
     page-break-before: always;
