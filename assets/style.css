@@ -1013,6 +1013,9 @@ iframe {
   .d--none-print {
     display: none;
   }
+  iframe {
+    display: none;
+  }
 }
 @media screen {
   .d--screen {
