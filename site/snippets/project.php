@@ -55,8 +55,6 @@ $cover = $project->cover()->toFile();
                                     '1800w' => ['width' => 2200],
                                 ]
                             )?>"
-                            width="<?= $cover->resize(2200)->width() ?>"
-                            height="<?= $cover->resize(2200)->height() ?>"
                         >
                     <?php else : ?>
                         <video alt="" class="header__media media--corner d--none-print" controls>
@@ -117,8 +115,6 @@ $cover = $project->cover()->toFile();
                                                 '1800w' => ['width' => 1800],
                                             ]
                                         )?>"
-                                        width="<?= $file->resize(1800)->width() ?>"
-                                        height="<?= $file->resize(1800)->height() ?>"
                                     >
                                         <figcaption><?= htmlspecialchars($file->caption()); ?> </figcaption>
                                     </figure>
