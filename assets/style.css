@@ -367,7 +367,7 @@ template {
 }
 
 :root {
-  --grid-gap: 16px;
+  --grid-gap: 32px;
 }
 @media only screen and (max-width: 992px) {
   :root {
@@ -1038,11 +1038,14 @@ article img {
   width: calc(100% + var(--grid-gap) + var(--grid-gap));
   padding-bottom: 1rem;
   padding-top: 1rem;
+  --aspect-ratio: none;
 }
 .list--images img,
 .list--images video {
   max-width: 100%;
   min-width: 40vw;
+  aspect-ratio: var(--aspect-ratio);
+  object-fit: cover;
 }
 .list--images > * {
   margin-right: 1rem;

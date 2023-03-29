@@ -7,3 +7,6 @@ fields:
   caption:
     label: Caption
     type: text
+  asp_ratio:
+    label: Set the aspect ratio as a CSS Variable
+    type: text

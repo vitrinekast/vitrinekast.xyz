@@ -85,8 +85,10 @@ $cover = $project->cover()->toFile();
                 <ul class='list--images spacer--y'>
                     <?php foreach ($project->other_files()->toFiles() as $file) : ?>
                         <?php if ($file->uuid() != $cover->uuid()) : ?>
-                            <li>
-
+                            <li <?php if($file->asp_ratio()) { 
+                                echo 'style="--aspect-ratio: ' . $file->asp_ratio() . ';"';
+                             } 
+                             ?>
                                 <?php if ($file->type() == "image") : ?>
                                     <figure>
                                         <img src="<?= $file->url() ?>" alt="" class="spotlight media--corner" loading="lazy" data-title="<?= htmlspecialchars($file->caption()); ?>">
@@ -95,7 +97,7 @@ $cover = $project->cover()->toFile();
                                 <?php elseif ($file->type() == "video") : ?>
                                     <figure>
                                         <video src="<?= $file->url() ?>" alt="" class=" media--corner" controls autoplay muted>
-                                            <figcaption><?= htmlspecialchars($file->caption()); ?> </figcaption>
+                                        <figcaption><?= htmlspecialchars($file->caption()); ?> </figcaption>
                                     </figure>
                                 <?php elseif ($file->type() == "document") : ?>
                                     <a href="<?= $file->url() ?>"> <?= $file->filename() ?> </a>

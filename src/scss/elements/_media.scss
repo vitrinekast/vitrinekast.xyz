@@ -26,11 +26,15 @@ article img {
   width: calc(100% + var(--grid-gap) + var(--grid-gap));
   padding-bottom: $gutter--md;
   padding-top: $gutter--md;
+  --aspect-ratio: none;
+
 
   img,
   video {
     max-width: 100%;
     min-width: 40vw;
+    aspect-ratio: var(--aspect-ratio);
+    object-fit: cover;
   }
 
   & > * {
