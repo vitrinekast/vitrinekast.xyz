@@ -998,8 +998,6 @@ main {
   }
   .list--images img {
     max-height: 30vh;
-    object-fit: contain;
-    object-position: left;
   }
   .d--print {
     display: inherit;
@@ -1192,6 +1190,9 @@ figure {
 .header__media {
   max-width: 80vw;
   max-height: 80vh;
+  aspect-ratio: var(--aspect-ratio);
+  object-fit: cover;
+  height: auto;
 }
 
 .footer {
