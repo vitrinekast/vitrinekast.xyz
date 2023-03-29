@@ -973,6 +973,14 @@ main {
   display: none;
 }
 
+iframe {
+  aspect-ratio: 16/9;
+  width: 100%;
+  max-width: 60vw;
+  border: none;
+  border-radius: 1rem;
+}
+
 .container--full + .container--full {
   margin-top: 8rem;
 }
@@ -1193,6 +1201,10 @@ figure {
   aspect-ratio: var(--aspect-ratio);
   object-fit: cover;
   height: auto;
+}
+.header__media iframe {
+  width: 100%;
+  aspect-ratio: 16/9;
 }
 
 .footer {

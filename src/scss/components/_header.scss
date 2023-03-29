@@ -18,5 +18,10 @@
     aspect-ratio: var(--aspect-ratio);
     object-fit: cover;
     height: auto;
+
+    iframe {
+      width: 100%;
+      aspect-ratio:16/9;
+    }
   }
 }

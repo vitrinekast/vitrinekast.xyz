@@ -63,6 +63,14 @@ main {
   display: none;
 }
 
+iframe {
+  aspect-ratio: 16/9;
+  width: 100%;
+  max-width: 60vw;
+  border: none;
+  border-radius: 1rem;
+}
+
 .container--full + .container--full {
   margin-top: 8rem;
 }
