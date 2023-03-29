@@ -51,8 +51,6 @@ $cover = $project->cover()->toFile();
                             srcset="<?= $cover->srcset(
                                 [
                                     '300w'  => ['width' => 300],
-                                    '600w'  => ['width' => 600],
-                                    '900w'  => ['width' => 900],
                                     '1200w' => ['width' => 1200],
                                     '1800w' => ['width' => 2200],
                                 ]
@@ -113,15 +111,14 @@ $cover = $project->cover()->toFile();
                                         class="spotlight media--corner" loading="lazy" data-title="<?= htmlspecialchars($file->caption()); ?>"
                                         srcset="<?= $file->srcset(
                                             [
-                                                '300w'  => ['width' => 300],
                                                 '600w'  => ['width' => 600],
                                                 '900w'  => ['width' => 900],
                                                 '1200w' => ['width' => 1200],
-                                                '1800w' => ['width' => 2200],
+                                                '1800w' => ['width' => 1800],
                                             ]
                                         )?>"
-                                        width="<?= $file->resize(2200)->width() ?>"
-                                        height="<?= $file->resize(2200)->height() ?>"
+                                        width="<?= $file->resize(1800)->width() ?>"
+                                        height="<?= $file->resize(1800)->height() ?>"
                                     >
                                         <figcaption><?= htmlspecialchars($file->caption()); ?> </figcaption>
                                     </figure>
