@@ -983,6 +983,9 @@ main {
   }
 }
 @media print {
+  :root {
+    --grid-gap: 16px;
+  }
   body {
     color: #151515;
     background: inherit;
@@ -1046,6 +1049,7 @@ article img {
   min-width: 40vw;
   aspect-ratio: var(--aspect-ratio);
   object-fit: cover;
+  height: auto;
 }
 .list--images > * {
   margin-right: 1rem;

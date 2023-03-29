@@ -74,6 +74,9 @@ main {
 }
 
 @media print {
+  :root {
+    --grid-gap: 16px;
+  }
   body {
     color: #151515;
     background: inherit;

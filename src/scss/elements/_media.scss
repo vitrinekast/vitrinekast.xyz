@@ -35,6 +35,7 @@ article img {
     min-width: 40vw;
     aspect-ratio: var(--aspect-ratio);
     object-fit: cover;
+    height: auto;
   }
 
   & > * {

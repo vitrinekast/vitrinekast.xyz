@@ -43,7 +43,23 @@ $cover = $project->cover()->toFile();
             <?php if ($cover) : ?>
                 <figure>
                     <?php if ($cover->type() == "image") : ?>
-                        <img src="<?= $cover->url() ?>" alt="" class="header__media spotlight media--corner" loading="lazy" data-title="<?= htmlspecialchars($cover->caption()); ?>">
+                    
+                        <img
+                            alt="<?= $cover->alt() ?>"
+                            src="<?= $cover->resize(900)->url() ?>"
+                            class="header__media spotlight media--corner" loading="lazy" data-title="<?= htmlspecialchars($cover->caption()); ?>"
+                            srcset="<?= $cover->srcset(
+                                [
+                                    '300w'  => ['width' => 300],
+                                    '600w'  => ['width' => 600],
+                                    '900w'  => ['width' => 900],
+                                    '1200w' => ['width' => 1200],
+                                    '1800w' => ['width' => 2200],
+                                ]
+                            )?>"
+                            width="<?= $cover->resize(2200)->width() ?>"
+                            height="<?= $cover->resize(2200)->height() ?>"
+                        >
                     <?php else : ?>
                         <video alt="" class="header__media media--corner d--none-print" controls>
                             <source type="video/mp4" src="<?= $cover->url() ?>">
@@ -91,7 +107,22 @@ $cover = $project->cover()->toFile();
                              ?>
                                 <?php if ($file->type() == "image") : ?>
                                     <figure>
-                                        <img src="<?= $file->url() ?>" alt="" class="spotlight media--corner" loading="lazy" data-title="<?= htmlspecialchars($file->caption()); ?>">
+                                    <img
+                                        alt="<?= $file->alt() ?>"
+                                        src="<?= $file->resize(900)->url() ?>"
+                                        class="spotlight media--corner" loading="lazy" data-title="<?= htmlspecialchars($file->caption()); ?>"
+                                        srcset="<?= $file->srcset(
+                                            [
+                                                '300w'  => ['width' => 300],
+                                                '600w'  => ['width' => 600],
+                                                '900w'  => ['width' => 900],
+                                                '1200w' => ['width' => 1200],
+                                                '1800w' => ['width' => 2200],
+                                            ]
+                                        )?>"
+                                        width="<?= $file->resize(2200)->width() ?>"
+                                        height="<?= $file->resize(2200)->height() ?>"
+                                    >
                                         <figcaption><?= htmlspecialchars($file->caption()); ?> </figcaption>
                                     </figure>
                                 <?php elseif ($file->type() == "video") : ?>
