@@ -44,20 +44,6 @@ $cover = $project->cover()->toFile();
                 <figure>
                     <?php if ($cover->type() == "image") : ?>
                     
-                        <img
-                            alt="<?= $cover->alt() ?>"
-                            src="<?= $cover->resize(900)->url() ?>"
-                            class="header__media spotlight media--corner" loading="lazy" data-title="<?= htmlspecialchars($cover->caption()); ?>"
-                            srcset="<?= $cover->srcset(
-                                [
-                                    '300w'  => ['width' => 300],
-                                    '1200w' => ['width' => 1200],
-                                    '1800w' => ['width' => 2200],
-                                ]
-                            )?>"
-                            width="<?= $cover->resize(2200)->width() ?>"
-                            height="<?= $cover->resize(2200)->height() ?>"
-                        >
                     <?php else : ?>
                         <video alt="" class="header__media media--corner d--none-print" controls>
                             <source type="video/mp4" src="<?= $cover->url() ?>">
