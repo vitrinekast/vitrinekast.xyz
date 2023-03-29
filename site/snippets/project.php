@@ -15,7 +15,7 @@ $cover = $project->cover()->toFile();
 
 
         </h1>
-        <p class='spacer--bottom spacer--none t--capitalise'>
+        <p class='spacer--y spacer--none t--capitalise'>
             <small>
                 <?php if ($project->werkgever() != "") : ?>
                     With <?= $project->werkgever(); ?>
