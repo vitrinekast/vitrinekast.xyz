@@ -138,3 +138,29 @@ $grid--container: var(--wp--custom--spacing--wide-size);
     align-self: start;
   }
 }
+
+.grid-system {
+  --column-end: span 1;
+  // 1154
+  $col: calc((100vw - (var(--grid-gap) * 4) )/3);
+  display: grid;
+  grid-template-columns: $col $col $col;
+  grid-gap: var(--grid-gap);
+  // grid-auto-rows: $col;
+  grid-auto-rows: 20vw; 
+  list-style-type: none;
+
+  & > * {
+    min-height: 50px;
+    min-width: 50px;
+    overflow: hidden;
+    grid-column-end: var(--column-end);
+    grid-row-end: var(--column-end);
+    img, figure {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+  }
+}

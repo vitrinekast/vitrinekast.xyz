@@ -7,6 +7,19 @@ fields:
   caption:
     label: Caption
     type: text
-  asp_ratio:
-    label: Set the aspect ratio as a CSS Variable
-    type: text
+  grid_column_end:
+    label: Set the grid-column-end span
+    type: select
+    default: 1
+    options:
+      1: span 1
+      2: span 2
+      3: span 3
+  grid_row_end:
+    label: Set the grid-column-end span
+    type: select
+    default: 1
+    options:
+      1: span 1
+      2: span 2
+      3: span 3

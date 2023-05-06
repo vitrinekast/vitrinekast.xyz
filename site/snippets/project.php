@@ -94,13 +94,13 @@ $cover = $project->cover()->toFile();
 
                 <h5 class='spacer--top spacer--lg d--none-print'>.Files</h5>
 
-                <ul class='list--images spacer--y'>
-                    <?php foreach ($project->other_files()->toFiles() as $file) : ?>
+                <ul class="grid-system">
+                
+                <?php foreach ($project->other_files()->toFiles() as $file) : ?>
+                    
                         <?php if ($file->uuid() != $cover->uuid()) : ?>
-                            <li <?php if($file->asp_ratio()) { 
-                                echo 'style="--aspect-ratio: ' . $file->asp_ratio() . ';"';
-                             } 
-                             ?>
+                            <li style="<?= $file->aspect_ratio() ? ("--aspect--ratio:" . $file->aspect_ratio() . ";") : "" ; ?> <?= $file->grid_column_end() ? ("--column-end:" . $file->grid_column_end() . ";") : "" ; ?> " >
+                           
                                 <?php if ($file->type() == "image") : ?>
                                     <figure>
                                     <img
