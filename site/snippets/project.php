@@ -1,6 +1,8 @@
 <?php
 
 $cover = $project->cover()->toFile();
+
+
 ?>
 
 
@@ -99,17 +101,33 @@ $cover = $project->cover()->toFile();
                 <?php foreach ($project->other_files()->toFiles() as $file) : ?>
                     
                         <?php if ($file->uuid() != $cover->uuid()) : ?>
-                            <li style="
-                                    <?= $file->aspect_ratio() ? ("--aspect--ratio:" . $file->aspect_ratio() . ";") : "" ; ?> 
-                                    <?= $file->grid_column_end() ? ("--column-end:" . $file->grid_column_end() . ";") : "" ; ?>
-                                    <?= $file->grid_row_end() ? ("--row-end:" . $file->grid_row_end() . ";") : "" ; ?> " >
+                            <?php 
+                                $css_variables = "";
+                                
+                                if( $file->grid_column_end()->isNotEmpty()){
+                                    $css_variables .= "--column-end:" . $file->grid_column_end() . ";";
+                                }
+                            
+                                if( $file->grid_row_end()->isNotEmpty()) {
+                                    $css_variables .= "--row-end:" . $file->grid_row_end() . ";";
+                                }
+                            
+                                if( $file->object_fit() == "contain") {
+                                    $css_variables .= "--object-fit:" . $file->object_fit() . ";";
+                                    $css_variables .= "--object-position:left;";
+                                }
+                                
+                                
+                                
+                                ?>
+                            <li style="<?= $css_variables ?>" >
                            
                                 <?php if ($file->type() == "image") : ?>
                                     <figure>
                                     <img
                                         alt="<?= $file->alt() ?>"
                                         src="<?= $file->resize(900)->url() ?>"
-                                        class="spotlight media--corner" loading="lazy" data-title="<?= htmlspecialchars($file->caption()); ?>"
+                                        class="spotlight" loading="lazy" data-title="<?= htmlspecialchars($file->caption()); ?>"
                                         srcset="<?= $file->srcset(
                                             [
                                                 '600w'  => ['width' => 600],
@@ -123,7 +141,7 @@ $cover = $project->cover()->toFile();
                                     </figure>
                                 <?php elseif ($file->type() == "video") : ?>
                                     <figure>
-                                        <video src="<?= $file->url() ?>" alt="" class=" media--corner" controls autoplay muted>
+                                        <video src="<?= $file->url() ?>" alt="" class="" controls autoplay muted>
                                         <figcaption><?= htmlspecialchars($file->caption()); ?> </figcaption>
                                     </figure>
                                 <?php elseif ($file->type() == "document") : ?>

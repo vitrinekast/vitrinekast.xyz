@@ -15,6 +15,13 @@ fields:
       1: span 1
       2: span 2
       3: span 3
+  object_fit:
+    label: how to fit the image
+    type: select
+    default: cover
+    options:
+      cover: Cover
+      contain: Contain
   grid_row_end:
     label: Set the grid-row-end span
     type: select

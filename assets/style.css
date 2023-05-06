@@ -716,6 +716,8 @@ template {
 .grid-system {
   --column-end: span 1;
   --row-end: span 1;
+  --object-position: center;
+  --object-fit: cover;
   display: grid;
   grid-template-columns: calc((100vw - var(--grid-gap) * 4) / 3) calc((100vw - var(--grid-gap) * 4) / 3) calc((100vw - var(--grid-gap) * 4) / 3);
   grid-gap: var(--grid-gap);
@@ -729,14 +731,16 @@ template {
   grid-column-end: var(--column-end);
   grid-row-end: var(--row-end);
 }
-.grid-system > * figure {
+.grid-system figure {
   display: flex;
   flex-direction: column;
 }
-.grid-system > * img, .grid-system > * figure {
+.grid-system img,
+.grid-system figure {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: var(--object-fit);
+  object-position: var(--object-position);
   overflow: hidden;
 }
 
