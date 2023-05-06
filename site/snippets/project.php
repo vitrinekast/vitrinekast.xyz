@@ -99,7 +99,10 @@ $cover = $project->cover()->toFile();
                 <?php foreach ($project->other_files()->toFiles() as $file) : ?>
                     
                         <?php if ($file->uuid() != $cover->uuid()) : ?>
-                            <li style="<?= $file->aspect_ratio() ? ("--aspect--ratio:" . $file->aspect_ratio() . ";") : "" ; ?> <?= $file->grid_column_end() ? ("--column-end:" . $file->grid_column_end() . ";") : "" ; ?> " >
+                            <li style="
+                                    <?= $file->aspect_ratio() ? ("--aspect--ratio:" . $file->aspect_ratio() . ";") : "" ; ?> 
+                                    <?= $file->grid_column_end() ? ("--column-end:" . $file->grid_column_end() . ";") : "" ; ?>
+                                    <?= $file->grid_row_end() ? ("--row-end:" . $file->grid_row_end() . ";") : "" ; ?> " >
                            
                                 <?php if ($file->type() == "image") : ?>
                                     <figure>

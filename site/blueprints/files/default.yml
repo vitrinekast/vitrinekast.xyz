@@ -16,7 +16,7 @@ fields:
       2: span 2
       3: span 3
   grid_row_end:
-    label: Set the grid-column-end span
+    label: Set the grid-row-end span
     type: select
     default: 1
     options:

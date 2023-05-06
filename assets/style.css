@@ -715,6 +715,7 @@ template {
 
 .grid-system {
   --column-end: span 1;
+  --row-end: span 1;
   display: grid;
   grid-template-columns: calc((100vw - var(--grid-gap) * 4) / 3) calc((100vw - var(--grid-gap) * 4) / 3) calc((100vw - var(--grid-gap) * 4) / 3);
   grid-gap: var(--grid-gap);
@@ -726,7 +727,7 @@ template {
   min-width: 50px;
   overflow: hidden;
   grid-column-end: var(--column-end);
-  grid-row-end: var(--column-end);
+  grid-row-end: var(--row-end);
 }
 .grid-system > * img, .grid-system > * figure {
   width: 100%;
