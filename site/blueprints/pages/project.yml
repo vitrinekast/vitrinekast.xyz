@@ -33,8 +33,7 @@ columns:
         layout: cards
         type: files
         multiple: true
-        uploads: false
-         
+        uploads: false 
         
 
 
@@ -57,6 +56,14 @@ columns:
             type: text
           author:
             type: users
+          bordered:
+            label: Show a border around the image grid?
+            type: toggle
+            default: false
+            default: 1
+            text: 
+              - "no"
+              - "yes"  
           exclude_from_google:
             label: Exclude this page from google?
             type: toggle

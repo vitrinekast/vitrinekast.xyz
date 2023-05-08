@@ -144,6 +144,7 @@ $grid--container: var(--wp--custom--spacing--wide-size);
   --row-end: span 1;
   --object-position: center;
   --object-fit: cover;
+  --border-color: white;
   // 1154
   $col: calc((100vw - (var(--grid-gap) * 4)) / 3);
   display: grid;
@@ -159,6 +160,16 @@ $grid--container: var(--wp--custom--spacing--wide-size);
     overflow: hidden;
     grid-column-end: var(--column-end);
     grid-row-end: var(--row-end);
+
+  }
+
+  &--bordered {
+    grid-gap: 0px;
+
+    & > * {
+      border: 1px solid var(--border-color);
+      padding: $gutter--md;
+    }
   }
 
   figure {
@@ -173,4 +184,11 @@ $grid--container: var(--wp--custom--spacing--wide-size);
     object-position: var(--object-position);
     overflow: hidden;
   }
+}
+
+
+@media print {
+ .grid-system {
+  --border-color: black;
+ } 
 }

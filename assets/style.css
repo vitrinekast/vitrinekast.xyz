@@ -718,6 +718,7 @@ template {
   --row-end: span 1;
   --object-position: center;
   --object-fit: cover;
+  --border-color: white;
   display: grid;
   grid-template-columns: calc((100vw - var(--grid-gap) * 4) / 3) calc((100vw - var(--grid-gap) * 4) / 3) calc((100vw - var(--grid-gap) * 4) / 3);
   grid-gap: var(--grid-gap);
@@ -730,6 +731,13 @@ template {
   overflow: hidden;
   grid-column-end: var(--column-end);
   grid-row-end: var(--row-end);
+}
+.grid-system--bordered {
+  grid-gap: 0px;
+}
+.grid-system--bordered > * {
+  border: 1px solid var(--border-color);
+  padding: 1rem;
 }
 .grid-system figure {
   display: flex;
@@ -744,6 +752,11 @@ template {
   overflow: hidden;
 }
 
+@media print {
+  .grid-system {
+    --border-color: black;
+  }
+}
 html {
   -webkit-font-smoothing: antialiased;
   font-smooth: always;
@@ -839,6 +852,7 @@ h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
 
 figure figcaption {
   opacity: 0.8;
+  margin-top: 0.5rem;
 }
 
 b,

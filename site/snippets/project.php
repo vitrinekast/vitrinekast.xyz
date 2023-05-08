@@ -96,7 +96,7 @@ $cover = $project->cover()->toFile();
 
                 <h5 class='spacer--top spacer--lg d--none-print'>.Files</h5>
 
-                <ul class="grid-system">
+                <ul class="grid-system <?= $project->bordered()->toBool() ? "grid-system--bordered" : "" ?>">
                 
                 <?php foreach ($project->other_files()->toFiles() as $file) : ?>
                     
@@ -117,10 +117,8 @@ $cover = $project->cover()->toFile();
                                     $css_variables .= "--object-position:left;";
                                 }
                                 
-                                
-                                
                                 ?>
-                            <li style="<?= $css_variables ?>" >
+                            <li style="<?= $css_variables ?>">
                            
                                 <?php if ($file->type() == "image") : ?>
                                     <figure>
