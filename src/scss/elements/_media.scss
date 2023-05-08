@@ -65,3 +65,9 @@ article img {
 figure {
   margin: 0 0;
 }
+.audio--fallback-print {
+  background-color: #f2f1f1;
+  padding: $gutter--md*0.75;
+  margin: $gutter--md 0;
+
+}
