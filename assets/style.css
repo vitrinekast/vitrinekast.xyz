@@ -1123,6 +1123,11 @@ figure {
   margin: 1rem 0;
 }
 
+@media print {
+  .audio--fallback-print {
+    -webkit-print-color-adjust: exact;
+  }
+}
 .button {
   font-family: inherit;
   font-size: 1.25rem;
