@@ -40,55 +40,10 @@ $cover = $project->cover()->toFile();
     <div class="col col--12">
         <article>
             <?php if ($cover) : ?>
+                
                 <figure>
                     <?php if ($cover->type() == "image") : ?>
-
-                        <figure>
-                                        <picture>
-                                            <source type="image/webp" sizes="(max-width: 600px) 100vw, (max-width: 1200px) 33vw, 1800px" srcset="<?= $cover->srcset(
-                                                [
-                                                    '600w'  => ['width' => 600, 'format' => 'webp'],
-                                                    '900w'  => ['width' => 900, 'format' => 'webp'],
-                                                    '1200w' => ['width' => 1200, 'format' => 'webp'],
-                                                    '1800w' => ['width' => 1800, 'format' => 'webp'],
-                                                ]
-                                            ) ?>">
-
-                                        <source type="image/jpg" sizes="(max-width: 600px) 100vw, (max-width: 1200px) 33vw, 1800px" srcset="<?= $cover->srcset(
-                                                [
-                                                    '600w'  => ['width' => 600, 'format' => 'jpg'],
-                                                    '900w'  => ['width' => 900, 'format' => 'jpg'],
-                                                    '1200w' => ['width' => 1200, 'format' => 'jpg'],
-                                                    '1800w' => ['width' => 1800, 'format' => 'jpg'],
-                                                ]
-                                            ) ?>">
-
-                                            <source type="image/png" sizes="(max-width: 600px) 100vw, (max-width: 1200px) 33vw, 1800px" srcset="<?= $cover->srcset(
-                                                [
-                                                    '600w'  => ['width' => 600, 'format' => 'png'],
-                                                    '900w'  => ['width' => 900, 'format' => 'png'],
-                                                    '1200w' => ['width' => 1200, 'format' => 'png'],
-                                                    '1800w' => ['width' => 1800, 'format' => 'png'],
-                                                ]
-                                            ) ?>">
-
-                                            <img
-                                                alt="<?= $cover->alt() ?>"
-                                                src="<?= $cover->resize(1200)->url() ?>"
-                                                class="header__media spotlight media--corner" 
-                                                loading="lazy" 
-                                                data-title="<?= htmlspecialchars($cover->caption()); ?>"
-
-                                                srcset="<?= $cover->srcset(
-                                                            [
-                                                                '600w'  => ['width' => 600],
-                                                                '900w'  => ['width' => 900],
-                                                                '1200w' => ['width' => 1200],
-                                                                '1800w' => ['width' => 1800],
-                                                            ]
-                                                        ) ?>"> 
-                                        </picture>
-                                    </figure>
+                        <?php snippet('responsive-image', ['file' => $cover, 'base_size' => 1200, 'caption' => false, 'print_size' => 1800, 'class' => 'header__media spotlight media--corner']) ?>
                     <?php else : ?>
                         <video alt="" class="header__media media--corner d--none-print" controls>
                             <source type="video/mp4" src="<?= $cover->url() ?>">
@@ -134,13 +89,16 @@ $cover = $project->cover()->toFile();
                         <?php if ($file->uuid() != $cover->uuid()) : ?>
                             <?php
                             $css_variables = "";
+                            $print_size = 800;
 
                             if ($file->grid_column_end()->isNotEmpty()) {
                                 $css_variables .= "--column-end:" . $file->grid_column_end() . ";";
+                                $print_size = 1500;
                             }
 
                             if ($file->grid_row_end()->isNotEmpty()) {
                                 $css_variables .= "--row-end:" . $file->grid_row_end() . ";";
+                                $print_size = 1500;
                             }
 
                             if ($file->object_fit() == "contain") {
@@ -149,56 +107,10 @@ $cover = $project->cover()->toFile();
                             }
 
                             ?>
-                            <li style="<?= $css_variables ?>">
+                            <li style="<?= $css_variables ?>" class="list-item list-item--<?= $file->type() ?>">
 
                                 <?php if ($file->type() == "image") : ?>
-                                    <figure>
-                                        <picture>
-                                            <source type="image/webp" sizes="(max-width: 600px) 100vw, (max-width: 1200px) 33vw, 1800px" srcset="<?= $file->srcset(
-                                                [
-                                                    '600w'  => ['width' => 600, 'format' => 'webp'],
-                                                    '900w'  => ['width' => 900, 'format' => 'webp'],
-                                                    '1200w' => ['width' => 1200, 'format' => 'webp'],
-                                                    '1800w' => ['width' => 1800, 'format' => 'webp'],
-                                                ]
-                                            ) ?>">
-
-                                        <source type="image/jpg" sizes="(max-width: 600px) 100vw, (max-width: 1200px) 33vw, 1800px" srcset="<?= $file->srcset(
-                                                [
-                                                    '600w'  => ['width' => 600, 'format' => 'jpg'],
-                                                    '900w'  => ['width' => 900, 'format' => 'jpg'],
-                                                    '1200w' => ['width' => 1200, 'format' => 'jpg'],
-                                                    '1800w' => ['width' => 1800, 'format' => 'jpg'],
-                                                ]
-                                            ) ?>">
-
-                                            <source type="image/png" sizes="(max-width: 600px) 100vw, (max-width: 1200px) 33vw, 1800px" srcset="<?= $file->srcset(
-                                                [
-                                                    '600w'  => ['width' => 600, 'format' => 'png'],
-                                                    '900w'  => ['width' => 900, 'format' => 'png'],
-                                                    '1200w' => ['width' => 1200, 'format' => 'png'],
-                                                    '1800w' => ['width' => 1800, 'format' => 'png'],
-                                                ]
-                                            ) ?>">
-
-                                            <img
-                                                alt="<?= $file->alt() ?>"
-                                                src="<?= $file->resize(900)->url() ?>"
-                                                class="spotlight" 
-                                                loading="lazy" 
-                                                data-title="<?= htmlspecialchars($file->caption()); ?>"
-
-                                                srcset="<?= $file->srcset(
-                                                            [
-                                                                '600w'  => ['width' => 600],
-                                                                '900w'  => ['width' => 900],
-                                                                '1200w' => ['width' => 1200],
-                                                                '1800w' => ['width' => 1800],
-                                                            ]
-                                                        ) ?>"> 
-                                        </picture>
-                                        <figcaption><?= htmlspecialchars($file->caption()); ?> </figcaption>
-                                    </figure>
+                                    <?php snippet('responsive-image', ['file' => $file, 'base_size' => 900, 'caption' => false, 'class' => 'spotlight', 'print_size' => $print_size]) ?>
                                 <?php elseif ($file->type() == "video") : ?>
                                     <figure>
                                         <video src="<?= $file->url() ?>" alt="" class="" controls autoplay muted>

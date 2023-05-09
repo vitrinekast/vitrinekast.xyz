@@ -10,7 +10,7 @@ html {
   --font-size--base: 1.25rem;
   --font-size--heading-mult: 1.5;
   --font-size--margin: #{$gutter--lg};
-
+  --border-color: white;
   @include break("lg", "min") {
     --font-size--base: 1.5rem;
     --font-size--heading-mult: 1.5;
@@ -61,7 +61,7 @@ textarea {
 
 h1 {
   font-size: calc(
-    var(--font-size--base) * 1.5 * var(--font-size--heading-mult)
+    var(--font-size--base) * 1.25 * var(--font-size--heading-mult)
   );
 }
 
@@ -71,20 +71,20 @@ h2 {
 
 h3 {
   font-size: calc(
-    var(--font-size--base) * 1.5 * var(--font-size--heading-mult)
+    var(--font-size--base) * 1 * var(--font-size--heading-mult)
   );
 }
 
 h4 {
   font-size: calc(
-    var(--font-size--base) * 1.25 * var(--font-size--heading-mult)
+    var(--font-size--base) * .8 * var(--font-size--heading-mult)
   );
 }
 
 h5,
 h6 {
   font-size: calc(
-    var(--font-size--base) * 1.1 * var(--font-size--heading-mult)
+    var(--font-size--base) * .7 * var(--font-size--heading-mult)
   );
 }
 
@@ -160,6 +160,8 @@ article {
   }
 
   ul {
+    margin: 1rem 0;
+
     li:before {
       content: '> ';
       display: inline;
@@ -179,12 +181,12 @@ article {
   }
   table {
     border-spacing: 0px;
-    border: .5px solid white;
+    border: .5px solid var(--border-color);
     margin: 1rem 0;
     text-align: left;
     th, td {
       padding: 4px 8px;
-      border: .5px solid white;
+      border: .5px solid var(--border-color);
       
     }
   }
@@ -231,9 +233,10 @@ article {
   // body {
   //   --font-size--base: 10pt;
   // }
-
+   
   :root {
     font-size:12px;
+    --border-color: rgba(0,0,0,.2);
   }
 
   article a {

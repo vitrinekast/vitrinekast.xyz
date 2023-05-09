@@ -76,7 +76,7 @@ iframe {
 }
 
 @media print {
-  .container--full {
+  .container--full, .grid-system  {
     page-break-before: always;
   }
 }
@@ -107,7 +107,7 @@ iframe {
     display: inherit;
   }
   .d--none-print {
-    display: none;
+    display: none !important;
   }
   iframe {
     display: none;
