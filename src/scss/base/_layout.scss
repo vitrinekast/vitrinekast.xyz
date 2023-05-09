@@ -121,3 +121,21 @@ iframe {
     display: none;
   }
 }
+
+
+.front-page {
+  break-after: page;
+  margin-top: 100px;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  align-content: flex-start;
+
+  @media print {
+
+  }
+}

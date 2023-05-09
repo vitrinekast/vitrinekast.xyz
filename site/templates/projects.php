@@ -6,7 +6,7 @@ $children = $page->children();
 
 ?>
 
-<main class='container container--full container--static'>
+<main class='container container--full container--static front-page'>
     <header class='col col--12 flex'>
         <h1 class='h6'>
             <?= $page->title() ?>
@@ -27,13 +27,13 @@ $children = $page->children();
 
     <?php if (count($children) !== 0) : ?>
         <article class="col col--12">
-            <ul class='d--print'>
+            <ul class='d--print list--links'>
                 <?php foreach ($children as $child) : ?>
-                    <li><a href="#<?= $child->slug(); ?>"><?= $child->title(); ?> </a> </li>
+                    <li><a href="#<?= $child->slug(); ?>"><?= explode(": ", $child->title())[0] ?> </a> </li>
                 <?php endforeach; ?>
             </ul>
 
-            <ul class='d--screen'>
+            <ul class='d--none-print list--links'>
                 <?php foreach ($children as $child) : ?>
                     <li><a href="<?= $child->url(); ?>"><?= $child->title(); ?> </a> </li>
                 <?php endforeach; ?>

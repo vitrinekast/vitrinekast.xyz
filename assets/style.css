@@ -1090,6 +1090,18 @@ iframe {
     display: none;
   }
 }
+.front-page {
+  break-after: page;
+  margin-top: 100px;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  align-content: flex-start;
+}
 .media--canvas {
   position: fixed;
   z-index: -1;
@@ -1305,6 +1317,11 @@ body[footer-visible=true] .footer {
   transform: translate3d(0, 0%, 0);
 }
 
+@media print {
+  .list--links {
+    columns: 2;
+  }
+}
 .videoplayer {
   overflow: hidden;
   position: relative;

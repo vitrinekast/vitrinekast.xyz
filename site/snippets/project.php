@@ -3,7 +3,7 @@ $cover = $project->cover()->toFile();
 ?>
 
 
-<section class='container container--full container--static' id="<?= $project->slug(); ?>">
+<section class='container container--full container--static ' id="<?= $project->slug(); ?>">
     <header class='col col--12 flex'>
         <h1 class='h6'>
             <?php if ($looped) : ?>
