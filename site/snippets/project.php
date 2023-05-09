@@ -110,7 +110,7 @@ $cover = $project->cover()->toFile();
                             <li style="<?= $css_variables ?>" class="list-item list-item--<?= $file->type() ?>">
 
                                 <?php if ($file->type() == "image") : ?>
-                                    <?php snippet('responsive-image', ['file' => $file, 'base_size' => 900, 'caption' => false, 'class' => 'spotlight', 'print_size' => $print_size]) ?>
+                                    <?php snippet('responsive-image', ['file' => $file, 'base_size' => 900, 'caption' => true, 'class' => 'spotlight', 'print_size' => $print_size]) ?>
                                 <?php elseif ($file->type() == "video") : ?>
                                     <figure>
                                         <video src="<?= $file->url() ?>" alt="" class="" controls autoplay muted>

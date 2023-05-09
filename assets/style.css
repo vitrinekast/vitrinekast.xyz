@@ -722,11 +722,12 @@ template {
   grid-template-columns: calc((100vw - var(--grid-gap) * 4) / 3) calc((100vw - var(--grid-gap) * 4) / 3) calc((100vw - var(--grid-gap) * 4) / 3);
   grid-gap: var(--grid-gap);
   margin: 2rem 0;
-  grid-auto-rows: min-content;
+  grid-auto-rows: 22vw;
   list-style-type: none;
 }
 @media only screen and (max-width: 992px) {
   .grid-system {
+    grid-auto-rows: min-content;
     grid-template-columns: 1fr;
     grid-auto-rows: 1fr;
   }
@@ -1035,7 +1036,7 @@ main {
 
 .d--print,
 .d--screen {
-  display: none;
+  display: none !important;
 }
 
 iframe {

@@ -60,7 +60,7 @@ main {
 
 .d--print,
 .d--screen {
-  display: none;
+  display: none !important;
 }
 
 iframe {

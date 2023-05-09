@@ -151,11 +151,11 @@ $grid--container: var(--wp--custom--spacing--wide-size);
   grid-template-columns: $col $col $col;
   grid-gap: var(--grid-gap);
   margin: $gutter--lg 0;
-  // grid-auto-rows: $col;
-  grid-auto-rows: min-content;
+  grid-auto-rows: 22vw;
   list-style-type: none;
-
+  
   @include break("md", "max") {
+    grid-auto-rows: min-content;
     grid-template-columns: 1fr;
     grid-auto-rows: 1fr;
   }
