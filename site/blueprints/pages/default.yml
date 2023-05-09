@@ -4,6 +4,9 @@ fields:
   exclude_from_google:
     label: Exclude this page from google?
     type: toggle
+  hide_title:
+    label: Hide the big title?
+    type: toggle
   text:
     label: Body
     type: textarea
