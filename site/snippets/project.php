@@ -89,16 +89,16 @@ $cover = $project->cover()->toFile();
                         <?php if ($file->uuid() != $cover->uuid()) : ?>
                             <?php
                             $css_variables = "";
-                            $print_size = 800;
+                            $print_size = 700;
 
                             if ($file->grid_column_end()->isNotEmpty()) {
                                 $css_variables .= "--column-end:" . $file->grid_column_end() . ";";
-                                $print_size = 1500;
+                                $print_size = 1300;
                             }
 
                             if ($file->grid_row_end()->isNotEmpty()) {
                                 $css_variables .= "--row-end:" . $file->grid_row_end() . ";";
-                                $print_size = 1500;
+                                $print_size = 1300;
                             }
 
                             if ($file->object_fit() == "contain") {
@@ -110,7 +110,7 @@ $cover = $project->cover()->toFile();
                             <li style="<?= $css_variables ?>" class="list-item list-item--<?= $file->type() ?>">
 
                                 <?php if ($file->type() == "image") : ?>
-                                    <?php snippet('responsive-image', ['file' => $file, 'base_size' => 900, 'caption' => true, 'class' => 'spotlight', 'print_size' => $print_size]) ?>
+                                    <?php snippet('responsive-image', ['file' => $file, 'base_size' => 800, 'caption' => true, 'class' => 'spotlight', 'print_size' => $print_size]) ?>
                                 <?php elseif ($file->type() == "video") : ?>
                                     <figure>
                                         <video src="<?= $file->url() ?>" alt="" class="" controls autoplay muted>
