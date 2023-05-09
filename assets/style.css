@@ -1034,11 +1034,11 @@ main {
   --space: 0px;
 }
 
-.d--print,
-.d--screen {
-  display: none !important;
+@media screen {
+  .d--print {
+    display: none;
+  }
 }
-
 iframe {
   aspect-ratio: 16/9;
   width: 100%;
@@ -1084,9 +1084,6 @@ iframe {
   }
 }
 @media screen {
-  .d--screen {
-    display: inherit;
-  }
   .d--none-screen {
     display: none;
   }
