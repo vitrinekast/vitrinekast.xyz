@@ -43,13 +43,52 @@ $cover = $project->cover()->toFile();
                 <figure>
                     <?php if ($cover->type() == "image") : ?>
 
-                        <img alt="<?= $cover->alt() ?>" src="<?= $cover->resize(900)->url() ?>" class="header__media spotlight media--corner" loading="lazy" data-title="<?= htmlspecialchars($cover->caption()); ?>" srcset="<?= $cover->srcset(
-                                                                                                                                                                                                                                    [
-                                                                                                                                                                                                                                        '300w'  => ['width' => 300],
-                                                                                                                                                                                                                                        '1200w' => ['width' => 1200],
-                                                                                                                                                                                                                                        '1800w' => ['width' => 2200],
-                                                                                                                                                                                                                                    ]
-                                                                                                                                                                                                                                ) ?>">
+                        <figure>
+                                        <picture>
+                                            <source type="image/webp" sizes="(max-width: 600px) 100vw, (max-width: 1200px) 33vw, 1800px" srcset="<?= $cover->srcset(
+                                                [
+                                                    '600w'  => ['width' => 600, 'format' => 'webp'],
+                                                    '900w'  => ['width' => 900, 'format' => 'webp'],
+                                                    '1200w' => ['width' => 1200, 'format' => 'webp'],
+                                                    '1800w' => ['width' => 1800, 'format' => 'webp'],
+                                                ]
+                                            ) ?>">
+
+                                        <source type="image/jpg" sizes="(max-width: 600px) 100vw, (max-width: 1200px) 33vw, 1800px" srcset="<?= $cover->srcset(
+                                                [
+                                                    '600w'  => ['width' => 600, 'format' => 'jpg'],
+                                                    '900w'  => ['width' => 900, 'format' => 'jpg'],
+                                                    '1200w' => ['width' => 1200, 'format' => 'jpg'],
+                                                    '1800w' => ['width' => 1800, 'format' => 'jpg'],
+                                                ]
+                                            ) ?>">
+
+                                            <source type="image/png" sizes="(max-width: 600px) 100vw, (max-width: 1200px) 33vw, 1800px" srcset="<?= $cover->srcset(
+                                                [
+                                                    '600w'  => ['width' => 600, 'format' => 'png'],
+                                                    '900w'  => ['width' => 900, 'format' => 'png'],
+                                                    '1200w' => ['width' => 1200, 'format' => 'png'],
+                                                    '1800w' => ['width' => 1800, 'format' => 'png'],
+                                                ]
+                                            ) ?>">
+
+                                            <img
+                                                alt="<?= $cover->alt() ?>"
+                                                src="<?= $cover->resize(1200)->url() ?>"
+                                                class="header__media spotlight media--corner" 
+                                                loading="lazy" 
+                                                data-title="<?= htmlspecialchars($cover->caption()); ?>"
+
+                                                srcset="<?= $cover->srcset(
+                                                            [
+                                                                '600w'  => ['width' => 600],
+                                                                '900w'  => ['width' => 900],
+                                                                '1200w' => ['width' => 1200],
+                                                                '1800w' => ['width' => 1800],
+                                                            ]
+                                                        ) ?>"> 
+                                        </picture>
+                                    </figure>
                     <?php else : ?>
                         <video alt="" class="header__media media--corner d--none-print" controls>
                             <source type="video/mp4" src="<?= $cover->url() ?>">
