@@ -81,11 +81,32 @@ $cover = $project->cover()->toFile();
             <?php if (count($project->other_files()->toFiles()) > 0) : ?>
 
                 <h5 class='spacer--top spacer--lg d--none-print'>.Files</h5>
+                
+                <?php if($page->nexted_media()->isNotEmpty()): ?>
+                    <ul class="grid-system grid-system--bordered">
+
+                    <?php foreach ($project->nexted_media()->toStructure() as $element): ?>
+                        
+                        <li class="list-item list-item--image">
+                            <?php foreach ($element->image()->toFiles() as $image): ?>
+                                <?php snippet('responsive-image', ['file' => $image, 'base_size' => 900, 'caption' => true, 'class' => 'spotlight', 'print_size' => 1200]) ?>
+                            <?php endforeach ?>
+                            
+                            <?php foreach($element->audio()->toFiles() as $audio): ?>
+                                <audio controls class='d--none-print'>
+                                    <source src="<?= $audio->url() ?>" type="<?= $audio->mime() ?>">
+                                </audio>
+                            <?php endforeach ?>
+                            <a href="<?= $element->url() ?>" class="hover-link">Documentation </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php endif; ?>
 
                 <ul class="grid-system <?= $project->bordered()->toBool() ? "grid-system--bordered" : "" ?>">
 
                     <?php foreach ($project->other_files()->toFiles() as $file) : ?>
-
+                        
                         <?php if ($file->uuid() != $cover->uuid()) : ?>
                             <?php
                             $css_variables = "";
@@ -93,12 +114,12 @@ $cover = $project->cover()->toFile();
 
                             if ($file->grid_column_end()->isNotEmpty()) {
                                 $css_variables .= "--column-end:" . $file->grid_column_end() . ";";
-                                $print_size = 1500;
+                                $print_size = 1200;
                             }
 
                             if ($file->grid_row_end()->isNotEmpty()) {
                                 $css_variables .= "--row-end:" . $file->grid_row_end() . ";";
-                                $print_size = 1500;
+                                $print_size = 1200;
                             }
 
                             if ($file->object_fit() == "contain") {

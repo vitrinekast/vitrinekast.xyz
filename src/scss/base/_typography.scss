@@ -70,21 +70,19 @@ h2 {
 }
 
 h3 {
-  font-size: calc(
-    var(--font-size--base) * 1 * var(--font-size--heading-mult)
-  );
+  font-size: calc(var(--font-size--base) * 1 * var(--font-size--heading-mult));
 }
 
 h4 {
   font-size: calc(
-    var(--font-size--base) * .8 * var(--font-size--heading-mult)
+    var(--font-size--base) * 0.8 * var(--font-size--heading-mult)
   );
 }
 
 h5,
 h6 {
   font-size: calc(
-    var(--font-size--base) * .7 * var(--font-size--heading-mult)
+    var(--font-size--base) * 0.7 * var(--font-size--heading-mult)
   );
 }
 
@@ -92,7 +90,12 @@ small {
   font-size: calc(var(--font-size--base) * 0.7);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   a {
     color: inherit;
   }
@@ -100,7 +103,7 @@ h1, h2, h3, h4, h5, h6 {
 
 figure figcaption {
   @extend small;
-  opacity: .8;
+  opacity: 0.8;
   margin-top: $gutter--sm;
 }
 
@@ -132,8 +135,6 @@ ul {
 
 li {
   font-size: inherit;
-   
-  
 }
 
 .t--capitalise {
@@ -163,7 +164,7 @@ article {
     margin: 1rem 0;
 
     li:before {
-      content: '> ';
+      content: "> ";
       display: inline;
     }
 
@@ -181,16 +182,16 @@ article {
   }
   table {
     border-spacing: 0px;
-    border: .5px solid var(--border-color);
+    border: 0.5px solid var(--border-color);
     margin: 1rem 0;
     text-align: left;
-    th, td {
+    th,
+    td {
       padding: 4px 8px;
-      border: .5px solid var(--border-color);
-      
+      border: 0.5px solid var(--border-color);
     }
   }
-  
+
   a {
     position: relative;
     color: inherit;
@@ -228,15 +229,51 @@ article {
   }
 }
 
+.hover-link a,
+a.hover-link {
+  position: relative;
+  color: inherit;
+  transition: color 0.5s $transition--bezier-timing;
+  z-index: 0;
+  text-decoration: none;
+  will-change: color;
+  margin-right: 2px;
+  display: inline-block;
+  cursor: pointer;
+
+  &:before {
+    content: "";
+    position: absolute;
+    width: calc(100% + 2px);
+    height: 100%;
+    transform: scale3d(1, 0.1, 1);
+    transform-origin: bottom;
+    left: -1px;
+    bottom: 0;
+    background-color: color(white, base);
+    transition: transform 0.5s $transition--bezier-timing;
+    z-index: -1;
+    will-change: transform;
+  }
+
+  &:hover,
+  &.active {
+    color: color(black, base);
+
+    &:before {
+      transform: scale3d(1, 1, 1);
+    }
+  }
+}
 
 @media print {
   // body {
   //   --font-size--base: 10pt;
   // }
-   
+
   :root {
-    font-size:12px;
-    --border-color: rgba(0,0,0,.2);
+    font-size: 12px;
+    --border-color: rgba(0, 0, 0, 0.2);
   }
 
   article a {

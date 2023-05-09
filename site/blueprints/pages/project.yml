@@ -34,7 +34,23 @@ columns:
         type: files
         multiple: true
         uploads: false 
-        
+      nexted_media:
+        label: Other nested media
+        type: structure
+        fields:
+          image:
+            label: image
+            type: files
+            multiple: false
+            query: page.images
+          audio:
+            label: Audio
+            type: files
+            multiple: false
+            query: page.audio
+          documentation:
+            label: Documentation
+            type: url  
 
 
   - width: 1/3

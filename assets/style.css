@@ -860,7 +860,12 @@ small, figure figcaption {
   font-size: calc(var(--font-size--base) * 0.7);
 }
 
-h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+h5 a,
+h6 a {
   color: inherit;
 }
 
@@ -937,7 +942,8 @@ article table {
   margin: 1rem 0;
   text-align: left;
 }
-article table th, article table td {
+article table th,
+article table td {
   padding: 4px 8px;
   border: 0.5px solid var(--border-color);
 }
@@ -973,10 +979,48 @@ article a:hover:before, article a.active:before {
   transform: scale3d(1, 1, 1);
 }
 
+.hover-link a,
+a.hover-link {
+  position: relative;
+  color: inherit;
+  transition: color 0.5s cubic-bezier(0.2, 0, 0, 1) 0s;
+  z-index: 0;
+  text-decoration: none;
+  will-change: color;
+  margin-right: 2px;
+  display: inline-block;
+  cursor: pointer;
+}
+.hover-link a:before,
+a.hover-link:before {
+  content: "";
+  position: absolute;
+  width: calc(100% + 2px);
+  height: 100%;
+  transform: scale3d(1, 0.1, 1);
+  transform-origin: bottom;
+  left: -1px;
+  bottom: 0;
+  background-color: white;
+  transition: transform 0.5s cubic-bezier(0.2, 0, 0, 1) 0s;
+  z-index: -1;
+  will-change: transform;
+}
+.hover-link a:hover, .hover-link a.active,
+a.hover-link:hover,
+a.hover-link.active {
+  color: #151515;
+}
+.hover-link a:hover:before, .hover-link a.active:before,
+a.hover-link:hover:before,
+a.hover-link.active:before {
+  transform: scale3d(1, 1, 1);
+}
+
 @media print {
   :root {
     font-size: 12px;
-    --border-color: rgba(0,0,0,.2);
+    --border-color: rgba(0, 0, 0, 0.2);
   }
   article a {
     text-decoration: underline;
@@ -1036,7 +1080,7 @@ main {
 
 @media screen {
   .d--print {
-    display: none;
+    display: none !important;
   }
 }
 iframe {
