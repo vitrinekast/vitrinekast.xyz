@@ -1036,7 +1036,7 @@ main {
 
 @media screen {
   .d--print {
-    display: none;
+    display: none !important;
   }
 }
 iframe {
