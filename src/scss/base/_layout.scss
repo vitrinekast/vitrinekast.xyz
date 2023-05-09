@@ -58,9 +58,11 @@ main {
   }
 }
 
-.d--print,
-.d--screen {
-  display: none !important;
+
+@media screen {
+  .d--print {
+    display: none;
+  } 
 }
 
 iframe {
@@ -114,9 +116,7 @@ iframe {
   }
 }
 @media screen {
-  .d--screen {
-    display: inherit;
-  }
+  
   .d--none-screen {
     display: none;
   }
