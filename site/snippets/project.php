@@ -1,5 +1,7 @@
 <?php
-$cover = $project->cover()->toFile();
+    $cover = $project->cover()->toFile();
+    $blocks = $project->text()->toBlocks();
+    $files = $project->other_files()->toFiles();
 ?>
 
 
@@ -41,7 +43,7 @@ $cover = $project->cover()->toFile();
         <article>
             <?php if ($cover) : ?>
                 
-                <figure>
+                <figure class="<?= $blocks->first()->type() == 'video' ? 'd--print' : '' ?>">
                     <?php if ($cover->type() == "image") : ?>
                         <?php snippet('responsive-image', ['file' => $cover, 'base_size' => 1200, 'caption' => false, 'print_size' => 1800, 'class' => 'header__media spotlight media--corner']) ?>
                     <?php else : ?>
@@ -65,26 +67,23 @@ $cover = $project->cover()->toFile();
                 </figure>
             <?php endif ?>
 
-            <?php if (count($project->text()->toBlocks()) > 0) : ?>
-                <?php foreach ($project->text()->toBlocks() as $block) : ?>
+            <?php if (count($blocks) > 0) : ?>
+                <?php foreach ($blocks as $block) : ?>
                     <div id="<?= $block->id() ?>" class="block block-type-<?= $block->type() ?>">
                         <?= $block ?>
                     </div>
                 <?php endforeach ?>
-            <?php else : ?>
-                <?php echo $project->description()->kirbytext(); ?>
-
             <?php endif; ?>
         </article>
 
         <section>
-            <?php if (count($project->other_files()->toFiles()) > 0) : ?>
+            <?php if (count($files) > 0) : ?>
 
                 <h5 class='spacer--top spacer--lg d--none-print'>.Files</h5>
 
                 <ul class="grid-system <?= $project->bordered()->toBool() ? "grid-system--bordered" : "" ?>">
 
-                    <?php foreach ($project->other_files()->toFiles() as $file) : ?>
+                    <?php foreach ($files as $file) : ?>
 
                         <?php if ($file->uuid() != $cover->uuid()) : ?>
                             <?php
