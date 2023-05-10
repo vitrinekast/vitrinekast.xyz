@@ -135,6 +135,10 @@ iframe {
   align-content: flex-start;
 
   @media print {
+    padding-bottom: 0px;
 
+    article ul {
+      margin-bottom: 0px;
+    }
   }
 }

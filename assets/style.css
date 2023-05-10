@@ -1099,6 +1099,15 @@ iframe {
   flex-wrap: nowrap;
   align-content: flex-start;
 }
+@media print {
+  .front-page {
+    padding-bottom: 0px;
+  }
+  .front-page article ul {
+    margin-bottom: 0px;
+  }
+}
+
 .media--canvas {
   position: fixed;
   z-index: -1;
