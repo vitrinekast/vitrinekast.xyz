@@ -92,12 +92,12 @@
 
                             if ($file->grid_column_end()->isNotEmpty()) {
                                 $css_variables .= "--column-end:" . $file->grid_column_end() . ";";
-                                $print_size = 1300;
+                                $print_size = 1000;
                             }
 
                             if ($file->grid_row_end()->isNotEmpty()) {
                                 $css_variables .= "--row-end:" . $file->grid_row_end() . ";";
-                                $print_size = 1300;
+                                $print_size = 1000;
                             }
 
                             if ($file->object_fit() == "contain") {
