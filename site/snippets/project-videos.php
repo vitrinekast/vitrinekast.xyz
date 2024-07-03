@@ -9,7 +9,7 @@
     <div class="fn-videoplayer videoplayer">
         <div class="videoplayer__video videoeffect--wobble">
             <?php foreach ($page->videos() as $video): ?>
-            <video class="videoplayer__video fn-video" muted="true" loop="true" lazy="true" preload="metadata"
+            <video class="videoplayer__video fn-video" muted="true" loop="true" lazy="true" preload="none"
                 data-file="<?= $video->filename(); ?>" playsinline>
                 <source src=" <?= $video->url() ?>" type="<?= $video->mime() ?>">
             </video>
