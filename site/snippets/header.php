@@ -49,17 +49,9 @@
 
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script src="https://rawcdn.githack.com/nextapps-de/spotlight/0.7.8/dist/spotlight.bundle.js"></script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6FM1YBVTSX"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-        gtag('js', new Date());
-
-        gtag('config', 'G-6FM1YBVTSX');
-    </script>
+     <!-- 100% privacy-first analytics -->
+    <script async defer src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+    <noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade" /></noscript>
     <?php snippet('meta_information'); ?>
     <?php snippet('robots'); ?>
 </head>
