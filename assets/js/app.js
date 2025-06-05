@@ -123,10 +123,8 @@ var screenController = (function () {
     hasPlayed = true;
 
     console.info("GA: event trigger");
-    gtag("event", "watch_video", {
-      app_name: "vitrinekast",
-      source: file,
-    });
+    
+    sa_event("watch_video", {source: file});
 
     let video = playlist.find((video) => video.fileName === file);
     if (video) {

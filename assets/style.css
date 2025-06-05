@@ -1390,6 +1390,10 @@ body[footer-visible=true] .footer {
     justify-content: flex-end;
     padding-bottom: 4rem;
   }
+  
+  .videoplayer{ 
+   max-width: 60vw;   
+  }
 }
 .videoplayer__video video {
   display: none;

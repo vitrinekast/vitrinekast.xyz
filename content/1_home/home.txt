@@ -2,19 +2,34 @@ Title: Vitrinekast
 
 ----
 
+Exclude-from-google: false
+
+----
+
+Hide-title: false
+
+----
+
 Text:
 
-Hi - I'm (project: text: Rosa video: portfolioweb_profile.mp4), a Digital Creative / Front-end Developer from Rotterdam.
+Hi - I'm (project: text: Rosa video: portfolioweb_profile.mp4), a Digital Creative / Front-end Developer based in Rotterdam.
 
-After finishing my bachelor Communication & Multimedia Design at the HvA, I worked at (project: link: https://elastique.nl text: Elastique video: portfolioweb_elastique.mp4) and (project: link: https://wetteloos.nl text: Wetteloos video: portfolioweb_wetteloos.mp4)(🤘), where we created unique interactive experiences for a wide variety of platforms. To name a few, I've worked with clients like (project: link: https://fifpro.org text: FIFPRO video: logo_fifpro.mp4), (project: link: https://npo3.nl text: NPO3 video: portfolioweb_npo3.mp4), (project: link: https://magnolia.today text: Magnolia video: logo_magnolia.mp4), (project: link: https://wnf.nl text: WNF video: portfolioweb_wnf.mp4), (project: link: https://omroepflevoland.nl text: Omroep Flevoland video: portfolioweb_of.mp4) and (project: link: https://airmiles.nl text: Air Miles. video: portfolioweb_airmiles.mp4)
+After finishing my bachelor Communication & Multimedia Design at the HvA, I joined (project: link: https://elastique.nl text: Elastique video: portfolioweb_elastique.mp4) and (project: link: https://wetteloos.nl text: Wetteloos video: portfolioweb_wetteloos.mp4)(🤘), where we created unique interactive experiences for a wide variety of platforms. To name a few, I've worked with clients like (project: link: https://fifpro.org text: FIFPRO video: logo_fifpro.mp4), 
+(project: link: https://npo3.nl text: NPO3 video: portfolioweb_npo3.mp4), (project: link: https://magnolia.today text: Magnolia video: logo_magnolia.mp4), (project: link: https://wnf.nl text: WNF video: portfolioweb_wnf.mp4), (project: link: https://omroepflevoland.nl text: Omroep Flevoland video: portfolioweb_of.mp4) and (project: link: https://airmiles.nl text: Air Miles. video: portfolioweb_airmiles.mp4)
 
-In 2022 I've started as a Freelance developer. Anything I can help you out with? (project: text: Let's get in touch! video: vid_letstalk.mp4)
+Currently, I am studying Experimental Publishing at the Piet Zwart Institute, whilst still (project: text: hacking printers video:portfolio_printing.mp4), (project: text: building synthesizers video:portfolio_synth2.mp4), (project: text: hosting Circuit Bending Workshops video: portfolio_circuitbending.mp4), and developing websites with (project: text: We Met Before video:wmb.mp4 link:https://wemetbefore.com/). 
+
+I'm always open for new projects and/or collaborations; (project: text: Let's get in touch! video: vid_letstalk.mp4)
 
 - Tel. (link: tel:+31630512026 text: +316 3051 2026)
 - Email. (link: mailto:rosa@vitrinekast.xyz text: rosa@vitrinekast.xyz) 
 - CV. (file: cv_rschuurmans.pdf text: download)
 - (link: https://www.linkedin.com/in/rosa-schuurmans-86b17393/ text: Linkedin. target:_blank)
 - (link: https://github.com/vitrinekast text: Github. target:_blank)
+
+----
+
+Description: 
 
 ----
 
