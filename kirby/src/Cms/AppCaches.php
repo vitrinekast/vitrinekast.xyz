@@ -17,15 +17,12 @@ use Kirby\Exception\InvalidArgumentException;
  */
 trait AppCaches
 {
-	protected $caches = [];
+	protected array $caches = [];
 
 	/**
 	 * Returns a cache instance by key
-	 *
-	 * @param string $key
-	 * @return \Kirby\Cache\Cache
 	 */
-	public function cache(string $key)
+	public function cache(string $key): Cache
 	{
 		if (isset($this->caches[$key]) === true) {
 			return $this->caches[$key];
@@ -43,10 +40,10 @@ trait AppCaches
 		$types = $this->extensions['cacheTypes'] ?? [];
 
 		if (array_key_exists($type, $types) === false) {
-			throw new InvalidArgumentException([
-				'key'  => 'cache.type.invalid',
-				'data' => ['type' => $type]
-			]);
+			throw new InvalidArgumentException(
+				key: 'cache.type.invalid',
+				data: ['type' => $type]
+			);
 		}
 
 		$className = $types[$type];
@@ -56,10 +53,10 @@ trait AppCaches
 
 		// check if it is a usable cache object
 		if ($cache instanceof Cache === false) {
-			throw new InvalidArgumentException([
-				'key'  => 'cache.type.invalid',
-				'data' => ['type' => $type]
-			]);
+			throw new InvalidArgumentException(
+				key: 'cache.type.invalid',
+				data: ['type' => $type]
+			);
 		}
 
 		return $this->caches[$key] = $cache;
@@ -67,9 +64,6 @@ trait AppCaches
 
 	/**
 	 * Returns the cache options by key
-	 *
-	 * @param string $key
-	 * @return array
 	 */
 	protected function cacheOptions(string $key): array
 	{
@@ -85,7 +79,7 @@ trait AppCaches
 		$prefix =
 			str_replace(['/', ':'], '_', $this->system()->indexUrl()) .
 			'/' .
-			str_replace('.', '/', $key);
+			str_replace(['/', '.'], ['_', '/'], $key);
 
 		$defaults = [
 			'active'    => true,
@@ -99,16 +93,13 @@ trait AppCaches
 			return $defaults;
 		}
 
-		return array_merge($defaults, $options);
+		return [...$defaults, ...$options];
 	}
 
 	/**
 	 * Takes care of converting prefixed plugin cache setups
 	 * to the right cache key, while leaving regular cache
 	 * setups untouched.
-	 *
-	 * @param string $key
-	 * @return string
 	 */
 	protected function cacheOptionsKey(string $key): string
 	{
@@ -120,7 +111,7 @@ trait AppCaches
 
 		// plain keys without dots don't need further investigation
 		// since they can never be from a plugin.
-		if (strpos($key, '.') === false) {
+		if (str_contains($key, '.') === false) {
 			return $prefixedKey;
 		}
 

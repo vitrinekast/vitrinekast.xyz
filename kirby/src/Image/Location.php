@@ -2,6 +2,8 @@
 
 namespace Kirby\Image;
 
+use Stringable;
+
 /**
  * Returns the latitude and longitude values
  * for exif location data if available
@@ -12,7 +14,7 @@ namespace Kirby\Image;
  * @copyright Bastian Allgeier
  * @license   https://opensource.org/licenses/MIT
  */
-class Location
+class Location implements Stringable
 {
 	protected float|null $lat = null;
 	protected float|null $lng = null;
@@ -24,13 +26,20 @@ class Location
 	 */
 	public function __construct(array $exif)
 	{
-		if (isset($exif['GPSLatitude']) === true &&
+		if (
+			isset($exif['GPSLatitude']) === true &&
 			isset($exif['GPSLatitudeRef']) === true &&
 			isset($exif['GPSLongitude']) === true &&
 			isset($exif['GPSLongitudeRef']) === true
 		) {
-			$this->lat = $this->gps($exif['GPSLatitude'], $exif['GPSLatitudeRef']);
-			$this->lng = $this->gps($exif['GPSLongitude'], $exif['GPSLongitudeRef']);
+			$this->lat = $this->gps(
+				$exif['GPSLatitude'],
+				$exif['GPSLatitudeRef']
+			);
+			$this->lng = $this->gps(
+				$exif['GPSLongitude'],
+				$exif['GPSLongitudeRef']
+			);
 		}
 	}
 
@@ -55,7 +64,7 @@ class Location
 	 */
 	protected function gps(array $coord, string $hemi): float
 	{
-		$degrees = count($coord) > 0 ? $this->num($coord[0]) : 0;
+		$degrees = $coord !== [] ? $this->num($coord[0]) : 0;
 		$minutes = count($coord) > 1 ? $this->num($coord[1]) : 0;
 		$seconds = count($coord) > 2 ? $this->num($coord[2]) : 0;
 
@@ -95,11 +104,12 @@ class Location
 	 */
 	public function __toString(): string
 	{
-		return trim(trim($this->lat() . ', ' . $this->lng(), ','));
+		return trim($this->lat() . ', ' . $this->lng(), ',');
 	}
 
 	/**
 	 * Improved `var_dump` output
+	 * @codeCoverageIgnore
 	 */
 	public function __debugInfo(): array
 	{

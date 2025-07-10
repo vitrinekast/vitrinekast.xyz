@@ -8,23 +8,21 @@ use Kirby\Parsley\Element;
 use Kirby\Toolkit\Str;
 
 /**
- * The plain schema definition converts
- * the entire document into simple text blocks
- *
- * @since 3.5.0
+ * The blocks schema definition converts
+ * the entire document into blocks for the blocks field
  *
  * @package   Kirby Parsley
- * @author    Bastian Allgeier <bastian@getkirby.com>,
+ * @author    Bastian Allgeier <bastian@getkirby.com>
  * @link      https://getkirby.com
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
+ * @since     3.5.0
  */
 class Blocks extends Plain
 {
 	public function blockquote(Element $node): array
 	{
-		$citation = null;
-		$text     = [];
+		$text = [];
 
 		// get all the text for the quote
 		foreach ($node->children() as $child) {
@@ -36,7 +34,8 @@ class Blocks extends Plain
 				$child instanceof DOMElement &&
 				$child->tagName !== 'footer'
 			) {
-				$text[] = (new Element($child))->innerHTML($this->marks());
+				$element = new Element($child);
+				$text[]  = $element->innerHTML($this->marks());
 			}
 		}
 
@@ -44,9 +43,7 @@ class Blocks extends Plain
 		$text = implode('', array_filter($text));
 
 		// get the citation from the footer
-		if ($footer = $node->find('footer')) {
-			$citation = $footer->innerHTML($this->marks());
-		}
+		$citation = $node->find('footer')?->innerHTML($this->marks());
 
 		return [
 			'content' => [
@@ -115,15 +112,12 @@ class Blocks extends Plain
 
 	public function iframe(Element $node): array
 	{
-		$caption = null;
-		$src     = $node->attr('src');
+		$src        = $node->attr('src');
+		$figcaption = $node->find('ancestor::figure[1]//figcaption');
+		$caption    = $figcaption?->innerHTML($this->marks());
 
-		if ($figcaption = $node->find('ancestor::figure[1]//figcaption')) {
-			$caption = $figcaption->innerHTML($this->marks());
-
-			// avoid parsing the caption twice
-			$figcaption->remove();
-		}
+		// avoid parsing the caption twice
+		$figcaption?->remove();
 
 		// reverse engineer video URLs
 		if (preg_match('!player.vimeo.com\/video\/([0-9]+)!i', $src, $array) === 1) {
@@ -157,19 +151,12 @@ class Blocks extends Plain
 
 	public function img(Element $node): array
 	{
-		$caption = null;
-		$link = null;
+		$link       = $node->find('ancestor::a')?->attr('href');
+		$figcaption = $node->find('ancestor::figure[1]//figcaption');
+		$caption    = $figcaption?->innerHTML($this->marks());
 
-		if ($figcaption = $node->find('ancestor::figure[1]//figcaption')) {
-			$caption = $figcaption->innerHTML($this->marks());
-
-			// avoid parsing the caption twice
-			$figcaption->remove();
-		}
-
-		if ($a = $node->find('ancestor::a')) {
-			$link = $a->attr('href');
-		}
+		// avoid parsing the caption twice
+		$figcaption?->remove();
 
 		return [
 			'content' => [
@@ -198,19 +185,21 @@ class Blocks extends Plain
 					$innerHtml .= $child->textContent;
 				} elseif ($child instanceof DOMElement) {
 					$child = new Element($child);
-
-					if (in_array($child->tagName(), ['ul', 'ol']) === true) {
-						$innerHtml .= $this->list($child);
-					} else {
-						$innerHtml .= $child->innerHTML($this->marks());
-					}
+					$list  = ['ul', 'ol'];
+					$innerHtml .= match (in_array($child->tagName(), $list, true)) {
+						true    => $this->list($child),
+						default => $child->innerHTML($this->marks())
+					};
 				}
 			}
 
 			$html[] = '<li>' . trim($innerHtml) . '</li>';
 		}
 
-		return '<' . $node->tagName() . '>' . implode($html) . '</' . $node->tagName() . '>';
+		$outerHtml  = '<' . $node->tagName() . '>';
+		$outerHtml .= implode($html);
+		$outerHtml .= '</' . $node->tagName() . '>';
+		return $outerHtml;
 	}
 
 	/**
@@ -224,7 +213,7 @@ class Blocks extends Plain
 				'tag' => 'a',
 				'attrs' => ['href', 'rel', 'target', 'title'],
 				'defaults' => [
-					'rel' => 'noopener noreferrer'
+					'rel' => 'noreferrer'
 				]
 			],
 			[

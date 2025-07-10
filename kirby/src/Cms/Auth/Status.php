@@ -3,8 +3,9 @@
 namespace Kirby\Cms\Auth;
 
 use Kirby\Cms\App;
+use Kirby\Cms\User;
 use Kirby\Exception\InvalidArgumentException;
-use Kirby\Toolkit\Properties;
+use Stringable;
 
 /**
  * Information container for the
@@ -17,61 +18,65 @@ use Kirby\Toolkit\Properties;
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
  */
-class Status
+class Status implements Stringable
 {
-	use Properties;
-
 	/**
 	 * Type of the active challenge
-	 *
-	 * @var string|null
 	 */
-	protected $challenge = null;
+	protected string|null $challenge = null;
 
 	/**
 	 * Challenge type to use as a fallback
 	 * when $challenge is `null`
-	 *
-	 * @var string|null
 	 */
-	protected $challengeFallback = null;
+	protected string|null $challengeFallback = null;
 
 	/**
 	 * Email address of the current/pending user
-	 *
-	 * @var string|null
 	 */
-	protected $email = null;
+	protected string|null $email;
 
 	/**
 	 * Kirby instance for user lookup
-	 *
-	 * @var \Kirby\Cms\App
 	 */
-	protected $kirby;
+	protected App $kirby;
+
+	/**
+	 * Purpose of the challenge:
+	 * `login|password-reset|2fa`
+	 */
+	protected string|null $mode;
 
 	/**
 	 * Authentication status:
 	 * `active|impersonated|pending|inactive`
-	 *
-	 * @var string
 	 */
-	protected $status;
+	protected string $status;
 
 	/**
 	 * Class constructor
-	 *
-	 * @param array $props
 	 */
 	public function __construct(array $props)
 	{
-		$this->setProperties($props);
+		if (in_array($props['status'], ['active', 'impersonated', 'pending', 'inactive'], true) !== true) {
+			throw new InvalidArgumentException(
+				data: [
+					'argument' => '$props[\'status\']',
+					'method'   => 'Status::__construct'
+				]
+			);
+		}
+
+		$this->kirby             = $props['kirby'];
+		$this->challenge         = $props['challenge'] ?? null;
+		$this->challengeFallback = $props['challengeFallback'] ?? null;
+		$this->email             = $props['email'] ?? null;
+		$this->mode              = $props['mode'] ?? null;
+		$this->status            = $props['status'];
 	}
 
 	/**
 	 * Returns the authentication status
-	 *
-	 * @return string
 	 */
 	public function __toString(): string
 	{
@@ -84,7 +89,6 @@ class Status
 	 * @param bool $automaticFallback If set to `false`, no faked challenge is returned;
 	 *                                WARNING: never send the resulting `null` value to the
 	 *                                user to avoid leaking whether the pending user exists
-	 * @return string|null
 	 */
 	public function challenge(bool $automaticFallback = true): string|null
 	{
@@ -101,13 +105,36 @@ class Status
 	}
 
 	/**
+	 * Creates a new instance while
+	 * merging initial and new properties
+	 */
+	public function clone(array $props = []): static
+	{
+		return new static(array_replace_recursive([
+			'kirby'             => $this->kirby,
+			'challenge'         => $this->challenge,
+			'challengeFallback' => $this->challengeFallback,
+			'email'             => $this->email,
+			'status'            => $this->status,
+		], $props));
+	}
+
+	/**
 	 * Returns the email address of the current/pending user
-	 *
-	 * @return string|null
 	 */
 	public function email(): string|null
 	{
 		return $this->email;
+	}
+
+	/**
+	 * Returns the purpose of the challenge
+	 *
+	 * @return string `login|password-reset|2fa`
+	 */
+	public function mode(): string|null
+	{
+		return $this->mode;
 	}
 
 	/**
@@ -122,98 +149,28 @@ class Status
 
 	/**
 	 * Returns an array with all public status data
-	 *
-	 * @return array
 	 */
 	public function toArray(): array
 	{
 		return [
 			'challenge' => $this->challenge(),
 			'email'     => $this->email(),
+			'mode'      => $this->mode(),
 			'status'    => $this->status()
 		];
 	}
 
 	/**
 	 * Returns the currently logged in user
-	 *
-	 * @return \Kirby\Cms\User
 	 */
-	public function user()
+	public function user(): User|null
 	{
 		// for security, only return the user if they are
 		// already logged in
-		if (in_array($this->status(), ['active', 'impersonated']) !== true) {
+		if (in_array($this->status(), ['active', 'impersonated'], true) !== true) {
 			return null;
 		}
 
 		return $this->kirby->user($this->email());
-	}
-
-	/**
-	 * Sets the type of the active challenge
-	 *
-	 * @param string|null $challenge
-	 * @return $this
-	 */
-	protected function setChallenge(string|null $challenge = null)
-	{
-		$this->challenge = $challenge;
-		return $this;
-	}
-
-	/**
-	 * Sets the challenge type to use as
-	 * a fallback when $challenge is `null`
-	 *
-	 * @param string|null $challengeFallback
-	 * @return $this
-	 */
-	protected function setChallengeFallback(string|null $challengeFallback = null)
-	{
-		$this->challengeFallback = $challengeFallback;
-		return $this;
-	}
-
-	/**
-	 * Sets the email address of the current/pending user
-	 *
-	 * @param string|null $email
-	 * @return $this
-	 */
-	protected function setEmail(string|null $email = null)
-	{
-		$this->email = $email;
-		return $this;
-	}
-
-	/**
-	 * Sets the Kirby instance for user lookup
-	 *
-	 * @param \Kirby\Cms\App $kirby
-	 * @return $this
-	 */
-	protected function setKirby(App $kirby)
-	{
-		$this->kirby = $kirby;
-		return $this;
-	}
-
-	/**
-	 * Sets the authentication status
-	 *
-	 * @param string $status `active|impersonated|pending|inactive`
-	 * @return $this
-	 */
-	protected function setStatus(string $status)
-	{
-		if (in_array($status, ['active', 'impersonated', 'pending', 'inactive']) !== true) {
-			throw new InvalidArgumentException([
-				'data' => ['argument' => '$props[\'status\']', 'method' => 'Status::__construct']
-			]);
-		}
-
-		$this->status = $status;
-		return $this;
 	}
 }

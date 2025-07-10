@@ -3,6 +3,7 @@
 namespace Kirby\Toolkit;
 
 use ArrayIterator;
+use Countable;
 use IteratorAggregate;
 
 /**
@@ -17,20 +18,21 @@ use IteratorAggregate;
  * @license   https://opensource.org/licenses/MIT
  *
  * @psalm-suppress MissingTemplateParam Implementing template params
- * 										in this class would require
- * 										implementing them throughout
- * 										the code base: https://github.com/getkirby/kirby/pull/4886#pullrequestreview-1203577545
+ *                                      in this class would require
+ *                                      implementing them throughout
+ *                                      the code base: https://github.com/getkirby/kirby/pull/4886#pullrequestreview-1203577545
+ *
+ * @template TKey of array-key
+ * @template TValue
+ * @implements \IteratorAggregate<TKey, TValue>
  */
-class Iterator implements IteratorAggregate
+class Iterator implements Countable, IteratorAggregate
 {
 	/**
-	 * The data array
+	 * @var array<TKey, TValue>
 	 */
 	public array $data = [];
 
-	/**
-	 * Constructor
-	 */
 	public function __construct(array $data = [])
 	{
 		$this->data = $data;
@@ -38,6 +40,7 @@ class Iterator implements IteratorAggregate
 
 	/**
 	 * Get an iterator for the items.
+	 * @return \ArrayIterator<TKey, TValue>
 	 */
 	public function getIterator(): ArrayIterator
 	{
@@ -62,8 +65,9 @@ class Iterator implements IteratorAggregate
 
 	/**
 	 * Returns the current element
+	 * @return TValue
 	 */
-	public function current()
+	public function current(): mixed
 	{
 		return current($this->data);
 	}
@@ -71,8 +75,9 @@ class Iterator implements IteratorAggregate
 	/**
 	 * Moves the cursor to the previous element
 	 * and returns it
+	 * @return TValue
 	 */
-	public function prev()
+	public function prev(): mixed
 	{
 		return prev($this->data);
 	}
@@ -80,8 +85,9 @@ class Iterator implements IteratorAggregate
 	/**
 	 * Moves the cursor to the next element
 	 * and returns it
+	 * @return TValue
 	 */
-	public function next()
+	public function next(): mixed
 	{
 		return next($this->data);
 	}
@@ -113,10 +119,10 @@ class Iterator implements IteratorAggregate
 	/**
 	 * Tries to find the index number for the given element
 	 *
-	 * @param mixed $needle the element to search for
+	 * @param TValue $needle the element to search for
 	 * @return int|false the index (int) of the element or false
 	 */
-	public function indexOf($needle): int|false
+	public function indexOf(mixed $needle): int|false
 	{
 		return array_search($needle, array_values($this->data));
 	}
@@ -124,36 +130,35 @@ class Iterator implements IteratorAggregate
 	/**
 	 * Tries to find the key for the given element
 	 *
-	 * @param mixed $needle the element to search for
+	 * @param TValue $needle the element to search for
 	 * @return int|string|false the name of the key or false
 	 */
-	public function keyOf($needle): int|string|false
+	public function keyOf(mixed $needle): int|string|false
 	{
 		return array_search($needle, $this->data);
 	}
 
 	/**
 	 * Checks by key if an element is included
-	 *
-	 * @param mixed $key
+	 * @param TKey $key
 	 */
-	public function has($key): bool
+	public function has(mixed $key): bool
 	{
 		return isset($this->data[$key]) === true;
 	}
 
 	/**
 	 * Checks if the current key is set
-	 *
-	 * @param mixed $key the key to check
+	 * @param TKey $key
 	 */
-	public function __isset($key): bool
+	public function __isset(mixed $key): bool
 	{
 		return $this->has($key);
 	}
 
 	/**
 	 * Simplified var_dump output
+	 * @codeCoverageIgnore
 	 */
 	public function __debugInfo(): array
 	{

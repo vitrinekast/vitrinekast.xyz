@@ -3,6 +3,8 @@
 namespace Kirby\Filesystem;
 
 use Kirby\Cms\FileModifications;
+use Kirby\Cms\HasMethods;
+use Kirby\Exception\BadMethodCallException;
 
 /**
  * Anything in your public path can be converted
@@ -20,22 +22,55 @@ class Asset
 {
 	use IsFile;
 	use FileModifications;
+	use HasMethods;
 
 	/**
 	 * Relative file path
 	 */
-	protected string|null $path = null;
+	protected string $path;
+
 
 	/**
 	 * Creates a new Asset object for the given path.
 	 */
 	public function __construct(string $path)
 	{
-		$this->setProperties([
-			'path' => dirname($path),
-			'root' => $this->kirby()->root('index') . '/' . $path,
-			'url'  => $this->kirby()->url('base') . '/' . $path
-		]);
+		$this->root = $this->kirby()->root('index') . '/' . $path;
+		$this->url  = $this->kirby()->url('base') . '/' . $path;
+
+		// set relative file path
+		$this->path = dirname($path);
+
+		if ($this->path === '.') {
+			$this->path = '';
+		}
+	}
+
+	/**
+	 * Magic caller for asset methods
+	 *
+	 * @throws \Kirby\Exception\BadMethodCallException
+	 */
+	public function __call(string $method, array $arguments = []): mixed
+	{
+		// public property access
+		if (isset($this->$method) === true) {
+			return $this->$method;
+		}
+
+		// asset method proxy
+		if (method_exists($this->asset(), $method)) {
+			return $this->asset()->$method(...$arguments);
+		}
+
+		// asset methods
+		if ($this->hasMethod($method)) {
+			return $this->callMethod($method, $arguments);
+		}
+
+		throw new BadMethodCallException(
+			message: 'The method: "' . $method . '" does not exist'
+		);
 	}
 
 	/**
@@ -44,6 +79,16 @@ class Asset
 	public function id(): string
 	{
 		return $this->root();
+	}
+
+	/**
+	 * Returns the absolute path to the media folder
+	 * for the file and its versions
+	 * @since 5.0.0
+	 */
+	public function mediaDir(): string
+	{
+		return dirname($this->mediaRoot());
 	}
 
 	/**
@@ -57,25 +102,26 @@ class Asset
 	/**
 	 * Returns the relative path starting at the media folder
 	 */
-	public function mediaPath(): string
+	public function mediaPath(string|null $filename = null): string
 	{
-		return 'assets/' . $this->path() . '/' . $this->mediaHash() . '/' . $this->filename();
+		$filename ??= $this->filename();
+		return 'assets/' . $this->path() . '/' . $this->mediaHash() . '/' . $filename;
 	}
 
 	/**
 	 * Returns the absolute path to the file in the public media folder
 	 */
-	public function mediaRoot(): string
+	public function mediaRoot(string|null $filename = null): string
 	{
-		return $this->kirby()->root('media') . '/' . $this->mediaPath();
+		return $this->kirby()->root('media') . '/' . $this->mediaPath($filename);
 	}
 
 	/**
 	 * Returns the absolute Url to the file in the public media folder
 	 */
-	public function mediaUrl(): string
+	public function mediaUrl(string|null $filename = null): string
 	{
-		return $this->kirby()->url('media') . '/' . $this->mediaPath();
+		return $this->kirby()->url('media') . '/' . $this->mediaPath($filename);
 	}
 
 	/**
@@ -85,16 +131,5 @@ class Asset
 	public function path(): string
 	{
 		return $this->path;
-	}
-
-	/**
-	 * Setter for the path
-	 *
-	 * @return $this
-	 */
-	protected function setPath(string $path): static
-	{
-		$this->path = $path === '.' ? '' : $path;
-		return $this;
 	}
 }

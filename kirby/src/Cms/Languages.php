@@ -13,69 +13,87 @@ use Kirby\Filesystem\F;
  * @link      https://getkirby.com
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
+ *
+ * @extends \Kirby\Cms\Collection<\Kirby\Cms\Language>
  */
 class Languages extends Collection
 {
 	/**
+	 * All registered languages methods
+	 */
+	public static array $methods = [];
+
+	/**
 	 * Creates a new collection with the given language objects
 	 *
-	 * @param array $objects `Kirby\Cms\Language` objects
 	 * @param null $parent
 	 * @throws \Kirby\Exception\DuplicateException
 	 */
-	public function __construct($objects = [], $parent = null)
-	{
+	public function __construct(
+		array $objects = [],
+		$parent = null
+	) {
 		$defaults = array_filter(
 			$objects,
 			fn ($language) => $language->isDefault() === true
 		);
 
 		if (count($defaults) > 1) {
-			throw new DuplicateException('You cannot have multiple default languages. Please check your language config files.');
+			throw new DuplicateException(
+				message: 'You cannot have multiple default languages. Please check your language config files.'
+			);
 		}
 
-		parent::__construct($objects, $parent);
+		parent::__construct($objects, null);
 	}
 
 	/**
 	 * Returns all language codes as array
-	 *
-	 * @return array
 	 */
 	public function codes(): array
 	{
-		return $this->keys();
+		return App::instance()->multilang() ? $this->keys() : ['default'];
 	}
 
 	/**
 	 * Creates a new language with the given props
-	 *
-	 * @internal
-	 * @param array $props
-	 * @return \Kirby\Cms\Language
 	 */
-	public function create(array $props)
+	public function create(array $props): Language
 	{
 		return Language::create($props);
 	}
 
 	/**
 	 * Returns the default language
-	 *
-	 * @return \Kirby\Cms\Language|null
 	 */
-	public function default()
+	public function default(): Language|null
 	{
 		return $this->findBy('isDefault', true) ?? $this->first();
 	}
 
 	/**
-	 * Convert all defined languages to a collection
+	 * Provides a collection of installed languages, even
+	 * if in single-language mode. In single-language mode
+	 * `Language::single()` is used to create the default language
 	 *
-	 * @internal
-	 * @return static
+	 * @unstable
 	 */
-	public static function load()
+	public static function ensure(): static
+	{
+		$kirby = App::instance();
+
+		if ($kirby->multilang() === true) {
+			return $kirby->languages();
+		}
+
+		return new static([Language::single()]);
+	}
+
+	/**
+	 * Load all languages from the languages directory
+	 * and convert them to a collection
+	 */
+	public static function load(): static
 	{
 		$languages = [];
 		$files     = glob(App::instance()->root('languages') . '/*.php');

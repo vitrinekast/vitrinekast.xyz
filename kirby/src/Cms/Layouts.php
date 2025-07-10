@@ -2,7 +2,7 @@
 
 namespace Kirby\Cms;
 
-use Kirby\Data\Data;
+use Kirby\Data\Json;
 use Kirby\Toolkit\Str;
 use Throwable;
 
@@ -15,17 +15,37 @@ use Throwable;
  * @link      https://getkirby.com
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
+ *
+ * @extends \Kirby\Cms\Items<\Kirby\Cms\Layout>
  */
 class Layouts extends Items
 {
 	public const ITEM_CLASS = Layout::class;
 
-	public static function factory(array $items = null, array $params = [])
-	{
+	/**
+	 * All registered layouts methods
+	 */
+	public static array $methods = [];
+
+	public static function factory(
+		array|null $items = null,
+		array $params = []
+	): static {
+		// convert single layout to layouts array
+		if (
+			isset($items['columns']) === true ||
+			isset($items['id']) === true
+		) {
+			$items = [$items];
+		}
+
 		$first = $items[0] ?? [];
 
 		// if there are no wrapping layouts for blocks yet …
-		if (array_key_exists('content', $first) === true || array_key_exists('type', $first) === true) {
+		if (
+			isset($first['content']) === true ||
+			isset($first['type']) === true
+		) {
 			$items = [
 				[
 					'id'      => Str::uuid(),
@@ -45,9 +65,6 @@ class Layouts extends Items
 	/**
 	 * Checks if a given block type exists in the layouts collection
 	 * @since 3.6.0
-	 *
-	 * @param string $type
-	 * @return bool
 	 */
 	public function hasBlockType(string $type): bool
 	{
@@ -56,15 +73,15 @@ class Layouts extends Items
 
 	/**
 	 * Parse layouts data
-	 *
-	 * @param array|string $input
-	 * @return array
 	 */
-	public static function parse($input): array
+	public static function parse(array|string|null $input): array
 	{
-		if (empty($input) === false && is_array($input) === false) {
+		if (
+			empty($input) === false &&
+			is_array($input) === false
+		) {
 			try {
-				$input = Data::decode($input, 'json');
+				$input = Json::decode((string)$input);
 			} catch (Throwable) {
 				return [];
 			}
@@ -82,9 +99,8 @@ class Layouts extends Items
 	 * @since 3.6.0
 	 *
 	 * @param bool $includeHidden Sets whether to include hidden blocks
-	 * @return \Kirby\Cms\Blocks
 	 */
-	public function toBlocks(bool $includeHidden = false)
+	public function toBlocks(bool $includeHidden = false): Blocks
 	{
 		$blocks = [];
 
@@ -98,6 +114,9 @@ class Layouts extends Items
 			}
 		}
 
-		return Blocks::factory($blocks);
+		return Blocks::factory($blocks, [
+			'field'  => $this->field,
+			'parent' => $this->parent
+		]);
 	}
 }

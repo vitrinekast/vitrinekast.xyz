@@ -16,8 +16,6 @@ class PageBlueprint extends Blueprint
 	/**
 	 * Creates a new page blueprint object
 	 * with the given props
-	 *
-	 * @param array $props
 	 */
 	public function __construct(array $props)
 	{
@@ -28,6 +26,7 @@ class PageBlueprint extends Blueprint
 			$this->props['options'] ?? true,
 			// defaults
 			[
+				'access'     	 => null,
 				'changeSlug'     => null,
 				'changeStatus'   => null,
 				'changeTemplate' => null,
@@ -35,8 +34,10 @@ class PageBlueprint extends Blueprint
 				'create'         => null,
 				'delete'         => null,
 				'duplicate'      => null,
-				'read'           => null,
+				'list'           => null,
+				'move'           => null,
 				'preview'        => null,
+				'read'           => null,
 				'sort'           => null,
 				'update'         => null,
 			],
@@ -58,8 +59,6 @@ class PageBlueprint extends Blueprint
 
 	/**
 	 * Returns the page numbering mode
-	 *
-	 * @return string
 	 */
 	public function num(): string
 	{
@@ -68,9 +67,6 @@ class PageBlueprint extends Blueprint
 
 	/**
 	 * Normalizes the ordering number
-	 *
-	 * @param mixed $num
-	 * @return string
 	 */
 	protected function normalizeNum($num): string
 	{
@@ -84,9 +80,6 @@ class PageBlueprint extends Blueprint
 
 	/**
 	 * Normalizes the available status options for the page
-	 *
-	 * @param mixed $status
-	 * @return array
 	 */
 	protected function normalizeStatus($status): array
 	{
@@ -116,7 +109,7 @@ class PageBlueprint extends Blueprint
 		// clean up and translate each status
 		foreach ($status as $key => $options) {
 			// skip invalid status definitions
-			if (in_array($key, ['draft', 'listed', 'unlisted']) === false || $options === false) {
+			if (in_array($key, ['draft', 'listed', 'unlisted'], true) === false || $options === false) {
 				unset($status[$key]);
 				continue;
 			}
@@ -163,8 +156,6 @@ class PageBlueprint extends Blueprint
 	/**
 	 * Returns the options object
 	 * that handles page options and permissions
-	 *
-	 * @return array
 	 */
 	public function options(): array
 	{
@@ -176,10 +167,8 @@ class PageBlueprint extends Blueprint
 	 * The preview setting controls the "Open"
 	 * button in the panel and redirects it to a
 	 * different URL if necessary.
-	 *
-	 * @return string|bool
 	 */
-	public function preview()
+	public function preview(): string|bool
 	{
 		$preview = $this->props['options']['preview'] ?? true;
 
@@ -187,13 +176,11 @@ class PageBlueprint extends Blueprint
 			return $this->model->toString($preview);
 		}
 
-		return $preview;
+		return $this->model->permissions()->can('preview', true);
 	}
 
 	/**
 	 * Returns the status array
-	 *
-	 * @return array
 	 */
 	public function status(): array
 	{

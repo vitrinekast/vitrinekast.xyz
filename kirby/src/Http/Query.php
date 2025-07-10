@@ -3,6 +3,7 @@
 namespace Kirby\Http;
 
 use Kirby\Toolkit\Obj;
+use Stringable;
 
 /**
  * A wrapper around a URL query string
@@ -15,7 +16,7 @@ use Kirby\Toolkit\Obj;
  * @copyright Bastian Allgeier
  * @license   https://opensource.org/licenses/MIT
  */
-class Query extends Obj
+class Query extends Obj implements Stringable
 {
 	public function __construct(string|array|null $query)
 	{
@@ -33,7 +34,7 @@ class Query extends Obj
 
 	public function isNotEmpty(): bool
 	{
-		return empty((array)$this) === false;
+		return $this->isEmpty() === false;
 	}
 
 	public function toString(bool $questionMark = false): string

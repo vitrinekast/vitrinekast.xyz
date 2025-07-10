@@ -4,7 +4,7 @@ namespace Kirby\Uuid;
 
 use Generator;
 use Kirby\Cms\Collection;
-use Kirby\Cms\Field;
+use Kirby\Content\Field;
 use Kirby\Toolkit\A;
 
 /**
@@ -28,7 +28,7 @@ abstract class FieldUuid extends Uuid
 	/**
 	 * Converts a content field to a related
 	 * models collection (e.g. Blocks or Structure)
-	 * @internal
+	 * @unstable
 	 */
 	abstract public static function fieldToCollection(Field $field): Collection;
 
@@ -39,22 +39,17 @@ abstract class FieldUuid extends Uuid
 	protected function findByCache(): Identifiable|null
 	{
 		// get mixed Uri from cache
-		$key   = $this->key();
-		$value = Uuids::cache()->get($key);
+		if ($key = $this->key()) {
+			if ($value = Uuids::cache()->get($key)) {
+				// value is an array containing
+				// the UUID for the parent, the field name
+				// and the specific ID
+				$parent = Uuid::for($value['parent'])->model();
 
-		if ($value === null) {
-			return null;
-		}
-
-		// value is an array containing
-		// the UUID for the parent, the field name
-		// and the specific ID
-		$parent = Uuid::for($value['parent'])->model();
-		$field  = $parent?->content()->get($value['field']);
-
-		if ($field) {
-			$collection = $this->fieldToCollection($field);
-			return $collection->get($value['id']);
+				if ($field = $parent?->content()->get($value['field'])) {
+					return static::fieldToCollection($field)->get($value['id']);
+				}
+			}
 		}
 
 		return null;
@@ -75,6 +70,16 @@ abstract class FieldUuid extends Uuid
 		return null;
 	}
 
+	/*
+	 * Returns the ID for the specific entry/row of the field
+	 * (we can rely in this case that the Uri was filled  on initiation)
+	 * @todo needs to be ensured for structure field once refactoring
+	 */
+	public function id(): string
+	{
+		return $this->uri->host();
+	}
+
 	/**
 	 * Generator function that returns collections for all fields globally
 	 * (in any page's, file's, user's or site's content file)
@@ -83,7 +88,7 @@ abstract class FieldUuid extends Uuid
 	 */
 	public static function index(): Generator
 	{
-		$generate = function (Generator $models): Generator {
+		$generate = static function (Generator $models): Generator {
 			foreach ($models as $model) {
 				$fields = $model->blueprint()->fields();
 

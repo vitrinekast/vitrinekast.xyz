@@ -13,10 +13,10 @@ namespace Kirby\Session;
  */
 class AutoSession
 {
-	protected $sessions;
-	protected $options;
+	protected Sessions $sessions;
+	protected array $options;
 
-	protected $createdSession;
+	protected Session $createdSession;
 
 	/**
 	 * Creates a new AutoSession instance
@@ -29,16 +29,19 @@ class AutoSession
 	 *                       - `cookieName`: Name to use for the session cookie; defaults to `kirby_session`
 	 *                       - `gcInterval`: How often should the garbage collector be run?; integer or `false` for never; defaults to `100`
 	 */
-	public function __construct($store, array $options = [])
-	{
+	public function __construct(
+		SessionStore|string $store,
+		array $options = []
+	) {
 		// merge options with defaults
-		$this->options = array_merge([
+		$this->options = [
 			'durationNormal' => 7200,
 			'durationLong'   => 1209600,
 			'timeout'        => 1800,
 			'cookieName'     => 'kirby_session',
-			'gcInterval'     => 100
-		], $options);
+			'gcInterval'     => 100,
+			...$options
+		];
 
 		// create an internal instance of the low-level Sessions class
 		$this->sessions = new Sessions($store, [
@@ -54,16 +57,16 @@ class AutoSession
 	 *                       - `detect`: Whether to allow sessions in the `Authorization` HTTP header (`true`) or only in the session cookie (`false`); defaults to `false`
 	 *                       - `createMode`: When creating a new session, should it be set as a cookie or is it going to be transmitted manually to be used in a header?; defaults to `cookie`
 	 *                       - `long`: Whether the session is a long "remember me" session or a normal session; defaults to `false`
-	 * @return \Kirby\Session\Session
 	 */
-	public function get(array $options = [])
+	public function get(array $options = []): Session
 	{
 		// merge options with defaults
-		$options = array_merge([
+		$options = [
 			'detect'     => false,
 			'createMode' => 'cookie',
-			'long'       => false
-		], $options);
+			'long'       => false,
+			...$options
+		];
 
 		// determine expiry options based on the session type
 		if ($options['long'] === true) {
@@ -90,7 +93,8 @@ class AutoSession
 				'renewable'  => true,
 			]);
 
-			// cache the newly created session to ensure that we don't create multiple
+			// cache the newly created session to ensure
+			// that we don't create multiple
 			$this->createdSession = $session;
 		}
 
@@ -101,6 +105,7 @@ class AutoSession
 			// the duration needs to be extended
 			$session->duration($duration);
 		}
+
 		if ($session->timeout() !== false) {
 			// a timeout exists
 			if ($timeout === false) {
@@ -113,8 +118,9 @@ class AutoSession
 		}
 
 		// if the session has been created and was not yet initialized,
-		// update the mode to a custom mode
-		// don't update back to cookie mode because the "special" behavior always wins
+		// update the mode to a custom mode;
+		// don't update back to cookie mode because the
+		// "special" behavior always wins
 		if ($session->token() === null && $options['createMode'] !== 'cookie') {
 			$session->mode($options['createMode']);
 		}
@@ -123,7 +129,8 @@ class AutoSession
 	}
 
 	/**
-	 * Creates a new empty session that is *not* automatically transmitted to the client
+	 * Creates a new empty session that is *not* automatically
+	 * transmitted to the client;
 	 * Useful for custom applications like a password reset link
 	 * Does *not* affect the automatic session
 	 *
@@ -132,9 +139,8 @@ class AutoSession
 	 *                       - `expiryTime`: Time the session expires (date string or timestamp); defaults to `+ 2 hours`
 	 *                       - `timeout`: Activity timeout in seconds (integer or false for none); defaults to `1800` (half an hour)
 	 *                       - `renewable`: Should it be possible to extend the expiry date?; defaults to `true`
-	 * @return \Kirby\Session\Session
 	 */
-	public function createManually(array $options = [])
+	public function createManually(array $options = []): Session
 	{
 		// only ever allow manual transmission mode
 		// to prevent overwriting our "auto" session
@@ -148,9 +154,8 @@ class AutoSession
 	 * @since 3.3.1
 	 *
 	 * @param string $token Session token, either including or without the key
-	 * @return \Kirby\Session\Session
 	 */
-	public function getManually(string $token)
+	public function getManually(string $token): Session
 	{
 		return $this->sessions->get($token, 'manual');
 	}
@@ -160,10 +165,8 @@ class AutoSession
 	 *
 	 * If the `gcInterval` is configured, this is done automatically
 	 * when initializing the AutoSession class
-	 *
-	 * @return void
 	 */
-	public function collectGarbage()
+	public function collectGarbage(): void
 	{
 		$this->sessions->collectGarbage();
 	}

@@ -6,7 +6,7 @@ use Closure;
 use Exception;
 use Kirby\Exception\LogicException;
 use Kirby\Filesystem\F;
-use Throwable;
+use Stringable;
 
 /**
  * Representation of an Http response,
@@ -19,7 +19,7 @@ use Throwable;
  * @copyright Bastian Allgeier
  * @license   https://opensource.org/licenses/MIT
  */
-class Response
+class Response implements Stringable
 {
 	/**
 	 * Store for all registered headers,
@@ -75,13 +75,14 @@ class Response
 		$this->charset = $charset ?? 'UTF-8';
 
 		// automatic mime type detection
-		if (strpos($this->type, '/') === false) {
+		if (str_contains($this->type, '/') === false) {
 			$this->type = F::extensionToMime($this->type) ?? 'text/html';
 		}
 	}
 
 	/**
 	 * Improved `var_dump` output
+	 * @codeCoverageIgnore
 	 */
 	public function __debugInfo(): array
 	{
@@ -95,11 +96,7 @@ class Response
 	 */
 	public function __toString(): string
 	{
-		try {
-			return $this->send();
-		} catch (Throwable) {
-			return '';
-		}
+		return $this->send();
 	}
 
 	/**
@@ -138,7 +135,7 @@ class Response
 		array $props = []
 	): static {
 		if (file_exists($file) === false) {
-			throw new Exception('The file could not be found');
+			throw new Exception(message: 'The file could not be found');
 		}
 
 		$filename ??= basename($file);
@@ -171,10 +168,23 @@ class Response
 	 */
 	public static function file(string $file, array $props = []): static
 	{
-		$props = array_merge([
+		$props = [
 			'body' => F::read($file),
-			'type' => F::extensionToMime(F::extension($file))
-		], $props);
+			'type' => F::extensionToMime(F::extension($file)),
+			...$props
+		];
+
+		// if we couldn't serve a correct MIME type, force
+		// the browser to display the file as plain text to
+		// harden against attacks from malicious file uploads
+		if ($props['type'] === null) {
+			if (isset($props['headers']) !== true) {
+				$props['headers'] = [];
+			}
+
+			$props['type'] = 'text/plain';
+			$props['headers']['X-Content-Type-Options'] = 'nosniff';
+		}
 
 		return new static($props);
 	}
@@ -186,9 +196,8 @@ class Response
 	 * @since 3.7.0
 	 *
 	 * @codeCoverageIgnore
-	 * @todo Change return type to `never` once support for PHP 8.0 is dropped
 	 */
-	public static function go(string $url = '/', int $code = 302): void
+	public static function go(string $url = '/', int $code = 302): never
 	{
 		die(static::redirect($url, $code));
 	}
@@ -239,7 +248,7 @@ class Response
 		array $headers = []
 	): static {
 		if (is_array($body) === true) {
-			$body = json_encode($body, $pretty === true ? JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES : 0);
+			$body = json_encode($body, $pretty === true ? JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES : 0);
 		}
 
 		return new static([
@@ -280,7 +289,7 @@ class Response
 		}
 
 		// send the content type header
-		header('Content-Type:' . $this->type() . '; charset=' . $this->charset());
+		header('Content-Type: ' . $this->type() . '; charset=' . $this->charset());
 
 		// print the response body
 		return $this->body();

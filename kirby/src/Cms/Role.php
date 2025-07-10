@@ -2,10 +2,10 @@
 
 namespace Kirby\Cms;
 
-use Exception;
 use Kirby\Data\Data;
 use Kirby\Filesystem\F;
 use Kirby\Toolkit\I18n;
+use Stringable;
 
 /**
  * Represents a User role with attached
@@ -17,52 +17,47 @@ use Kirby\Toolkit\I18n;
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
  */
-class Role extends Model
+class Role implements Stringable
 {
-	protected $description;
-	protected $name;
-	protected $permissions;
-	protected $title;
+	protected string|null $description;
+	protected string $name;
+	protected Permissions $permissions;
+	protected string|null $title;
 
 	public function __construct(array $props)
 	{
-		$this->setProperties($props);
+		$this->name        = $props['name'];
+		$this->permissions = new Permissions($props['permissions'] ?? null);
+		$title             = $props['title'] ?? null;
+		$this->title       = I18n::translate($title) ?? $title;
+		$description       = $props['description'] ?? null;
+		$this->description = I18n::translate($description) ?? $description;
 	}
 
 	/**
 	 * Improved `var_dump` output
-	 *
-	 * @return array
+	 * @codeCoverageIgnore
 	 */
 	public function __debugInfo(): array
 	{
 		return $this->toArray();
 	}
 
-	/**
-	 * @return string
-	 */
 	public function __toString(): string
 	{
 		return $this->name();
 	}
 
-	/**
-	 * @param array $inject
-	 * @return static
-	 */
-	public static function admin(array $inject = [])
+	public static function defaultAdmin(array $inject = []): static
 	{
-		try {
-			return static::load('admin');
-		} catch (Exception) {
-			return static::factory(static::defaults()['admin'], $inject);
-		}
+		return static::factory(static::defaults()['admin'], $inject);
 	}
 
-	/**
-	 * @return array
-	 */
+	public static function defaultNobody(array $inject = []): static
+	{
+		return static::factory(static::defaults()['nobody'], $inject);
+	}
+
 	protected static function defaults(): array
 	{
 		return [
@@ -81,133 +76,55 @@ class Role extends Model
 		];
 	}
 
-	/**
-	 * @return mixed
-	 */
-	public function description()
+	public function description(): string|null
 	{
 		return $this->description;
 	}
 
-	/**
-	 * @param array $props
-	 * @param array $inject
-	 * @return static
-	 */
-	public static function factory(array $props, array $inject = [])
+	public static function factory(array $props, array $inject = []): static
 	{
-		return new static($props + $inject);
+		// ensure to properly extend the blueprint
+		$props = $props + $inject;
+		$props = Blueprint::extend($props);
+
+		return new static($props);
 	}
 
-	/**
-	 * @return string
-	 */
 	public function id(): string
 	{
 		return $this->name();
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function isAdmin(): bool
 	{
 		return $this->name() === 'admin';
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function isNobody(): bool
 	{
 		return $this->name() === 'nobody';
 	}
 
-	/**
-	 * @param string $file
-	 * @param array $inject
-	 * @return static
-	 */
-	public static function load(string $file, array $inject = [])
+	public static function load(string $file, array $inject = []): static
 	{
-		$data = Data::read($file);
-		$data['name'] = F::name($file);
+		$data = [
+			...Data::read($file),
+			'name' => F::name($file)
+		];
 
 		return static::factory($data, $inject);
 	}
 
-	/**
-	 * @return string
-	 */
 	public function name(): string
 	{
 		return $this->name;
 	}
 
-	/**
-	 * @param array $inject
-	 * @return static
-	 */
-	public static function nobody(array $inject = [])
-	{
-		try {
-			return static::load('nobody');
-		} catch (Exception) {
-			return static::factory(static::defaults()['nobody'], $inject);
-		}
-	}
-
-	/**
-	 * @return \Kirby\Cms\Permissions
-	 */
-	public function permissions()
+	public function permissions(): Permissions
 	{
 		return $this->permissions;
 	}
 
-	/**
-	 * @param mixed $description
-	 * @return $this
-	 */
-	protected function setDescription($description = null)
-	{
-		$this->description = I18n::translate($description, $description);
-		return $this;
-	}
-
-	/**
-	 * @param string $name
-	 * @return $this
-	 */
-	protected function setName(string $name)
-	{
-		$this->name = $name;
-		return $this;
-	}
-
-	/**
-	 * @param mixed $permissions
-	 * @return $this
-	 */
-	protected function setPermissions($permissions = null)
-	{
-		$this->permissions = new Permissions($permissions);
-		return $this;
-	}
-
-	/**
-	 * @param mixed $title
-	 * @return $this
-	 */
-	protected function setTitle($title = null)
-	{
-		$this->title = I18n::translate($title, $title);
-		return $this;
-	}
-
-	/**
-	 * @return string
-	 */
 	public function title(): string
 	{
 		return $this->title ??= ucfirst($this->name());
@@ -216,8 +133,6 @@ class Role extends Model
 	/**
 	 * Converts the most important role
 	 * properties to an array
-	 *
-	 * @return array
 	 */
 	public function toArray(): array
 	{

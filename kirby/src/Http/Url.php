@@ -38,9 +38,13 @@ class Url
 	 * Url Builder
 	 * Actually just a factory for `new Uri($parts)`
 	 */
-	public static function build(array $parts = [], string|null $url = null): string
-	{
-		return (string)(new Uri($url ?? static::current()))->clone($parts);
+	public static function build(
+		array $parts = [],
+		string|null $url = null
+	): string {
+		$url ??= static::current();
+		$uri   = new Uri($url);
+		return $uri->clone($parts)->toString();
 	}
 
 	/**
@@ -112,7 +116,7 @@ class Url
 			return $home ?? static::home();
 		}
 
-		if (substr($path, 0, 1) === '#') {
+		if (str_starts_with($path, '#') === true) {
 			return $path;
 		}
 
@@ -139,7 +143,9 @@ class Url
 		bool $leadingSlash = false,
 		bool $trailingSlash = false
 	): string {
-		return Url::toObject($url)->path()->toString($leadingSlash, $trailingSlash);
+		return Url::toObject($url)
+			->path()
+			->toString($leadingSlash, $trailingSlash);
 	}
 
 	/**
@@ -180,7 +186,7 @@ class Url
 		$uri->slash = false;
 
 		$url = $base ? $uri->base() : $uri->toString();
-		$url = str_replace('www.', '', $url);
+		$url = str_replace('www.', '', $url ?? '');
 
 		return Str::short($url, $length, $rep);
 	}
@@ -212,13 +218,18 @@ class Url
 	/**
 	 * Smart resolver for internal and external urls
 	 */
-	public static function to(string|null $path = null, array $options = null): string
-	{
+	public static function to(
+		string|null $path = null,
+		array|null $options = null
+	): string {
 		// make sure $path is string
 		$path ??= '';
 
 		// keep relative urls
-		if (substr($path, 0, 2) === './' || substr($path, 0, 3) === '../') {
+		if (
+			str_starts_with($path, './') === true ||
+			str_starts_with($path, '../') === true
+		) {
 			return $path;
 		}
 

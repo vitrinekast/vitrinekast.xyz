@@ -3,7 +3,6 @@
 namespace Kirby\Exception;
 
 /**
- * DuplicateException
  * Thrown when an object could not be created
  * because it already exists
  *
@@ -15,7 +14,7 @@ namespace Kirby\Exception;
  */
 class DuplicateException extends Exception
 {
-	protected static $defaultKey = 'duplicate';
-	protected static $defaultFallback = 'The entry exists';
-	protected static $defaultHttpCode = 400;
+	protected static string $defaultKey = 'duplicate';
+	protected static string $defaultFallback = 'The entry exists';
+	protected static int $defaultHttpCode = 400;
 }

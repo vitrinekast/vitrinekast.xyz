@@ -10,8 +10,8 @@ use Kirby\Http\Response;
 use Kirby\Sane\Sane;
 use Kirby\Toolkit\Escape;
 use Kirby\Toolkit\Html;
-use Kirby\Toolkit\Properties;
 use Kirby\Toolkit\V;
+use Stringable;
 
 /**
  * Flexible File object with a set of helpful
@@ -25,25 +25,23 @@ use Kirby\Toolkit\V;
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
  */
-class File
+class File implements Stringable
 {
-	use Properties;
-
 	/**
 	 * Parent file model
 	 * The model object must use the `\Kirby\Filesystem\IsFile` trait
 	 */
-	protected object|null $model = null;
+	protected object|null $model;
 
 	/**
 	 * Absolute file path
 	 */
-	protected string|null $root = null;
+	protected string|null $root;
 
 	/**
 	 * Absolute file URL
 	 */
-	protected string|null $url = null;
+	protected string|null $url;
 
 	/**
 	 * Validation rules to be used for `::match()`
@@ -58,6 +56,8 @@ class File
 	 *
 	 * @param array|string|null $props Properties or deprecated `$root` string
 	 * @param string|null $url Deprecated argument, use `$props['url']` instead
+	 *
+	 * @throws \Kirby\Exception\InvalidArgumentException When the model does not use the `Kirby\Filesystem\IsFile` trait
 	 */
 	public function __construct(
 		array|string|null $props = null,
@@ -65,7 +65,6 @@ class File
 	) {
 		// Legacy support for old constructor of
 		// the `Kirby\Image\Image` class
-		// @todo 4.0.0 remove
 		if (is_array($props) === false) {
 			$props = [
 				'root' => $props,
@@ -73,11 +72,23 @@ class File
 			];
 		}
 
-		$this->setProperties($props);
+		$this->root  = $props['root'] ?? null;
+		$this->url   = $props['url'] ?? null;
+		$this->model = $props['model'] ?? null;
+
+		if (
+			$this->model !== null &&
+			method_exists($this->model, 'hasIsFileTrait') !== true
+		) {
+			throw new InvalidArgumentException(
+				message: 'The model object must use the "Kirby\Filesystem\IsFile" trait'
+			);
+		}
 	}
 
 	/**
 	 * Improved `var_dump` output
+	 * @codeCoverageIgnore
 	 */
 	public function __debugInfo(): array
 	{
@@ -106,7 +117,9 @@ class File
 	public function copy(string $target, bool $force = false): static
 	{
 		if (F::copy($this->root(), $target, $force) !== true) {
-			throw new Exception('The file "' . $this->root() . '" could not be copied');
+			throw new Exception(
+				message: 'The file "' . $this->root() . '" could not be copied'
+			);
 		}
 
 		return new static($target);
@@ -119,11 +132,10 @@ class File
 	 */
 	public function dataUri(bool $base64 = true): string
 	{
-		if ($base64 === true) {
-			return 'data:' . $this->mime() . ';base64,' . $this->base64();
-		}
-
-		return 'data:' . $this->mime() . ',' . Escape::url($this->read());
+		return match ($base64) {
+			true  => 'data:' . $this->mime() . ';base64,' . $this->base64(),
+			false => 'data:' . $this->mime() . ',' . Escape::url($this->read())
+		};
 	}
 
 	/**
@@ -132,7 +144,9 @@ class File
 	public function delete(): bool
 	{
 		if (F::remove($this->root()) !== true) {
-			throw new Exception('The file "' . $this->root() . '" could not be deleted');
+			throw new Exception(
+				message: 'The file "' . $this->root() . '" could not be deleted'
+			);
 		}
 
 		return true;
@@ -147,7 +161,10 @@ class File
 	 */
 	public function download(string|null $filename = null): string
 	{
-		return Response::download($this->root(), $filename ?? $this->filename());
+		return Response::download(
+			$this->root(),
+			$filename ?? $this->filename()
+		);
 	}
 
 	/**
@@ -233,7 +250,7 @@ class File
 
 	/**
 	 * Checks if a preview can be displayed for the file
-	 * in the panel or in the frontend
+	 * in the Panel or in the frontend
 	 */
 	public function isViewable(): bool
 	{
@@ -269,6 +286,15 @@ class File
 		if (is_array($rules['mime'] ?? null) === true) {
 			$mime = $this->mime();
 
+			// the MIME type could not be determined, but matching
+			// to it was requested explicitly
+			if ($mime === null) {
+				throw new Exception(
+					key: 'file.mime.missing',
+					data: ['filename' => $this->filename()]
+				);
+			}
+
 			// determine if any pattern matches the MIME type;
 			// once any pattern matches, `$carry` is `true` and the rest is skipped
 			$matches = array_reduce(
@@ -278,30 +304,30 @@ class File
 			);
 
 			if ($matches !== true) {
-				throw new Exception([
-					'key'  => 'file.mime.invalid',
-					'data' => compact('mime')
-				]);
+				throw new Exception(
+					key: 'file.mime.invalid',
+					data: compact('mime')
+				);
 			}
 		}
 
 		if (is_array($rules['extension'] ?? null) === true) {
 			$extension = $this->extension();
-			if (in_array($extension, $rules['extension']) !== true) {
-				throw new Exception([
-					'key'  => 'file.extension.invalid',
-					'data' => compact('extension')
-				]);
+			if (in_array($extension, $rules['extension'], true) !== true) {
+				throw new Exception(
+					key: 'file.extension.invalid',
+					data: compact('extension')
+				);
 			}
 		}
 
 		if (is_array($rules['type'] ?? null) === true) {
 			$type = $this->type();
-			if (in_array($type, $rules['type']) !== true) {
-				throw new Exception([
-					'key'  => 'file.type.invalid',
-					'data' => compact('type')
-				]);
+			if (in_array($type, $rules['type'], true) !== true) {
+				throw new Exception(
+					key: 'file.type.invalid',
+					data: compact('type')
+				);
 			}
 		}
 
@@ -313,10 +339,10 @@ class File
 				$validator = $arguments[1];
 
 				if (V::$validator($this->$property(), $rule) === false) {
-					throw new Exception([
-						'key'  => 'file.' . $key,
-						'data' => [$property => $rule]
-					]);
+					throw new Exception(
+						key: 'file.' . $key,
+						data: [$property => $rule]
+					);
 				}
 			}
 		}
@@ -343,19 +369,14 @@ class File
 	/**
 	 * Returns the file's last modification time
 	 *
-	 * @param string|null $handler date, intl or strftime
+	 * @param 'date'|'intl'|'strftime'|null $handler Custom date handler or `null`
+	 *                                               for the globally configured one
 	 */
 	public function modified(
 		string|IntlDateFormatter|null $format = null,
 		string|null $handler = null
 	): string|int|false {
-		$kirby = $this->kirby();
-
-		return F::modified(
-			$this->root(),
-			$format,
-			$handler ?? ($kirby ? $kirby->option('date.handler', 'date') : 'date')
-		);
+		return F::modified($this->root(), $format, $handler);
 	}
 
 	/**
@@ -366,7 +387,9 @@ class File
 	public function move(string $newRoot, bool $overwrite = false): static
 	{
 		if (F::move($this->root(), $newRoot, $overwrite) !== true) {
-			throw new Exception('The file: "' . $this->root() . '" could not be moved to: "' . $newRoot . '"');
+			throw new Exception(
+				message: 'The file: "' . $this->root() . '" could not be moved to: "' . $newRoot . '"'
+			);
 		}
 
 		return new static($newRoot);
@@ -421,7 +444,9 @@ class File
 		$newRoot = F::rename($this->root(), $newName, $overwrite);
 
 		if ($newRoot === false) {
-			throw new Exception('The file: "' . $this->root() . '" could not be renamed to: "' . $newName . '"');
+			throw new Exception(
+				message: 'The file: "' . $this->root() . '" could not be renamed to: "' . $newName . '"'
+			);
 		}
 
 		return new static($newRoot);
@@ -433,45 +458,6 @@ class File
 	public function root(): string|null
 	{
 		return $this->root ??= $this->model?->root();
-	}
-
-	/**
-	 * Setter for the parent file model, which uses this instance as proxied file asset
-	 *
-	 * @return $this
-	 *
-	 * @throws \Kirby\Exception\InvalidArgumentException When the model does not use the `Kirby\Filesystem\IsFile` trait
-	 */
-	protected function setModel(object|null $model = null): static
-	{
-		if ($model !== null && method_exists($model, 'hasIsFileTrait') !== true) {
-			throw new InvalidArgumentException('The model object must use the "Kirby\Filesystem\IsFile" trait');
-		}
-
-		$this->model = $model;
-		return $this;
-	}
-
-	/**
-	 * Setter for the root
-	 *
-	 * @return $this
-	 */
-	protected function setRoot(string|null $root = null): static
-	{
-		$this->root = $root;
-		return $this;
-	}
-
-	/**
-	 * Setter for the file url
-	 *
-	 * @return $this
-	 */
-	protected function setUrl(string|null $url = null): static
-	{
-		$this->url = $url;
-		return $this;
 	}
 
 	/**
@@ -585,7 +571,9 @@ class File
 	public function write(string $content): bool
 	{
 		if (F::write($this->root(), $content) !== true) {
-			throw new Exception('The file "' . $this->root() . '" could not be written');
+			throw new Exception(
+				message: 'The file "' . $this->root() . '" could not be written'
+			);
 		}
 
 		return true;

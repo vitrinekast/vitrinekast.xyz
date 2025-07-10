@@ -2,7 +2,6 @@
 
 namespace Kirby\Toolkit;
 
-use Kirby\Cms\Helpers;
 use SimpleXMLElement;
 
 /**
@@ -56,10 +55,8 @@ class Xml
 
 	/**
 	 * Closing string for void tags
-	 *
-	 * @var string
 	 */
-	public static $void = ' />';
+	public static string $void = ' />';
 
 	/**
 	 * Generates a single attribute or a list of attributes
@@ -70,14 +67,17 @@ class Xml
 	 *                     If used with a `$name` array, this can be set to `false` to disable attribute sorting.
 	 * @return string|null The generated XML attributes string
 	 */
-	public static function attr(string|array $name, $value = null): string|null
-	{
+	public static function attr(
+		string|array $name,
+		$value = null
+	): string|null {
 		if (is_array($name) === true) {
 			if ($value !== false) {
 				ksort($name);
 			}
 
 			$attributes = [];
+
 			foreach ($name as $key => $val) {
 				if (is_int($key) === true) {
 					$key = $val;
@@ -92,43 +92,26 @@ class Xml
 			return implode(' ', $attributes);
 		}
 
-		// TODO: In 3.10, treat $value === '' to render as name=""
-		if ($value === null || $value === '' || $value === []) {
-			// TODO: Remove in 3.10
-			// @codeCoverageIgnoreStart
-			if ($value === '') {
-				Helpers::deprecated('Passing an empty string as value to `Xml::attr()` has been deprecated. In a future version, passing an empty string won\'t omit the attribute anymore but render it with an empty value. To omit the attribute, please pass `null`.', 'xml-attr-empty-string');
-			}
-			// @codeCoverageIgnoreEnd
-
+		if ($value === null || $value === false || $value === []) {
 			return null;
-		}
-
-		// TODO: In 3.10, add deprecation message for space = empty attribute
-		// TODO: In 3.11, render space as space
-		if ($value === ' ') {
-			return $name . '=""';
 		}
 
 		if ($value === true) {
 			return $name . '="' . $name . '"';
 		}
 
-		if ($value === false) {
-			return null;
-		}
-
-		if (is_array($value) === true) {
-			if (isset($value['value'], $value['escape'])) {
-				$value = $value['escape'] === true ? static::encode($value['value']) : $value['value'];
-			} else {
-				$value = implode(' ', array_filter(
-					$value,
-					fn ($value) => !empty($value) || is_numeric($value)
-				));
-			}
-		} else {
+		if (is_array($value) === false) {
 			$value = static::encode($value);
+		} elseif (isset($value['value'], $value['escape']) === true) {
+			$value = match ($value['escape']) {
+				true    => static::encode($value['value']),
+				default => $value['value']
+			};
+		} else {
+			$value = implode(' ', array_filter(
+				$value,
+				fn ($value) => !empty($value) || is_numeric($value)
+			));
 		}
 
 		return $name . '="' . $value . '"';
@@ -164,7 +147,8 @@ class Xml
 				$name       = $props['@name'] ?? $name;
 				$attributes = $props['@attributes'] ?? [];
 				$value      = $props['@value'] ?? null;
-				if (isset($props['@namespaces'])) {
+
+				if (isset($props['@namespaces']) === true) {
 					foreach ($props['@namespaces'] as $key => $namespace) {
 						$key = 'xmlns' . (($key) ? ':' . $key : '');
 						$attributes[$key] = $namespace;
@@ -172,25 +156,50 @@ class Xml
 				}
 
 				// continue with just the children
-				unset($props['@name'], $props['@attributes'], $props['@namespaces'], $props['@value']);
+				unset(
+					$props['@name'],
+					$props['@attributes'],
+					$props['@namespaces'],
+					$props['@value']
+				);
 
-				if (count($props) > 0) {
+				if ($props !== []) {
 					// there are children, use them instead of the value
 
 					$value = [];
 					foreach ($props as $childName => $childItem) {
-						// render the child, but don't include the indentation of the first line
-						$value[] = trim(static::create($childItem, $childName, false, $indent, $level + 1));
+						// render the child, but don't include the
+						// indentation of the first line
+						$value[] = trim(static::create(
+							$childItem,
+							$childName,
+							false,
+							$indent,
+							$level + 1
+						));
 					}
 				}
 
-				$result = static::tag($name, $value, $attributes, $indent, $level);
+				$result = static::tag(
+					$name,
+					$value,
+					$attributes,
+					$indent,
+					$level
+				);
 			} else {
 				// just children
 
 				$result = [];
+
 				foreach ($props as $childItem) {
-					$result[] = static::create($childItem, $name, false, $indent, $level);
+					$result[] = static::create(
+						$childItem,
+						$name,
+						false,
+						$indent,
+						$level
+					);
 				}
 
 				$result = implode(PHP_EOL, $result);
@@ -211,7 +220,7 @@ class Xml
 	/**
 	 * Removes all HTML/XML tags and encoded chars from a string
 	 *
-	 * ```
+	 * ```php
 	 * echo Xml::decode('some &uuml;ber <em>crazy</em> stuff');
 	 * // output: some über crazy stuff
 	 * ```
@@ -235,8 +244,10 @@ class Xml
 	 *
 	 * @param bool $html True = Convert to HTML-safe first
 	 */
-	public static function encode(string|null $string, bool $html = true): string
-	{
+	public static function encode(
+		string|null $string,
+		bool $html = true
+	): string {
 		if ($string === null) {
 			return '';
 		}
@@ -267,9 +278,9 @@ class Xml
 	 */
 	public static function parse(string $xml): array|null
 	{
-		$xml = @simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NOENT);
+		$xml = @simplexml_load_string($xml);
 
-		if (is_object($xml) !== true) {
+		if (is_object($xml) === false) {
 			return null;
 		}
 
@@ -282,17 +293,19 @@ class Xml
 	 *
 	 * @param bool $collectName Whether the element name should be collected (for the root element)
 	 */
-	public static function simplify(SimpleXMLElement $element, bool $collectName = true): array|string
-	{
+	public static function simplify(
+		SimpleXMLElement $element,
+		bool $collectName = true
+	): array|string {
 		// get all XML namespaces of the whole document to iterate over later;
 		// we don't need the global namespace (empty string) in the list
 		$usedNamespaces = $element->getNamespaces(true);
-		if (isset($usedNamespaces[''])) {
-			unset($usedNamespaces['']);
-		}
+
+		unset($usedNamespaces['']);
 
 		// now collect element metadata of the parent
 		$array = [];
+
 		if ($collectName === true) {
 			$array['@name'] = $element->getName();
 		}
@@ -300,15 +313,17 @@ class Xml
 		// collect attributes with each defined document namespace;
 		// also check for attributes without any namespace
 		$attributeArray = [];
-		foreach (array_merge([0 => null], array_keys($usedNamespaces)) as $namespace) {
-			$prefix = ($namespace) ? $namespace . ':' : '';
+
+		foreach ([0 => null, ...array_keys($usedNamespaces)] as $namespace) {
+			$prefix     = $namespace ? $namespace . ':' : '';
 			$attributes = $element->attributes($namespace, true);
 
 			foreach ($attributes as $key => $value) {
 				$attributeArray[$prefix . $key] = (string)$value;
 			}
 		}
-		if (count($attributeArray) > 0) {
+
+		if ($attributeArray !== []) {
 			$array['@attributes'] = $attributeArray;
 		}
 
@@ -320,8 +335,9 @@ class Xml
 		// check for children with each defined document namespace;
 		// also check for children without any namespace
 		$hasChildren = false;
-		foreach (array_merge([0 => null], array_keys($usedNamespaces)) as $namespace) {
-			$prefix = ($namespace) ? $namespace . ':' : '';
+
+		foreach ([0 => null, ...array_keys($usedNamespaces)] as $namespace) {
+			$prefix   = $namespace ? $namespace . ':' : '';
 			$children = $element->children($namespace, true);
 
 			if (count($children) > 0) {
@@ -342,23 +358,27 @@ class Xml
 			// of the respective type to a simple string;
 			// don't do anything with special `@` metadata keys
 			foreach ($array as $name => $item) {
-				if (substr($name, 0, 1) !== '@' && count($item) === 1) {
+				if (
+					str_starts_with($name, '@') === false &&
+					count($item) === 1
+				) {
 					$array[$name] = $item[0];
 				}
 			}
 
 			return $array;
-		} else {
-			// we didn't find any XML children above, only use the string value
-			$element = (string)$element;
-
-			if (count($array) === 0) {
-				return $element;
-			}
-
-			$array['@value'] = $element;
-			return $array;
 		}
+
+		// we didn't find any XML children above, only use the string value
+		$element = (string)$element;
+
+		if ($array === []) {
+			return $element;
+		}
+
+		$array['@value'] = $element;
+
+		return $array;
 	}
 
 	/**
@@ -372,29 +392,40 @@ class Xml
 	 * @param int $level Indentation level
 	 * @return string The generated XML
 	 */
-	public static function tag(string $name, $content = '', array $attr = [], string $indent = null, int $level = 0): string
-	{
+	public static function tag(
+		string $name,
+		array|string|null $content = '',
+		array $attr = [],
+		string|null $indent = null,
+		int $level = 0
+	): string {
 		$attr       = static::attr($attr);
 		$start      = '<' . $name . ($attr ? ' ' . $attr : '') . '>';
 		$startShort = '<' . $name . ($attr ? ' ' . $attr : '') . static::$void;
 		$end        = '</' . $name . '>';
-		$baseIndent = $indent ? str_repeat($indent, $level) : '';
+		$baseIndent = match ($indent) {
+			null    => '',
+			default => str_repeat($indent, $level)
+		};
 
-		if (is_array($content) === true) {
-			if (is_string($indent) === true) {
-				$xml = $baseIndent . $start . PHP_EOL;
-				foreach ($content as $line) {
-					$xml .= $baseIndent . $indent . $line . PHP_EOL;
-				}
-				$xml .= $baseIndent . $end;
-			} else {
-				$xml = $start . implode($content) . $end;
-			}
-		} elseif ($content === null) {
-			$xml = $baseIndent . $startShort;
-		} else {
-			$xml = $baseIndent . $start . static::value($content) . $end;
+		if (is_array($content) === false) {
+			return match ($content) {
+				null    => $baseIndent . $startShort,
+				default => $baseIndent . $start . static::value($content) . $end
+			};
 		}
+
+		if (is_string($indent) === false) {
+			return $start . implode($content) . $end;
+		}
+
+		$xml = $baseIndent . $start . PHP_EOL;
+
+		foreach ($content as $line) {
+			$xml .= $baseIndent . $indent . $line . PHP_EOL;
+		}
+
+		$xml .= $baseIndent . $end;
 
 		return $xml;
 	}
@@ -425,8 +456,9 @@ class Xml
 		}
 
 		$encoded = htmlentities($value, ENT_NOQUOTES | ENT_XML1);
+
+		// no CDATA block needed
 		if ($encoded === $value) {
-			// no CDATA block needed
 			return $value;
 		}
 

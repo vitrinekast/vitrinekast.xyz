@@ -2,13 +2,16 @@
 
 use Kirby\Cms\App;
 use Kirby\Cms\Find;
-use Kirby\Panel\Field;
+use Kirby\Cms\Language;
+use Kirby\Cms\LanguageVariable;
+use Kirby\Exception\NotFoundException;
 use Kirby\Toolkit\A;
 use Kirby\Toolkit\Escape;
 use Kirby\Toolkit\I18n;
 
 $languageDialogFields = [
 	'name' => [
+		'counter'  => false,
 		'label'    => I18n::translate('language.name'),
 		'type'     => 'text',
 		'required' => true,
@@ -19,7 +22,7 @@ $languageDialogFields = [
 		'type'     => 'text',
 		'required' => true,
 		'counter'  => false,
-		'icon'     => 'globe',
+		'icon'     => 'translate',
 		'width'    => '1/2'
 	],
 	'direction' => [
@@ -34,13 +37,47 @@ $languageDialogFields = [
 		'width'    => '1/2'
 	],
 	'locale' => [
-		'label' => I18n::translate('language.locale'),
-		'type'  => 'text',
+		'counter' => false,
+		'label'   => I18n::translate('language.locale'),
+		'type'    => 'text',
 	],
 ];
 
-return [
+$translationDialogFields = [
+	'key' => [
+		'counter' => false,
+		'icon'    => null,
+		'label'   => I18n::translate('language.variable.key'),
+		'type'    => 'text'
+	],
+	'multiple' => [
+		'label'   => I18n::translate('language.variable.multiple'),
+		'text'    => I18n::translate('language.variable.multiple.text'),
+		'help'    => I18n::translate('language.variable.multiple.help'),
+		'type'    => 'toggle'
+	],
+	'value' => [
+		'buttons' => false,
+		'counter' => false,
+		'label'   => I18n::translate('language.variable.value'),
+		'type'    => 'textarea',
+		'when'    => [
+			'multiple' => false
+		]
+	],
+	'entries' => [
+		'field' => ['type' => 'text'],
+		'label' => I18n::translate('language.variable.entries'),
+		'help'  => I18n::translate('language.variable.entries.help'),
+		'type'  => 'entries',
+		'min'   => 1,
+		'when'  => [
+			'multiple' => true
+		],
+	]
+];
 
+return [
 	// create language
 	'language.create' => [
 		'pattern' => 'languages/create',
@@ -92,8 +129,10 @@ return [
 		},
 		'submit' => function (string $id) {
 			Find::language($id)->delete();
+
 			return [
-				'event' => 'language.delete',
+				'event'    => 'language.delete',
+				'redirect' => 'languages'
 			];
 		}
 	],
@@ -152,4 +191,134 @@ return [
 			];
 		}
 	],
+
+	'language.translation.create' => [
+		'pattern' => 'languages/(:any)/translations/create',
+		'load'    => function (string $languageCode) use ($translationDialogFields) {
+			// find the language to make sure it exists
+			Find::language($languageCode);
+
+			return [
+				'component' => 'k-form-dialog',
+				'props' => [
+					'fields' => $translationDialogFields,
+					'size'   => 'large',
+					'value'  => [
+						'multiple' => false,
+					]
+				],
+			];
+		},
+		'submit' => function (string $languageCode) {
+			$request  = App::instance()->request();
+			$language = Find::language($languageCode);
+
+			$key      = $request->get('key', '');
+			$multiple = $request->get('multiple', false);
+
+			$value = match ($multiple) {
+				true    => $request->get('entries', []),
+				default => $request->get('value', '')
+			};
+
+			LanguageVariable::create($key, $value);
+
+			if ($language->isDefault() === false) {
+				$language->variable($key)->update($value);
+			}
+
+			return true;
+		}
+	],
+	'language.translation.delete' => [
+		'pattern' => 'languages/(:any)/translations/(:any)/delete',
+		'load'    => function (string $languageCode, string $translationKey) {
+			$variable = Find::language($languageCode)->variable($translationKey, true);
+
+			if ($variable->exists() === false) {
+				throw new NotFoundException(
+					key: 'language.variable.notFound'
+				);
+			}
+
+			return [
+				'component' => 'k-remove-dialog',
+				'props' => [
+					'text' => I18n::template('language.variable.delete.confirm', [
+						'key' => Escape::html($variable->key())
+					])
+				],
+			];
+		},
+		'submit' => function (string $languageCode, string $translationKey) {
+			return Find::language($languageCode)->variable($translationKey, true)->delete();
+		}
+	],
+	'language.translation.update' => [
+		'pattern' => 'languages/(:any)/translations/(:any)/update',
+		'load'    => function (string $languageCode, string $translationKey) use ($translationDialogFields) {
+			$language = Find::language($languageCode);
+			$variable = $language->variable($translationKey, true);
+
+			if ($variable->exists() === false) {
+				throw new NotFoundException(
+					key: 'language.variable.notFound'
+				);
+			}
+
+			$fields = $translationDialogFields;
+
+			// the key field cannot be changed
+			// the multiple field is hidden
+			$fields['key']['disabled']  = true;
+			$fields['multiple']['type'] = 'hidden';
+
+			// check if the variable has multiple values;
+			// ensure to use the default language for this check because
+			// the variable might not exist in the current language but
+			// already be defined in the default language with multiple values
+			$isVariableArray = Language::ensure('default')->variable($translationKey, true)->hasMultipleValues();
+
+			// set the correct value field
+			// when value is string, set value for value field
+			// when value is array, set value for entries field
+			if ($isVariableArray === true) {
+				$fields['entries']['autofocus'] = true;
+				$value                          = [
+					'entries'  => $variable->value(),
+					'key'      => $variable->key(),
+					'multiple' => true
+				];
+			} else {
+				$fields['value']['autofocus'] = true;
+				$value                        = [
+					'key'      => $variable->key(),
+					'multiple' => false,
+					'value'    => $variable->value()
+				];
+			}
+
+			return [
+				'component' => 'k-form-dialog',
+				'props'     => [
+					'fields' => $fields,
+					'size'   => 'large',
+					'value'  => $value
+				]
+			];
+		},
+		'submit' => function (string $languageCode, string $translationKey) {
+			$request  = App::instance()->request();
+			$multiple = $request->get('multiple', false);
+			$value    = match ($multiple) {
+				true    => $request->get('entries', []),
+				default => $request->get('value', '')
+			};
+
+			Find::language($languageCode)->variable($translationKey, true)->update($value);
+
+			return true;
+		}
+	]
+
 ];

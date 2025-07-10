@@ -2,9 +2,6 @@
 
 namespace Kirby\Uuid;
 
-use Kirby\Cms\App;
-use Kirby\Cms\Collection;
-
 /**
  * Base for UUIDs for models where id string
  * is stored in the content, such as pages and files
@@ -21,19 +18,7 @@ abstract class ModelUuid extends Uuid
 	/**
 	 * @var \Kirby\Cms\ModelWithContent|null
 	 */
-	public Identifiable|null $model;
-
-	public function __construct(
-		string|null $uuid = null,
-		Identifiable|null $model = null,
-		Collection|null $context = null
-	) {
-		parent::__construct($uuid, $model, $context);
-
-		// ensure that ID gets generated right away if
-		// not yet stored any in content file
-		$this->id();
-	}
+	public Identifiable|null $model = null;
 
 	/**
 	 * Looks up UUID in local and global index
@@ -97,7 +82,7 @@ abstract class ModelUuid extends Uuid
 		// just to be sure we don't lose content
 		if (empty($data) === true) {
 			usleep(1000);
-			$data = $this->model->readContent('default');
+			$data = $this->model->version()->read('default');
 		}
 
 		// add the UUID to the content array
@@ -105,33 +90,8 @@ abstract class ModelUuid extends Uuid
 			$data['uuid'] = $id;
 		}
 
-		// overwrite the content in memory for the current request
-		if ($this->model->kirby()->multilang() === true) {
-			// update the default translation instead of the content object
-			// (the default content object is always freshly loaded from the
-			// default translation afterwards, so updating the default
-			// content object would not have any effect)
-			$this->model->translation('default')->update($data);
-		} else {
-			$this->model->content('default')->update($data);
-		}
-
 		// overwrite the content in the file;
 		// use the most basic write method to avoid object cloning
-		$this->model->writeContent($data, 'default');
-	}
-
-	/**
-	 * Returns permalink url
-	 */
-	public function url(): string
-	{
-		// make sure UUID is cached because the permalink
-		// route only looks up UUIDs from cache
-		if ($this->isCached() === false) {
-			$this->populate();
-		}
-
-		return App::instance()->url() . '/@/' . static::TYPE . '/' . $this->id();
+		$this->model->version()->save($data, 'default');
 	}
 }

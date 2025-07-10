@@ -146,9 +146,16 @@ class F
 	/**
 	 * Copy a file to a new location.
 	 */
-	public static function copy(string $source, string $target, bool $force = false): bool
-	{
-		if (file_exists($source) === false || (file_exists($target) === true && $force === false)) {
+	public static function copy(
+		string $source,
+		string $target,
+		bool $force = false
+	): bool {
+		if (file_exists($source) === false) {
+			return false;
+		}
+
+		if (file_exists($target) === true && $force === false) {
 			return false;
 		}
 
@@ -165,12 +172,10 @@ class F
 	/**
 	 * Just an alternative for dirname() to stay consistent
 	 *
-	 * <code>
-	 *
+	 * ```php
 	 * $dirname = F::dirname('/var/www/test.txt');
 	 * // dirname is /var/www
-	 *
-	 * </code>
+	 * ```
 	 *
 	 * @param string $file The path
 	 */
@@ -225,7 +230,7 @@ class F
 	public static function extensionToType(string $extension): string|false
 	{
 		foreach (static::$types as $type => $extensions) {
-			if (in_array($extension, $extensions) === true) {
+			if (in_array($extension, $extensions, true) === true) {
 				return $type;
 			}
 		}
@@ -248,12 +253,10 @@ class F
 	/**
 	 * Extracts the filename from a file path
 	 *
-	 * <code>
-	 *
+	 * ```php
 	 * $filename = F::filename('/var/www/test.txt');
 	 * // filename is test.txt
-	 *
-	 * </code>
+	 * ```
 	 *
 	 * @param string $name The path
 	 */
@@ -288,12 +291,12 @@ class F
 	public static function is(string $file, string $value): bool
 	{
 		// check for the extension
-		if (in_array($value, static::extensions()) === true) {
+		if (in_array($value, static::extensions(), true) === true) {
 			return static::extension($file) === $value;
 		}
 
 		// check for the mime type
-		if (strpos($value, '/') !== false) {
+		if (str_contains($value, '/') === true) {
 			return static::mime($file) === $value;
 		}
 
@@ -323,8 +326,11 @@ class F
 	/**
 	 * Create a (symbolic) link to a file
 	 */
-	public static function link(string $source, string $link, string $method = 'link'): bool
-	{
+	public static function link(
+		string $source,
+		string $link,
+		string $method = 'link'
+	): bool {
 		Dir::make(dirname($link), true);
 
 		if (is_file($link) === true) {
@@ -366,11 +372,10 @@ class F
 		// if the loaded file should not produce any output,
 		// call the loaidIsolated method from the Response class
 		// which checks for unintended ouput and throws an error if detected
-		if ($allowOutput === false) {
-			$result = Response::guardAgainstOutput($callback);
-		} else {
-			$result = $callback();
-		}
+		$result = match ($allowOutput) {
+			true  => $callback(),
+			false => Response::guardAgainstOutput($callback),
+		};
 
 		if (
 			$fallback !== null &&
@@ -459,8 +464,9 @@ class F
 	/**
 	 * Converts a mime type to a file extension
 	 */
-	public static function mimeToExtension(string|null $mime = null): string|false
-	{
+	public static function mimeToExtension(
+		string|null $mime = null
+	): string|false {
 		return Mime::toExtension($mime);
 	}
 
@@ -475,12 +481,13 @@ class F
 	/**
 	 * Get the file's last modification time.
 	 *
-	 * @param string $handler date, intl or strftime
+	 * @param 'date'|'intl'|'strftime'|null $handler Custom date handler or `null`
+	 *                                               for the globally configured one
 	 */
 	public static function modified(
 		string $file,
 		string|IntlDateFormatter|null $format = null,
-		string $handler = 'date'
+		string|null $handler = null
 	): string|int|false {
 		if (file_exists($file) !== true) {
 			return false;
@@ -498,8 +505,11 @@ class F
 	 * @param string $newRoot The path to the new location
 	 * @param bool $force Force move if the target file exists
 	 */
-	public static function move(string $oldRoot, string $newRoot, bool $force = false): bool
-	{
+	public static function move(
+		string $oldRoot,
+		string $newRoot,
+		bool $force = false
+	): bool {
 		// check if the file exists
 		if (file_exists($oldRoot) === false) {
 			return false;
@@ -521,12 +531,26 @@ class F
 			Dir::make($directory, true);
 		}
 
-		// actually move the file
-		if (rename($oldRoot, $newRoot) !== true) {
-			return false;
+		// atomically moving the file will only work if
+		// source and target are on the same filesystem
+		if (stat($oldRoot)['dev'] === stat($directory)['dev']) {
+			// same filesystem, we can move the file
+			return rename($oldRoot, $newRoot) === true;
 		}
 
-		return true;
+		// @codeCoverageIgnoreStart
+		// not the same filesystem; we need to copy
+		// the file and unlink the source afterwards
+		if (copy($oldRoot, $newRoot) === true) {
+			return unlink($oldRoot) === true;
+		}
+
+		// copying failed, ensure the new root isn't there
+		// (e.g. if the file could be created but there's no
+		// more remaining disk space to write its contents)
+		static::remove($newRoot);
+		return false;
+		// @codeCoverageIgnoreEnd
 	}
 
 	/**
@@ -565,7 +589,7 @@ class F
 		}
 
 		// the math magic
-		$size = round($size / pow(1024, ($unit = floor(log($size, 1024)))), 2);
+		$size = round($size / 1024 ** ($unit = floor(log($size, 1024))), 2);
 
 		// format the number if requested
 		if ($locale !== false) {
@@ -583,15 +607,23 @@ class F
 	 */
 	public static function read(string $file): string|false
 	{
-		if (
-			is_readable($file) !== true &&
-			Str::startsWith($file, 'https://') !== true &&
-			Str::startsWith($file, 'http://') !== true
-		) {
+		if (str_contains($file, '://') === true) {
 			return false;
 		}
 
-		return file_get_contents($file);
+		// exit early on empty paths that would trigger a PHP `ValueError`
+		if ($file === '') {
+			return false;
+		}
+
+		// to increase performance, directly try to load the file without checking
+		// if it exists; fall back to a `false` return value if it doesn't exist
+		// while letting other warnings through
+		return Helpers::handleErrors(
+			fn (): string|false => file_get_contents($file),
+			fn (int $errno, string $errstr): bool => str_contains($errstr, 'No such file'),
+			false
+		);
 	}
 
 	/**
@@ -600,8 +632,11 @@ class F
 	 *
 	 * @param bool $overwrite Force overwrite existing files
 	 */
-	public static function rename(string $file, string $newName, bool $overwrite = false): string|false
-	{
+	public static function rename(
+		string $file,
+		string $newName,
+		bool $overwrite = false
+	): string|false {
 		// create the new name
 		$name = static::safeName(basename($newName));
 
@@ -623,8 +658,10 @@ class F
 	/**
 	 * Returns the absolute path to the file if the file can be found.
 	 */
-	public static function realpath(string $file, string|null $in = null): string
-	{
+	public static function realpath(
+		string $file,
+		string|null $in = null
+	): string {
 		$realpath = realpath($file);
 
 		if ($realpath === false || is_file($realpath) === false) {
@@ -638,7 +675,7 @@ class F
 				throw new Exception(sprintf('The parent directory does not exist: "%s"', $in));
 			}
 
-			if (substr($realpath, 0, strlen($parent)) !== $parent) {
+			if (str_starts_with($realpath, $parent) === false) {
 				throw new Exception('The file is not within the parent directory');
 			}
 		}
@@ -652,8 +689,10 @@ class F
 	 *
 	 * @SuppressWarnings(PHPMD.CountInLoopExpression)
 	 */
-	public static function relativepath(string $file, string|null $in = null): string
-	{
+	public static function relativepath(
+		string $file,
+		string|null $in = null
+	): string {
 		if (empty($in) === true) {
 			return basename($file);
 		}
@@ -670,8 +709,13 @@ class F
 			// make the paths relative by stripping what they have
 			// in common and adding `../` tokens at the start
 			$fileParts = explode('/', $file);
-			$inParts = explode('/', $in);
-			while (count($fileParts) && count($inParts) && ($fileParts[0] === $inParts[0])) {
+			$inParts   = explode('/', $in);
+
+			while (
+				count($fileParts) &&
+				count($inParts) &&
+				($fileParts[0] === $inParts[0])
+			) {
 				array_shift($fileParts);
 				array_shift($inParts);
 			}
@@ -685,18 +729,16 @@ class F
 	/**
 	 * Deletes a file
 	 *
-	 * <code>
-	 *
+	 * ```php
 	 * $remove = F::remove('test.txt');
-	 * if($remove) echo 'The file has been removed';
-	 *
-	 * </code>
+	 * if ($remove) echo 'The file has been removed';
+	 * ```
 	 *
 	 * @param string $file The path for the file
 	 */
 	public static function remove(string $file): bool
 	{
-		if (strpos($file, '*') !== false) {
+		if (str_contains($file, '*') === true) {
 			foreach (glob($file) as $f) {
 				static::remove($f);
 			}
@@ -705,6 +747,7 @@ class F
 		}
 
 		$file = realpath($file);
+
 		if (is_string($file) === false) {
 			return true;
 		}
@@ -713,25 +756,58 @@ class F
 	}
 
 	/**
-	 * Sanitize a filename to strip unwanted special characters
+	 * Sanitize a file's full name (filename and extension)
+	 * to strip unwanted special characters
 	 *
-	 * <code>
-	 *
+	 * ```php
 	 * $safe = f::safeName('über genius.txt');
 	 * // safe will be ueber-genius.txt
-	 *
-	 * </code>
+	 * ```
 	 *
 	 * @param string $string The file name
 	 */
 	public static function safeName(string $string): string
 	{
-		$name          = static::name($string);
-		$extension     = static::extension($string);
-		$safeName      = Str::slug($name, '-', 'a-z0-9@._-');
-		$safeExtension = empty($extension) === false ? '.' . Str::slug($extension) : '';
+		$basename  = static::safeBasename($string);
+		$extension =  static::safeExtension($string);
 
-		return $safeName . $safeExtension;
+		if (empty($extension) === false) {
+			$extension = '.' . $extension;
+		}
+
+		return $basename . $extension;
+	}
+
+	/**
+	 * Sanitize a file's name (without extension)
+	 * @since 4.0.0
+	 */
+	public static function safeBasename(
+		string $string,
+		bool $extract = true
+	): string {
+		// extract only the name part from whole filename string
+		if ($extract === true) {
+			$string = static::name($string);
+		}
+
+		return Str::slug($string, '-', 'a-z0-9@._-');
+	}
+
+	/**
+	 * Sanitize a file's extension
+	 * @since 4.0.0
+	 */
+	public static function safeExtension(
+		string $string,
+		bool $extract = true
+	): string {
+		// extract only the extension part from whole filename string
+		if ($extract === true) {
+			$string = static::extension($string);
+		}
+
+		return Str::slug($string);
 	}
 
 	/**
@@ -762,11 +838,11 @@ class F
 			);
 		}
 
-		try {
-			return filesize($file);
-		} catch (Throwable) {
-			return 0;
+		if ($size = @filesize($file)) {
+			return $size;
 		}
+
+		return 0;
 	}
 
 	/**
@@ -776,17 +852,15 @@ class F
 	 */
 	public static function type(string $file): string|null
 	{
-		$length = strlen($file);
-
-		if ($length >= 2 && $length <= 4) {
+		$length    = strlen($file);
+		$extension = match ($length >= 2 && $length <= 4) {
 			// use the file name as extension
-			$extension = $file;
-		} else {
+			true  => $file,
 			// get the extension from the filename
-			$extension = pathinfo($file, PATHINFO_EXTENSION);
-		}
+			false => pathinfo($file, PATHINFO_EXTENSION)
+		};
 
-		if (empty($extension) === true) {
+		if (empty($extension) === true || $extension === 'tmp') {
 			// detect the mime type first to get the most reliable extension
 			$mime      = static::mime($file);
 			$extension = static::mimeToExtension($mime);
@@ -796,7 +870,7 @@ class F
 		$extension = strtolower($extension);
 
 		foreach (static::$types as $type => $extensions) {
-			if (in_array($extension, $extensions) === true) {
+			if (in_array($extension, $extensions, true) === true) {
 				return $type;
 			}
 		}
@@ -869,8 +943,11 @@ class F
 	 * @param mixed $content Either a string, an object or an array. Arrays and objects will be serialized.
 	 * @param bool $append true: append the content to an existing file if available. false: overwrite.
 	 */
-	public static function write(string $file, $content, bool $append = false): bool
-	{
+	public static function write(
+		string $file,
+		$content,
+		bool $append = false
+	): bool {
 		if (is_array($content) === true || is_object($content) === true) {
 			$content = serialize($content);
 		}

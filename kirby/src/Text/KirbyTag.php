@@ -6,7 +6,7 @@ use AllowDynamicProperties;
 use Closure;
 use Kirby\Cms\App;
 use Kirby\Cms\File;
-use Kirby\Cms\Model;
+use Kirby\Cms\ModelWithContent;
 use Kirby\Exception\BadMethodCallException;
 use Kirby\Exception\InvalidArgumentException;
 use Kirby\Uuid\Uri as UuidUri;
@@ -46,7 +46,9 @@ class KirbyTag
 		// type aliases
 		if (isset(static::$types[$type]) === false) {
 			if (isset(static::$aliases[$type]) === false) {
-				throw new InvalidArgumentException('Undefined tag type: ' . $type);
+				throw new InvalidArgumentException(
+					message: 'Undefined tag type: ' . $type
+				);
 			}
 
 			$type = static::$aliases[$type];
@@ -63,7 +65,7 @@ class KirbyTag
 			$attrName = strtolower($attrName);
 
 			// applies only defined attributes to safely update
-			if (in_array($attrName, $availableAttrs) === true) {
+			if (in_array($attrName, $availableAttrs, true) === true) {
 				$this->{$attrName} = $attrValue;
 			}
 		}
@@ -172,12 +174,12 @@ class KirbyTag
 
 		// use substr instead of rtrim to keep non-tagged brackets
 		// (link: file.pdf text: Download (PDF))
-		if (substr($tag, -1) === ')') {
+		if (str_ends_with($tag, ')') === true) {
 			$tag = substr($tag, 0, -1);
 		}
 
 		$pos  = strpos($tag, ':');
-		$type = trim(substr($tag, 0, $pos ? $pos : null));
+		$type = trim(substr($tag, 0, $pos ?: null));
 		$type = strtolower($type);
 		$attr = static::$types[$type]['attr'] ?? [];
 
@@ -217,9 +219,9 @@ class KirbyTag
 	/**
 	 * Returns the parent model
 	 */
-	public function parent(): Model|null
+	public function parent(): ModelWithContent|null
 	{
-		return $this->data['parent'];
+		return $this->data['parent'] ?? null;
 	}
 
 	public function render(): string
@@ -230,7 +232,9 @@ class KirbyTag
 			return (string)$callback($this);
 		}
 
-		throw new BadMethodCallException('Invalid tag render function in tag: ' . $this->type);
+		throw new BadMethodCallException(
+			message: 'Invalid tag render function in tag: ' . $this->type
+		);
 	}
 
 	public function type(): string

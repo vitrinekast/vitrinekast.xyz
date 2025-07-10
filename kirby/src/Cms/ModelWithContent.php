@@ -3,13 +3,24 @@
 namespace Kirby\Cms;
 
 use Closure;
-use Kirby\Data\Data;
+use Kirby\Content\Content;
+use Kirby\Content\ImmutableMemoryStorage;
+use Kirby\Content\Lock;
+use Kirby\Content\MemoryStorage;
+use Kirby\Content\Storage;
+use Kirby\Content\Translation;
+use Kirby\Content\Translations;
+use Kirby\Content\Version;
+use Kirby\Content\VersionId;
+use Kirby\Content\Versions;
 use Kirby\Exception\InvalidArgumentException;
+use Kirby\Form\Fields;
 use Kirby\Form\Form;
+use Kirby\Panel\Model;
 use Kirby\Toolkit\Str;
 use Kirby\Uuid\Identifiable;
 use Kirby\Uuid\Uuid;
-use Kirby\Uuid\Uuids;
+use Stringable;
 use Throwable;
 
 /**
@@ -21,220 +32,247 @@ use Throwable;
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
  */
-abstract class ModelWithContent extends Model implements Identifiable
+abstract class ModelWithContent implements Identifiable, Stringable
 {
 	/**
-	 * The content
-	 *
-	 * @var \Kirby\Cms\Content
+	 * Each model must define a CLASS_ALIAS
+	 * which will be used in template queries.
+	 * The CLASS_ALIAS is a short human-readable
+	 * version of the class name, i.e. page.
 	 */
-	public $content;
+	public const CLASS_ALIAS = null;
 
 	/**
-	 * @var \Kirby\Cms\Translations
+	 * Cached array of valid blueprints
+	 * that could be used for the model
 	 */
-	public $translations;
+	public array|null $blueprints = null;
+
+	public static App $kirby;
+	protected Site|null $site;
+	protected Storage $storage;
+
+	/**
+	 * Store values used to initilaize object
+	 */
+	protected array $propertyData = [];
+
+	public function __construct(array $props = [])
+	{
+		$this->site = $props['site'] ?? null;
+
+		$this->setContent($props['content'] ?? null);
+		$this->setTranslations($props['translations'] ?? null);
+
+		$this->propertyData = $props;
+	}
 
 	/**
 	 * Returns the blueprint of the model
-	 *
-	 * @return \Kirby\Cms\Blueprint
 	 */
-	abstract public function blueprint();
+	abstract public function blueprint(): Blueprint;
 
 	/**
 	 * Returns an array with all blueprints that are available
-	 *
-	 * @param string|null $inSection
-	 * @return array
 	 */
-	public function blueprints(string $inSection = null): array
+	public function blueprints(string|null $inSection = null): array
 	{
-		$blueprints = [];
-		$blueprint  = $this->blueprint();
-		$sections   = $inSection !== null ? [$blueprint->section($inSection)] : $blueprint->sections();
+		// helper function
+		$toBlueprints = static function (array $sections): array {
+			$blueprints = [];
 
-		foreach ($sections as $section) {
-			if ($section === null) {
-				continue;
+			foreach ($sections as $section) {
+				if ($section === null) {
+					continue;
+				}
+
+				foreach ((array)$section->blueprints() as $blueprint) {
+					$blueprints[$blueprint['name']] = $blueprint;
+				}
 			}
 
-			foreach ((array)$section->blueprints() as $blueprint) {
-				$blueprints[$blueprint['name']] = $blueprint;
-			}
+			return array_values($blueprints);
+		};
+
+		$blueprint = $this->blueprint();
+
+		// no caching for when collecting for specific section
+		if ($inSection !== null) {
+			return $toBlueprints([$blueprint->section($inSection)]);
 		}
 
-		return array_values($blueprints);
+		return $this->blueprints ??= $toBlueprints($blueprint->sections());
+	}
+
+	/**
+	 * Moves or copies the model to a new storage instance/type
+	 * @since 5.0.0
+	 * @unstable
+	 */
+	public function changeStorage(Storage|string $toStorage, bool $copy = false): static
+	{
+		if (is_string($toStorage) === true) {
+			if (is_subclass_of($toStorage, Storage::class) === false) {
+				throw new InvalidArgumentException('Invalid storage class');
+			}
+
+			$toStorage = new $toStorage($this);
+		}
+
+		$method = $copy ? 'copyAll' : 'moveAll';
+
+		$this->storage()->$method(to: $toStorage);
+		$this->storage = $toStorage;
+		return $this;
+	}
+
+	/**
+	 * Creates a new instance with the same
+	 * initial properties
+	 *
+	 * @todo eventually refactor without need of propertyData
+	 */
+	public function clone(array $props = []): static
+	{
+		$props = array_replace_recursive($this->propertyData, $props);
+		$clone = new static($props);
+
+		// Move the clone to a new instance of the same storage class
+		// The storage classes might need to rely on the model instance
+		// and thus we need to make sure that the cloned object is
+		// passed on to the new storage instance
+		$storage = match (true) {
+			isset($props['content']),
+			isset($props['translations']) => $clone->storage()::class,
+			default                       => $this->storage()::class
+		};
+
+		$clone->changeStorage($storage);
+
+		return $clone;
 	}
 
 	/**
 	 * Executes any given model action
-	 *
-	 * @param string $action
-	 * @param array $arguments
-	 * @param \Closure $callback
-	 * @return mixed
 	 */
-	abstract protected function commit(string $action, array $arguments, Closure $callback);
+	abstract protected function commit(
+		string $action,
+		array $arguments,
+		Closure $callback
+	): mixed;
 
 	/**
 	 * Returns the content
 	 *
-	 * @param string|null $languageCode
-	 * @return \Kirby\Cms\Content
 	 * @throws \Kirby\Exception\InvalidArgumentException If the language for the given code does not exist
 	 */
-	public function content(string $languageCode = null)
+	public function content(string|null $languageCode = null): Content
 	{
-		// single language support
-		if ($this->kirby()->multilang() === false) {
-			if ($this->content instanceof Content) {
-				return $this->content;
-			}
-
-			// don't normalize field keys (already handled by the `Data` class)
-			return $this->content = new Content($this->readContent(), $this, false);
-		}
-
 		// get the targeted language
-		$language = $this->kirby()->language($languageCode);
+		$language  = Language::ensure($languageCode ?? 'current');
+		$versionId = VersionId::$render ?? 'latest';
+		$version   = $this->version($versionId);
 
-		// stop if the language does not exist
-		if ($language === null) {
-			throw new InvalidArgumentException('Invalid language: ' . $languageCode);
+		if ($version->exists($language) === true) {
+			return $version->content($language);
 		}
 
-		// only fetch from cache for the current language
-		if ($languageCode === null && $this->content instanceof Content) {
-			return $this->content;
-		}
-
-		// get the translation by code
-		$translation = $this->translation($language->code());
-
-		// don't normalize field keys (already handled by the `ContentTranslation` class)
-		$content = new Content($translation->content(), $this, false);
-
-		// only store the content for the current language
-		if ($languageCode === null) {
-			$this->content = $content;
-		}
-
-		return $content;
-	}
-
-	/**
-	 * Returns the absolute path to the content file
-	 *
-	 * @internal
-	 * @param string|null $languageCode
-	 * @param bool $force
-	 * @return string
-	 * @throws \Kirby\Exception\InvalidArgumentException If the language for the given code does not exist
-	 */
-	public function contentFile(string $languageCode = null, bool $force = false): string
-	{
-		$extension = $this->contentFileExtension();
-		$directory = $this->contentFileDirectory();
-		$filename  = $this->contentFileName();
-
-		// overwrite the language code
-		if ($force === true) {
-			if (empty($languageCode) === false) {
-				return $directory . '/' . $filename . '.' . $languageCode . '.' . $extension;
-			}
-
-			return $directory . '/' . $filename . '.' . $extension;
-		}
-
-		// add and validate the language code in multi language mode
-		if ($this->kirby()->multilang() === true) {
-			if ($language = $this->kirby()->languageCode($languageCode)) {
-				return $directory . '/' . $filename . '.' . $language . '.' . $extension;
-			}
-
-			throw new InvalidArgumentException('Invalid language: ' . $languageCode);
-		}
-
-		return $directory . '/' . $filename . '.' . $extension;
-	}
-
-	/**
-	 * Returns an array with all content files
-	 *
-	 * @return array
-	 */
-	public function contentFiles(): array
-	{
-		if ($this->kirby()->multilang() === true) {
-			$files = [];
-			foreach ($this->kirby()->languages()->codes() as $code) {
-				$files[] = $this->contentFile($code);
-			}
-			return $files;
-		}
-
-		return [
-			$this->contentFile()
-		];
+		return $this->version()->content($language);
 	}
 
 	/**
 	 * Prepares the content that should be written
 	 * to the text file
-	 *
-	 * @internal
-	 * @param array $data
-	 * @param string|null $languageCode
-	 * @return array
+	 * @unstable
 	 */
-	public function contentFileData(array $data, string $languageCode = null): array
-	{
+	public function contentFileData(
+		array $data,
+		string|null $languageCode = null
+	): array {
 		return $data;
 	}
 
 	/**
-	 * Returns the absolute path to the
-	 * folder in which the content file is
-	 * located
-	 *
-	 * @internal
-	 * @return string|null
+	 * Converts model to new blueprint
+	 * incl. its content for all translations
 	 */
-	public function contentFileDirectory(): string|null
+	protected function convertTo(string $blueprint): static
 	{
-		return $this->root();
+		// Keep a copy of the old model with the original storage handler.
+		// This will be used to delete the old versions.
+		$old = $this->clone();
+
+		// Clone the object with the new blueprint as template
+		$new = $this->clone(['template' => $blueprint]);
+
+		// Make sure to use the same storage class as the original model.
+		// This is needed if the model has been constructed with `content` or
+		// `translations` props. In this case, the storage would be set to
+		// `MemoryStorage` in the clone method again, even if it might have been
+		// changed before.
+		$new->changeStorage($this->storage()::class);
+
+		// Copy this instance into immutable storage.
+		// Moving the content would prematurely delete the old content storage entries.
+		// But we need to keep them until the new content is written.
+		$this->changeStorage(
+			toStorage: new ImmutableMemoryStorage(
+				model: $this,
+				nextModel: $new
+			),
+			copy: true
+		);
+
+		// Get all languages to loop through
+		$languages = Languages::ensure();
+
+		// Loop through all versions
+		foreach ($old->versions() as $oldVersion) {
+			// Loop through all languages
+			foreach ($languages as $language) {
+				// Skip non-existing versions
+				if ($oldVersion->exists($language) === false) {
+					continue;
+				}
+
+				// Convert the content to the new blueprint
+				$content = $oldVersion->content($language)->convertTo($blueprint);
+
+				// Delete the old versions. This will also remove the
+				// content files from the storage if this is a plain text
+				// storage instance.
+				$oldVersion->delete($language);
+
+				// Save to re-create the new version
+				// with the converted/updated content
+				$new->version($oldVersion->id())->save($content, $language);
+			}
+		}
+
+		return $new;
 	}
 
 	/**
-	 * Returns the extension of the content file
+	 * Creates default content for the model, by using our
+	 * Form class to generate the defaults, based on the
+	 * model's blueprint setup.
 	 *
-	 * @internal
-	 * @return string
+	 * @since 5.0.0
 	 */
-	public function contentFileExtension(): string
+	public function createDefaultContent(): array
 	{
-		return $this->kirby()->contentExtension();
+		$fields = Fields::for($this, 'default');
+		return $fields->fill($fields->defaults())->toStoredValues();
 	}
-
-	/**
-	 * Needs to be declared by the final model
-	 *
-	 * @internal
-	 * @return string
-	 */
-	abstract public function contentFileName(): string;
 
 	/**
 	 * Decrement a given field value
-	 *
-	 * @param string $field
-	 * @param int $by
-	 * @param int $min
-	 * @return static
 	 */
-	public function decrement(string $field, int $by = 1, int $min = 0)
-	{
+	public function decrement(
+		string $field,
+		int $by = 1,
+		int $min = 0
+	): static {
 		$value = (int)$this->content()->get($field)->value() - $by;
 
 		if ($value < $min) {
@@ -246,30 +284,51 @@ abstract class ModelWithContent extends Model implements Identifiable
 
 	/**
 	 * Returns all content validation errors
-	 *
-	 * @return array
 	 */
 	public function errors(): array
 	{
 		$errors = [];
 
 		foreach ($this->blueprint()->sections() as $section) {
-			$errors = array_merge($errors, $section->errors());
+			$errors = [...$errors, ...$section->errors()];
 		}
 
 		return $errors;
 	}
 
 	/**
-	 * Increment a given field value
-	 *
-	 * @param string $field
-	 * @param int $by
-	 * @param int|null $max
-	 * @return static
+	 * Creates a clone and fetches all
+	 * lazy-loaded getters to get a full copy
 	 */
-	public function increment(string $field, int $by = 1, int $max = null)
+	public function hardcopy(): static
 	{
+		$clone = $this->clone();
+
+		foreach (get_object_vars($clone) as $name => $default) {
+			if (method_exists($clone, $name) === true) {
+				$clone->$name();
+			}
+		}
+
+		return $clone;
+	}
+
+	/**
+	 * Each model must return a unique id
+	 */
+	public function id(): string|null
+	{
+		return null;
+	}
+
+	/**
+	 * Increment a given field value
+	 */
+	public function increment(
+		string $field,
+		int $by = 1,
+		int|null $max = null
+	): static {
 		$value = (int)$this->content()->get($field)->value() + $by;
 
 		if ($max && $value > $max) {
@@ -281,71 +340,66 @@ abstract class ModelWithContent extends Model implements Identifiable
 
 	/**
 	 * Checks if the model is locked for the current user
-	 *
-	 * @return bool
+	 * @deprecated 5.0.0 Use `->lock()->isLocked()` instead
 	 */
 	public function isLocked(): bool
 	{
-		$lock = $this->lock();
-		return $lock && $lock->isLocked() === true;
+		return $this->lock()->isLocked() === true;
 	}
 
 	/**
 	 * Checks if the data has any errors
-	 *
-	 * @return bool
 	 */
 	public function isValid(): bool
 	{
-		return Form::for($this)->hasErrors() === false;
+		return $this->version('latest')->isValid('current');
 	}
 
 	/**
-	 * Returns the lock object for this model
-	 *
-	 * Only if a content directory exists,
-	 * virtual pages will need to overwrite this method
-	 *
-	 * @return \Kirby\Cms\ContentLock|null
+	 * Returns the parent Kirby instance
 	 */
-	public function lock()
+	public function kirby(): App
 	{
-		$dir = $this->contentFileDirectory();
+		return static::$kirby ??= App::instance();
+	}
 
-		if (
-			$this->kirby()->option('content.locking', true) &&
-			is_string($dir) === true &&
-			file_exists($dir) === true
-		) {
-			return new ContentLock($this);
-		}
+	/**
+	 * Returns lock for the model
+	 */
+	public function lock(): Lock
+	{
+		return $this->version('changes')->lock('*');
 	}
 
 	/**
 	 * Returns the panel info of the model
 	 * @since 3.6.0
-	 *
-	 * @return \Kirby\Panel\Model
 	 */
-	abstract public function panel();
+	abstract public function panel(): Model;
 
 	/**
 	 * Must return the permissions object for the model
-	 *
-	 * @return \Kirby\Cms\ModelPermissions
 	 */
-	abstract public function permissions();
+	abstract public function permissions(): ModelPermissions;
+
+	/**
+	 * Clean internal caches
+	 *
+	 * @return $this
+	 */
+	public function purge(): static
+	{
+		$this->blueprints = null;
+		return $this;
+	}
 
 	/**
 	 * Creates a string query, starting from the model
-	 *
-	 * @internal
-	 * @param string|null $query
-	 * @param string|null $expect
-	 * @return mixed
 	 */
-	public function query(string $query = null, string $expect = null)
-	{
+	public function query(
+		string|null $query = null,
+		string|null $expect = null
+	): mixed {
 		if ($query === null) {
 			return null;
 		}
@@ -370,159 +424,144 @@ abstract class ModelWithContent extends Model implements Identifiable
 
 	/**
 	 * Read the content from the content file
-	 *
 	 * @internal
-	 * @param string|null $languageCode
-	 * @return array
+	 * @deprecated 5.0.0 Use `->version()->read()` instead
 	 */
-	public function readContent(string $languageCode = null): array
+	public function readContent(string|null $languageCode = null): array
 	{
-		$file = $this->contentFile($languageCode);
-
-		// only if the content file really does not exist, it's ok
-		// to return empty content. Otherwise this could lead to
-		// content loss in case of file reading issues
-		if (file_exists($file) === false) {
-			return [];
-		}
-
-		return Data::read($file);
+		Helpers::deprecated('$model->readContent() is deprecated. Use $model->version()->read() instead.'); // @codeCoverageIgnore
+		return $this->version()->read($languageCode ?? 'default') ?? [];
 	}
 
 	/**
 	 * Returns the absolute path to the model
-	 *
-	 * @return string|null
 	 */
 	abstract public function root(): string|null;
 
 	/**
-	 * Stores the content on disk
-	 *
-	 * @internal
-	 * @param array|null $data
-	 * @param string|null $languageCode
-	 * @param bool $overwrite
-	 * @return static
+	 * Low-level method to save the model with the given data.
+	 * Consider using `::update()` instead.
 	 */
-	public function save(array $data = null, string $languageCode = null, bool $overwrite = false)
-	{
-		if ($this->kirby()->multilang() === true) {
-			return $this->saveTranslation($data, $languageCode, $overwrite);
-		}
-
-		return $this->saveContent($data, $overwrite);
-	}
-
-	/**
-	 * Save the single language content
-	 *
-	 * @param array|null $data
-	 * @param bool $overwrite
-	 * @return static
-	 */
-	protected function saveContent(array $data = null, bool $overwrite = false)
-	{
+	public function save(
+		array|null $data = null,
+		string|null $languageCode = null,
+		bool $overwrite = false
+	): static {
 		// create a clone to avoid modifying the original
 		$clone = $this->clone();
 
-		// merge the new data with the existing content
-		$clone->content()->update($data, $overwrite);
+		// move the old model into memory
+		$this->changeStorage(
+			toStorage: new ImmutableMemoryStorage(
+				model: $this,
+				nextModel: $clone
+			),
+			copy: true
+		);
 
-		// send the full content array to the writer
-		$clone->writeContent($clone->content()->toArray());
+		// update the clone
+		$clone->version()->save(
+			$data ?? [],
+			$languageCode ?? 'default',
+			$overwrite
+		);
+
+		ModelState::update(
+			method: 'set',
+			current: $this,
+			next: $clone
+		);
 
 		return $clone;
 	}
 
 	/**
-	 * Save a translation
-	 *
-	 * @param array|null $data
-	 * @param string|null $languageCode
-	 * @param bool $overwrite
-	 * @return static
-	 * @throws \Kirby\Exception\InvalidArgumentException If the language for the given code does not exist
+	 * @deprecated 5.0.0 Use $model->save() instead
 	 */
-	protected function saveTranslation(array $data = null, string $languageCode = null, bool $overwrite = false)
-	{
-		// create a clone to not touch the original
-		$clone = $this->clone();
+	protected function saveContent(
+		array|null $data = null,
+		bool $overwrite = false
+	): static {
+		Helpers::deprecated('$model->saveContent() is deprecated. Use $model->save() instead.');
+		return $this->save($data, 'default', $overwrite);
+	}
 
-		// fetch the matching translation and update all the strings
-		$translation = $clone->translation($languageCode);
-
-		if ($translation === null) {
-			throw new InvalidArgumentException('Invalid language: ' . $languageCode);
-		}
-
-		// get the content to store
-		$content      = $translation->update($data, $overwrite)->content();
-		$kirby        = $this->kirby();
-		$languageCode = $kirby->languageCode($languageCode);
-
-		// remove all untranslatable fields
-		if ($languageCode !== $kirby->defaultLanguage()->code()) {
-			foreach ($this->blueprint()->fields() as $field) {
-				if (($field['translate'] ?? true) === false) {
-					$content[strtolower($field['name'])] = null;
-				}
-			}
-
-			// remove UUID for non-default languages
-			if (Uuids::enabled() === true && isset($content['uuid']) === true) {
-				$content['uuid'] = null;
-			}
-
-			// merge the translation with the new data
-			$translation->update($content, true);
-		}
-
-		// send the full translation array to the writer
-		$clone->writeContent($translation->content(), $languageCode);
-
-		// reset the content object
-		$clone->content = null;
-
-		// return the updated model
-		return $clone;
+	/**
+	 * @deprecated 5.0.0 Use $model->save() instead
+	 */
+	protected function saveTranslation(
+		array|null $data = null,
+		string|null $languageCode = null,
+		bool $overwrite = false
+	): static {
+		Helpers::deprecated('$model->saveTranslation() is deprecated. Use $model->save() instead.');
+		return $this->save($data, $languageCode ?? 'default', $overwrite);
 	}
 
 	/**
 	 * Sets the Content object
 	 *
-	 * @param array|null $content
 	 * @return $this
 	 */
-	protected function setContent(array $content = null)
+	protected function setContent(array|null $content = null): static
 	{
-		if ($content !== null) {
-			$content = new Content($content, $this);
+		if ($content === null) {
+			return $this;
 		}
 
-		$this->content = $content;
+		$this->changeStorage(MemoryStorage::class, copy: true);
+		$this->version()->save($content, 'default');
+
 		return $this;
 	}
 
 	/**
 	 * Create the translations collection from an array
 	 *
-	 * @param array|null $translations
 	 * @return $this
 	 */
-	protected function setTranslations(array $translations = null)
+	protected function setTranslations(array|null $translations = null): static
 	{
-		if ($translations !== null) {
-			$this->translations = new Collection();
-
-			foreach ($translations as $props) {
-				$props['parent'] = $this;
-				$translation = new ContentTranslation($props);
-				$this->translations->data[$translation->code()] = $translation;
-			}
+		if ($translations === null) {
+			return $this;
 		}
 
+		$this->changeStorage(MemoryStorage::class, copy: true);
+
+		Translations::create(
+			model: $this,
+			version: $this->version(),
+			translations: $translations
+		);
+
 		return $this;
+	}
+
+	/**
+	 * Returns the parent Site instance
+	 */
+	public function site(): Site
+	{
+		return $this->site ??= $this->kirby()->site();
+	}
+
+	/**
+	 * Returns the content storage handler
+	 */
+	public function storage(): Storage
+	{
+		return $this->storage ??= $this->kirby()->storage($this);
+	}
+
+	/**
+	 * Convert the model to a simple array
+	 */
+	public function toArray(): array
+	{
+		return [
+			'content'      => $this->content()->toArray(),
+			'translations' => $this->translations()->toArray()
+		];
 	}
 
 	/**
@@ -530,13 +569,14 @@ abstract class ModelWithContent extends Model implements Identifiable
 	 * @since 3.6.0
 	 *
 	 * @param string|null $template Template string or `null` to use the model ID
-	 * @param array $data
 	 * @param string|null $fallback Fallback for tokens in the template that cannot be replaced
 	 *                              (`null` to keep the original token)
-	 * @return string
 	 */
-	public function toSafeString(string $template = null, array $data = [], string|null $fallback = ''): string
-	{
+	public function toSafeString(
+		string|null $template = null,
+		array $data = [],
+		string|null $fallback = ''
+	): string {
 		return $this->toString($template, $data, $fallback, 'safeTemplate');
 	}
 
@@ -544,20 +584,22 @@ abstract class ModelWithContent extends Model implements Identifiable
 	 * String template builder
 	 *
 	 * @param string|null $template Template string or `null` to use the model ID
-	 * @param array $data
 	 * @param string|null $fallback Fallback for tokens in the template that cannot be replaced
 	 *                              (`null` to keep the original token)
 	 * @param string $handler For internal use
-	 * @return string
 	 */
-	public function toString(string $template = null, array $data = [], string|null $fallback = '', string $handler = 'template'): string
-	{
+	public function toString(
+		string|null $template = null,
+		array $data = [],
+		string|null $fallback = '',
+		string $handler = 'template'
+	): string {
 		if ($template === null) {
 			return $this->id() ?? '';
 		}
 
 		if ($handler !== 'template' && $handler !== 'safeTemplate') {
-			throw new InvalidArgumentException('Invalid toString handler'); // @codeCoverageIgnore
+			throw new InvalidArgumentException(message: 'Invalid toString handler'); // @codeCoverageIgnore
 		}
 
 		$result = Str::$handler($template, array_replace([
@@ -571,75 +613,78 @@ abstract class ModelWithContent extends Model implements Identifiable
 	}
 
 	/**
+	 * Makes it possible to convert the entire model
+	 * to a string. Mostly useful for debugging
+	 */
+	public function __toString(): string
+	{
+		return (string)$this->id();
+	}
+
+	/**
 	 * Returns a single translation by language code
 	 * If no code is specified the current translation is returned
 	 *
-	 * @param string|null $languageCode
-	 * @return \Kirby\Cms\ContentTranslation|null
+	 * @throws \Kirby\Exception\NotFoundException If the language does not exist
 	 */
-	public function translation(string $languageCode = null)
-	{
-		if ($language = $this->kirby()->language($languageCode)) {
-			return $this->translations()->find($language->code());
-		}
+	public function translation(
+		string|null $languageCode = null
+	): Translation {
+		$language = Language::ensure($languageCode ?? 'current');
 
-		return null;
+		return new Translation(
+			model: $this,
+			version: $this->version(),
+			language: $language
+		);
 	}
 
 	/**
 	 * Returns the translations collection
-	 *
-	 * @return \Kirby\Cms\Collection
 	 */
-	public function translations()
+	public function translations(): Translations
 	{
-		if ($this->translations !== null) {
-			return $this->translations;
-		}
-
-		$this->translations = new Collection();
-
-		foreach ($this->kirby()->languages() as $language) {
-			$translation = new ContentTranslation([
-				'parent' => $this,
-				'code'   => $language->code(),
-			]);
-
-			$this->translations->data[$translation->code()] = $translation;
-		}
-
-		return $this->translations;
+		return Translations::load(
+			model: $this,
+			version: $this->version()
+		);
 	}
 
 	/**
 	 * Updates the model data
 	 *
-	 * @param array|null $input
-	 * @param string|null $languageCode
-	 * @param bool $validate
-	 * @return static
 	 * @throws \Kirby\Exception\InvalidArgumentException If the input array contains invalid values
 	 */
-	public function update(array $input = null, string $languageCode = null, bool $validate = false)
-	{
-		$form = Form::for($this, [
-			'ignoreDisabled' => $validate === false,
-			'input'          => $input,
-			'language'       => $languageCode,
-		]);
+	public function update(
+		array|null $input = null,
+		string|null $languageCode = null,
+		bool $validate = false
+	): static {
+		$form = Form::for(
+			model: $this,
+			language: $languageCode,
+		);
 
-		// validate the input
-		if ($validate === true && $form->isInvalid() === true) {
-			throw new InvalidArgumentException([
-				'fallback' => 'Invalid form with errors',
-				'details'  => $form->errors()
-			]);
+		$form->submit(
+			input: $input ?? [],
+			force: $validate === false
+		);
+
+		if ($validate === true) {
+			$form->validate();
 		}
 
-		$arguments = [static::CLASS_ALIAS => $this, 'values' => $form->data(), 'strings' => $form->strings(), 'languageCode' => $languageCode];
-		return $this->commit('update', $arguments, function ($model, $values, $strings, $languageCode) {
-			return $model->save($strings, $languageCode, true);
-		});
+		return $this->commit(
+			'update',
+			[
+				static::CLASS_ALIAS => $this,
+				'values'            => $form->toFormValues(),
+				'strings'           => $form->toStoredValues(),
+				'languageCode'      => $languageCode
+			],
+			fn ($model, $values, $strings, $languageCode) =>
+				$model->save($strings, $languageCode, true)
+		);
 	}
 
 	/**
@@ -652,19 +697,36 @@ abstract class ModelWithContent extends Model implements Identifiable
 	}
 
 	/**
+	 * Returns a content version instance
+	 * @since 5.0.0
+	 */
+	public function version(VersionId|string|null $versionId = null): Version
+	{
+		return new Version(
+			model: $this,
+			id: VersionId::from($versionId ?? 'latest')
+		);
+	}
+
+	/**
+	 * Returns a versions collection
+	 * @since 5.0.0
+	 */
+	public function versions(): Versions
+	{
+		return Versions::load($this);
+	}
+
+	/**
 	 * Low level data writer method
 	 * to store the given data on disk or anywhere else
-	 *
 	 * @internal
-	 * @param array $data
-	 * @param string|null $languageCode
-	 * @return bool
+	 * @deprecated 5.0.0 Use `->version()->save()` instead
 	 */
-	public function writeContent(array $data, string $languageCode = null): bool
+	public function writeContent(array $data, string|null $languageCode = null): bool
 	{
-		return Data::write(
-			$this->contentFile($languageCode),
-			$this->contentFileData($data, $languageCode)
-		);
+		Helpers::deprecated('$model->writeContent() is deprecated. Use $model->version()->save() instead.'); // @codeCoverageIgnore
+		$this->version()->save($data, $languageCode ?? 'default', true);
+		return true;
 	}
 }

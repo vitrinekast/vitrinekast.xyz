@@ -4,6 +4,7 @@ namespace Kirby\Cms;
 
 use Kirby\Exception\InvalidArgumentException;
 use Kirby\Exception\NotFoundException;
+use Kirby\Template\Template;
 
 /**
  * Wrapper around our Email package, which
@@ -21,18 +22,14 @@ class Email
 {
 	/**
 	 * Options configured through the `email` CMS option
-	 *
-	 * @var array
 	 */
-	protected $options;
+	protected array $options;
 
 	/**
 	 * Props for the email object; will be passed to the
-	 * Kirby\Email\Email class
-	 *
-	 * @var array
+	 * \Kirby\Email\Email class
 	 */
-	protected $props;
+	protected array $props;
 
 	/**
 	 * Class constructor
@@ -40,13 +37,12 @@ class Email
 	 * @param string|array $preset Preset name from the config or a simple props array
 	 * @param array $props Props array to override the $preset
 	 */
-	public function __construct($preset = [], array $props = [])
+	public function __construct(string|array $preset = [], array $props = [])
 	{
-		$this->options = App::instance()->option('email');
+		$this->options = App::instance()->option('email', []);
 
 		// build a prop array based on preset and props
-		$preset = $this->preset($preset);
-		$this->props = array_merge($preset, $props);
+		$this->props = [...$this->preset($preset), ...$props];
 
 		// add transport settings
 		$this->props['transport'] ??= $this->options['transport'] ?? [];
@@ -71,10 +67,9 @@ class Email
 	 * prop arrays in case a preset is not needed
 	 *
 	 * @param string|array $preset Preset name or simple prop array
-	 * @return array
 	 * @throws \Kirby\Exception\NotFoundException
 	 */
-	protected function preset($preset): array
+	protected function preset(string|array $preset): array
 	{
 		// only passed props, not preset name
 		if (is_array($preset) === true) {
@@ -83,10 +78,10 @@ class Email
 
 		// preset does not exist
 		if (isset($this->options['presets'][$preset]) !== true) {
-			throw new NotFoundException([
-				'key'  => 'email.preset.notFound',
-				'data' => ['name' => $preset]
-			]);
+			throw new NotFoundException(
+				key: 'email.preset.notFound',
+				data: ['name' => $preset]
+			);
 		}
 
 		return $this->options['presets'][$preset];
@@ -96,7 +91,6 @@ class Email
 	 * Renders the email template(s) and sets the body props
 	 * to the result
 	 *
-	 * @return void
 	 * @throws \Kirby\Exception\NotFoundException
 	 */
 	protected function template(): void
@@ -109,40 +103,34 @@ class Email
 			$html = $this->getTemplate($this->props['template'], 'html');
 			$text = $this->getTemplate($this->props['template'], 'text');
 
-			if ($html->exists()) {
-				$this->props['body'] = [
-					'html' => $html->render($data)
-				];
+			if ($html->exists() === true) {
+				$this->props['body'] = ['html' => $html->render($data)];
 
-				if ($text->exists()) {
+				if ($text->exists() === true) {
 					$this->props['body']['text'] = $text->render($data);
 				}
 
 			// fallback to single email text template
-			} elseif ($text->exists()) {
+			} elseif ($text->exists() === true) {
 				$this->props['body'] = $text->render($data);
 			} else {
-				throw new NotFoundException('The email template "' . $this->props['template'] . '" cannot be found');
+				throw new NotFoundException(
+					message: 'The email template "' . $this->props['template'] . '" cannot be found'
+				);
 			}
 		}
 	}
 
 	/**
 	 * Returns an email template by name and type
-	 *
-	 * @param string $name Template name
-	 * @param string|null $type `html` or `text`
-	 * @return \Kirby\Template\Template
 	 */
-	protected function getTemplate(string $name, string $type = null)
+	protected function getTemplate(string $name, string|null $type = null): Template
 	{
 		return App::instance()->template('emails/' . $name, $type, 'text');
 	}
 
 	/**
 	 * Returns the prop array
-	 *
-	 * @return array
 	 */
 	public function toArray(): array
 	{
@@ -154,11 +142,10 @@ class Email
 	 * supports simple strings, file objects or collections/arrays of either
 	 *
 	 * @param string $prop Prop to transform
-	 * @return void
 	 */
 	protected function transformFile(string $prop): void
 	{
-		$this->props[$prop] = $this->transformModel($prop, 'Kirby\Cms\File', 'root');
+		$this->props[$prop] = $this->transformModel($prop, File::class, 'root');
 	}
 
 	/**
@@ -171,8 +158,12 @@ class Email
 	 *                                returns a simple value-only array if not given
 	 * @return array Simple key-value or just value array with the transformed prop data
 	 */
-	protected function transformModel(string $prop, string $class, string $contentValue, string $contentKey = null): array
-	{
+	protected function transformModel(
+		string $prop,
+		string $class,
+		string $contentValue,
+		string|null $contentKey = null
+	): array {
 		$value = $this->props[$prop] ?? [];
 
 		// ensure consistent input by making everything an iterable value
@@ -198,7 +189,9 @@ class Email
 				}
 			} else {
 				// invalid input
-				throw new InvalidArgumentException('Invalid input for prop "' . $prop . '", expected string or "' . $class . '" object or collection');
+				throw new InvalidArgumentException(
+					message: 'Invalid input for prop "' . $prop . '", expected string or "' . $class . '" object or collection'
+				);
 			}
 		}
 
@@ -212,11 +205,12 @@ class Email
 	 *
 	 * @param string $addressProp Prop with the email address
 	 * @param string $nameProp Prop with the name corresponding to the $addressProp
-	 * @return void
 	 */
-	protected function transformUserSingle(string $addressProp, string $nameProp): void
-	{
-		$result = $this->transformModel($addressProp, 'Kirby\Cms\User', 'name', 'email');
+	protected function transformUserSingle(
+		string $addressProp,
+		string $nameProp
+	): void {
+		$result = $this->transformModel($addressProp, User::class, 'name', 'email');
 
 		$address = array_keys($result)[0] ?? null;
 		$name    = $result[$address] ?? null;
@@ -239,10 +233,14 @@ class Email
 	 * supports simple strings, user objects or collections/arrays of either
 	 *
 	 * @param string $prop Prop to transform
-	 * @return void
 	 */
 	protected function transformUserMultiple(string $prop): void
 	{
-		$this->props[$prop] = $this->transformModel($prop, 'Kirby\Cms\User', 'name', 'email');
+		$this->props[$prop] = $this->transformModel(
+			$prop,
+			User::class,
+			'name',
+			'email'
+		);
 	}
 }

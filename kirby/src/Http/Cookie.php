@@ -25,12 +25,10 @@ class Cookie
 	/**
 	 * Set a new cookie
 	 *
-	 * <code>
-	 *
-	 * cookie::set('mycookie', 'hello', ['lifetime' => 60]);
+	 * ```php
 	 * // expires in 1 hour
-	 *
-	 * </code>
+	 * Cookie::set('mycookie', 'hello', ['lifetime' => 60]);
+	 * ```
 	 *
 	 * @param string $key The name of the cookie
 	 * @param string $value The cookie content
@@ -39,8 +37,11 @@ class Cookie
 	 * @return bool true: cookie was created,
 	 *              false: cookie creation failed
 	 */
-	public static function set(string $key, string $value, array $options = []): bool
-	{
+	public static function set(
+		string $key,
+		string $value,
+		array $options = []
+	): bool {
 		// modify CMS caching behavior
 		static::trackUsage($key);
 
@@ -59,8 +60,11 @@ class Cookie
 		$_COOKIE[$key] = $value;
 
 		// store the cookie
-		$options = compact('expires', 'path', 'domain', 'secure', 'httponly', 'samesite');
-		return setcookie($key, $value, $options);
+		return setcookie(
+			$key,
+			$value,
+			compact('expires', 'path', 'domain', 'secure', 'httponly', 'samesite')
+		);
 	}
 
 	/**
@@ -70,13 +74,13 @@ class Cookie
 	 */
 	public static function lifetime(int $minutes): int
 	{
+		// absolute timestamp
 		if ($minutes > 1000000000) {
-			// absolute timestamp
 			return $minutes;
 		}
 
+		// minutes from now
 		if ($minutes > 0) {
-			// minutes from now
 			return time() + ($minutes * 60);
 		}
 
@@ -86,12 +90,10 @@ class Cookie
 	/**
 	 * Stores a cookie forever
 	 *
-	 * <code>
-	 *
-	 * cookie::forever('mycookie', 'hello');
+	 * ```php
 	 * // never expires
-	 *
-	 * </code>
+	 * Cookie::forever('mycookie', 'hello');
+	 * ```
 	 *
 	 * @param string $key The name of the cookie
 	 * @param string $value The cookie content
@@ -100,8 +102,11 @@ class Cookie
 	 * @return bool true: cookie was created,
 	 *              false: cookie creation failed
 	 */
-	public static function forever(string $key, string $value, array $options = []): bool
-	{
+	public static function forever(
+		string $key,
+		string $value,
+		array $options = []
+	): bool {
 		// 9999-12-31 if supported (lower on 32-bit servers)
 		$options['lifetime'] = min(253402214400, PHP_INT_MAX);
 		return static::set($key, $value, $options);
@@ -110,20 +115,20 @@ class Cookie
 	/**
 	 * Get a cookie value
 	 *
-	 * <code>
-	 *
-	 * cookie::get('mycookie', 'peter');
+	 * ```php
 	 * // sample output: 'hello' or if the cookie is not set 'peter'
-	 *
-	 * </code>
+	 * Cookie::get('mycookie', 'peter');
+	 * ```
 	 *
 	 * @param string|null $key The name of the cookie
 	 * @param string|null $default The default value, which should be returned
 	 *                             if the cookie has not been found
 	 * @return string|array|null The found value
 	 */
-	public static function get(string|null $key = null, string|null $default = null): string|array|null
-	{
+	public static function get(
+		string|null $key = null,
+		string|null $default = null
+	): string|array|null {
 		if ($key === null) {
 			return $_COOKIE;
 		}
@@ -131,8 +136,11 @@ class Cookie
 		// modify CMS caching behavior
 		static::trackUsage($key);
 
-		$value = $_COOKIE[$key] ?? null;
-		return empty($value) ? $default : static::parse($value);
+		if ($value = $_COOKIE[$key] ?? null) {
+			return static::parse($value);
+		}
+
+		return $default;
 	}
 
 	/**
@@ -159,7 +167,7 @@ class Cookie
 	protected static function parse(string $string): string|null
 	{
 		// if no hash-value separator is present, we can't parse the value
-		if (strpos($string, '+') === false) {
+		if (str_contains($string, '+') === false) {
 			return null;
 		}
 
@@ -185,12 +193,10 @@ class Cookie
 	/**
 	 * Remove a cookie
 	 *
-	 * <code>
-	 *
-	 * cookie::remove('mycookie');
+	 * ```php
 	 * // mycookie is now gone
-	 *
-	 * </code>
+	 * Cookie::remove('mycookie');
+	 * ```
 	 *
 	 * @param string $key The name of the cookie
 	 * @return bool true: the cookie has been removed,

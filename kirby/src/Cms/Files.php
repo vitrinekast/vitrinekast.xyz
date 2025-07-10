@@ -2,9 +2,12 @@
 
 namespace Kirby\Cms;
 
+use Kirby\Exception\Exception;
 use Kirby\Exception\InvalidArgumentException;
+use Kirby\Exception\NotFoundException;
 use Kirby\Filesystem\F;
 use Kirby\Uuid\HasUuids;
+use Throwable;
 
 /**
  * The `$files` object extends the general
@@ -19,6 +22,8 @@ use Kirby\Uuid\HasUuids;
  * @link      https://getkirby.com
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
+ *
+ * @extends \Kirby\Cms\Collection<\Kirby\Cms\File>
  */
 class Files extends Collection
 {
@@ -26,25 +31,28 @@ class Files extends Collection
 
 	/**
 	 * All registered files methods
-	 *
-	 * @var array
 	 */
-	public static $methods = [];
+	public static array $methods = [];
+
+	/**
+	 * @var \Kirby\Cms\Page|\Kirby\Cms\Site|\Kirby\Cms\User
+	 */
+	protected object|null $parent = null;
 
 	/**
 	 * Adds a single file or
 	 * an entire second collection to the
 	 * current collection
 	 *
-	 * @param \Kirby\Cms\Files|\Kirby\Cms\File|string $object
+	 * @param static|\Kirby\Cms\File|string $object
 	 * @return $this
 	 * @throws \Kirby\Exception\InvalidArgumentException When no `File` or `Files` object or an ID of an existing file is passed
 	 */
-	public function add($object)
+	public function add($object): static
 	{
 		// add a files collection
 		if ($object instanceof self) {
-			$this->data = array_merge($this->data, $object->data);
+			$this->data = [...$this->data, ...$object->data];
 
 		// add a file by id
 		} elseif (
@@ -60,7 +68,9 @@ class Files extends Collection
 		// give a useful error message on invalid input;
 		// silently ignore "empty" values for compatibility with existing setups
 		} elseif (in_array($object, [null, false, true], true) !== true) {
-			throw new InvalidArgumentException('You must pass a Files or File object or an ID of an existing file to the Files collection');
+			throw new InvalidArgumentException(
+				message: 'You must pass a Files or File object or an ID of an existing file to the Files collection'
+			);
 		}
 
 		return $this;
@@ -74,7 +84,7 @@ class Files extends Collection
 	 * @param int $offset Sorting offset
 	 * @return $this
 	 */
-	public function changeSort(array $files, int $offset = 0)
+	public function changeSort(array $files, int $offset = 0): static
 	{
 		foreach ($files as $filename) {
 			if ($file = $this->get($filename)) {
@@ -87,20 +97,51 @@ class Files extends Collection
 	}
 
 	/**
-	 * Creates a files collection from an array of props
+	 * Deletes the files with the given IDs
+	 * if they exist in the collection
 	 *
-	 * @param array $files
-	 * @param \Kirby\Cms\Model $parent
-	 * @return static
+	 * @throws \Kirby\Exception\Exception If not all files could be deleted
 	 */
-	public static function factory(array $files, Model $parent)
+	public function delete(array $ids): void
 	{
+		$exceptions = [];
+
+		// delete all pages and collect errors
+		foreach ($ids as $id) {
+			try {
+				$model = $this->get($id);
+
+				if ($model instanceof File === false) {
+					throw new NotFoundException(
+						key: 'file.undefined'
+					);
+				}
+
+				$model->delete();
+			} catch (Throwable $e) {
+				$exceptions[$id] = $e;
+			}
+		}
+
+		if ($exceptions !== []) {
+			throw new Exception(
+				key: 'file.delete.multiple',
+				details: $exceptions
+			);
+		}
+	}
+
+	/**
+	 * Creates a files collection from an array of props
+	 */
+	public static function factory(
+		array $files,
+		Page|Site|User $parent
+	): static {
 		$collection = new static([], $parent);
-		$kirby      = $parent->kirby();
 
 		foreach ($files as $props) {
 			$props['collection'] = $collection;
-			$props['kirby']      = $kirby;
 			$props['parent']     = $parent;
 
 			$file = File::factory($props);
@@ -114,11 +155,8 @@ class Files extends Collection
 	/**
 	 * Finds a file by its filename
 	 * @internal Use `$files->find()` instead
-	 *
-	 * @param string $key
-	 * @return \Kirby\Cms\File|null
 	 */
-	public function findByKey(string $key)
+	public function findByKey(string $key): File|null
 	{
 		if ($file = $this->findByUuid($key, 'file')) {
 			return $file;
@@ -136,9 +174,8 @@ class Files extends Collection
 	 * @param string|null|false $locale Locale for number formatting,
 	 *                                  `null` for the current locale,
 	 *                                  `false` to disable number formatting
-	 * @return string
 	 */
-	public function niceSize($locale = null): string
+	public function niceSize(string|false|null $locale = null): string
 	{
 		return F::niceSize($this->size(), $locale);
 	}
@@ -147,8 +184,6 @@ class Files extends Collection
 	 * Returns the raw size for all
 	 * files in the collection
 	 * @since 3.6.0
-	 *
-	 * @return int
 	 */
 	public function size(): int
 	{
@@ -158,10 +193,8 @@ class Files extends Collection
 	/**
 	 * Returns the collection sorted by
 	 * the sort number and the filename
-	 *
-	 * @return static
 	 */
-	public function sorted()
+	public function sorted(): static
 	{
 		return $this->sort('sort', 'asc', 'filename', 'asc');
 	}
@@ -169,10 +202,9 @@ class Files extends Collection
 	/**
 	 * Filter all files by the given template
 	 *
-	 * @param null|string|array $template
 	 * @return $this|static
 	 */
-	public function template($template)
+	public function template(string|array|null $template): static
 	{
 		if (empty($template) === true) {
 			return $this;

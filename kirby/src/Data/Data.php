@@ -4,6 +4,7 @@ namespace Kirby\Data;
 
 use Kirby\Exception\Exception;
 use Kirby\Filesystem\F;
+use Throwable;
 
 /**
  * The `Data` class provides readers and
@@ -38,11 +39,11 @@ class Data
 	 * All registered handlers
 	 */
 	public static array $handlers = [
-		'json' => 'Kirby\Data\Json',
-		'php'  => 'Kirby\Data\PHP',
-		'txt'  => 'Kirby\Data\Txt',
-		'xml'  => 'Kirby\Data\Xml',
-		'yaml' => 'Kirby\Data\Yaml',
+		'json' => Json::class,
+		'php'  => PHP::class,
+		'txt'  => Txt::class,
+		'xml'  => Xml::class,
+		'yaml' => Yaml::class
 	];
 
 	/**
@@ -54,19 +55,24 @@ class Data
 		$type = strtolower($type);
 
 		// find a handler or alias
-		$alias   = static::$aliases[$type] ?? null;
-		$handler =
-			static::$handlers[$type] ??
-			($alias ? static::$handlers[$alias] ?? null : null);
+		$handler = static::$handlers[$type] ?? null;
+
+		if ($alias = static::$aliases[$type] ?? null) {
+			$handler ??= static::$handlers[$alias] ?? null;
+		}
 
 		if ($handler === null || class_exists($handler) === false) {
-			throw new Exception('Missing handler for type: "' . $type . '"');
+			throw new Exception(
+				message: 'Missing handler for type: "' . $type . '"'
+			);
 		}
 
 		$handler = new $handler();
 
 		if ($handler instanceof Handler === false) {
-			throw new Exception('Handler for type: "' . $type . '" needs to extend Kirby\\Data\\Handler');
+			throw new Exception(
+				message: 'Handler for type: "' . $type . '" needs to extend ' . Handler::class
+			);
 		}
 
 		return $handler;
@@ -75,9 +81,20 @@ class Data
 	/**
 	 * Decodes data with the specified handler
 	 */
-	public static function decode($string, string $type): array
-	{
-		return static::handler($type)->decode($string);
+	public static function decode(
+		$string,
+		string $type,
+		bool $fail = true
+	): array {
+		try {
+			return static::handler($type)->decode($string);
+		} catch (Throwable $e) {
+			if ($fail === false) {
+				return [];
+			}
+
+			throw $e;
+		}
 	}
 
 	/**
@@ -93,9 +110,22 @@ class Data
 	 * the data handler is automatically chosen by
 	 * the extension if not specified
 	 */
-	public static function read(string $file, string|null $type = null): array
-	{
-		return static::handler($type ?? F::extension($file))->read($file);
+	public static function read(
+		string $file,
+		string|null $type = null,
+		bool $fail = true
+	): array {
+		try {
+			$type  ??= F::extension($file);
+			$handler = static::handler($type);
+			return $handler->read($file);
+		} catch (Throwable $e) {
+			if ($fail === false) {
+				return [];
+			}
+
+			throw $e;
+		}
 	}
 
 	/**
@@ -108,6 +138,8 @@ class Data
 		$data = [],
 		string|null $type = null
 	): bool {
-		return static::handler($type ?? F::extension($file))->write($file, $data);
+		$type  ??= F::extension($file);
+		$handler = static::handler($type);
+		return $handler->write($file, $data);
 	}
 }

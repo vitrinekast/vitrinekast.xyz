@@ -2,8 +2,11 @@
 
 namespace Kirby\Cms;
 
+use Kirby\Exception\Exception;
 use Kirby\Exception\InvalidArgumentException;
+use Kirby\Exception\NotFoundException;
 use Kirby\Uuid\HasUuids;
+use Throwable;
 
 /**
  * The `$pages` object refers to a
@@ -20,6 +23,8 @@ use Kirby\Uuid\HasUuids;
  * @link      https://getkirby.com
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
+ *
+ * @extends \Kirby\Cms\Collection<\Kirby\Cms\Page>
  */
 class Pages extends Collection
 {
@@ -27,24 +32,23 @@ class Pages extends Collection
 
 	/**
 	 * Cache for the index only listed and unlisted pages
-	 *
-	 * @var \Kirby\Cms\Pages|null
 	 */
-	protected $index = null;
+	protected Pages|null $index = null;
 
 	/**
 	 * Cache for the index all statuses also including drafts
-	 *
-	 * @var \Kirby\Cms\Pages|null
 	 */
-	protected $indexWithDrafts = null;
+	protected Pages|null $indexWithDrafts = null;
 
 	/**
 	 * All registered pages methods
-	 *
-	 * @var array
 	 */
-	public static $methods = [];
+	public static array $methods = [];
+
+	/**
+	 * @var \Kirby\Cms\Page|\Kirby\Cms\Site|null
+	 */
+	protected object|null $parent = null;
 
 	/**
 	 * Adds a single page or
@@ -55,13 +59,13 @@ class Pages extends Collection
 	 * @return $this
 	 * @throws \Kirby\Exception\InvalidArgumentException When no `Page` or `Pages` object or an ID of an existing page is passed
 	 */
-	public function add($object)
+	public function add($object): static
 	{
 		$site = App::instance()->site();
 
 		// add a pages collection
 		if ($object instanceof self) {
-			$this->data = array_merge($this->data, $object->data);
+			$this->data = [...$this->data, ...$object->data];
 
 		// add a page by id
 		} elseif (
@@ -77,7 +81,9 @@ class Pages extends Collection
 		// give a useful error message on invalid input;
 		// silently ignore "empty" values for compatibility with existing setups
 		} elseif (in_array($object, [null, false, true], true) !== true) {
-			throw new InvalidArgumentException('You must pass a Pages or Page object or an ID of an existing page to the Pages collection');
+			throw new InvalidArgumentException(
+				message: 'You must pass a Pages or Page object or an ID of an existing page to the Pages collection'
+			);
 		}
 
 		return $this;
@@ -85,22 +91,18 @@ class Pages extends Collection
 
 	/**
 	 * Returns all audio files of all children
-	 *
-	 * @return \Kirby\Cms\Files
 	 */
-	public function audio()
+	public function audio(): Files
 	{
 		return $this->files()->filter('type', 'audio');
 	}
 
 	/**
 	 * Returns all children for each page in the array
-	 *
-	 * @return \Kirby\Cms\Pages
 	 */
-	public function children()
+	public function children(): static
 	{
-		$children = new Pages([]);
+		$children = new static([]);
 
 		foreach ($this->data as $page) {
 			foreach ($page->children() as $childKey => $child) {
@@ -113,32 +115,61 @@ class Pages extends Collection
 
 	/**
 	 * Returns all code files of all children
-	 *
-	 * @return \Kirby\Cms\Files
 	 */
-	public function code()
+	public function code(): Files
 	{
 		return $this->files()->filter('type', 'code');
 	}
 
 	/**
-	 * Returns all documents of all children
+	 * Deletes the pages with the given IDs
+	 * if they exist in the collection
 	 *
-	 * @return \Kirby\Cms\Files
+	 * @throws \Kirby\Exception\Exception If not all pages could be deleted
 	 */
-	public function documents()
+	public function delete(array $ids): void
+	{
+		$exceptions = [];
+
+		// delete all pages and collect errors
+		foreach ($ids as $id) {
+			try {
+				$model = $this->get($id);
+
+				if ($model instanceof Page === false) {
+					throw new NotFoundException(
+						key: 'page.undefined',
+					);
+				}
+
+				$model->delete();
+			} catch (Throwable $e) {
+				$exceptions[$id] = $e;
+			}
+		}
+
+		if ($exceptions !== []) {
+			throw new Exception(
+				key: 'page.delete.multiple',
+				details: $exceptions
+			);
+		}
+	}
+
+	/**
+	 * Returns all documents of all children
+	 */
+	public function documents(): Files
 	{
 		return $this->files()->filter('type', 'document');
 	}
 
 	/**
 	 * Fetch all drafts for all pages in the collection
-	 *
-	 * @return \Kirby\Cms\Pages
 	 */
-	public function drafts()
+	public function drafts(): static
 	{
-		$drafts = new Pages([]);
+		$drafts = new static([]);
 
 		foreach ($this->data as $page) {
 			foreach ($page->drafts() as $draftKey => $draft) {
@@ -151,17 +182,14 @@ class Pages extends Collection
 
 	/**
 	 * Creates a pages collection from an array of props
-	 *
-	 * @param array $pages
-	 * @param \Kirby\Cms\Model|null $model
-	 * @param bool $draft
-	 * @return static
 	 */
-	public static function factory(array $pages, Model $model = null, bool $draft = false)
-	{
+	public static function factory(
+		array $pages,
+		Page|Site|null $model = null,
+		bool|null $draft = null
+	): static {
 		$model  ??= App::instance()->site();
 		$children = new static([], $model);
-		$kirby    = $model->kirby();
 
 		if ($model instanceof Page) {
 			$parent = $model;
@@ -172,10 +200,9 @@ class Pages extends Collection
 		}
 
 		foreach ($pages as $props) {
-			$props['kirby']   = $kirby;
 			$props['parent']  = $parent;
 			$props['site']    = $site;
-			$props['isDraft'] = $draft;
+			$props['isDraft'] = $draft ?? $props['isDraft'] ?? $props['draft'] ?? false;
 
 			$page = Page::factory($props);
 
@@ -187,10 +214,8 @@ class Pages extends Collection
 
 	/**
 	 * Returns all files of all children
-	 *
-	 * @return \Kirby\Cms\Files
 	 */
-	public function files()
+	public function files(): Files
 	{
 		$files = new Files([], $this->parent);
 
@@ -206,11 +231,8 @@ class Pages extends Collection
 	/**
 	 * Finds a page by its ID or URI
 	 * @internal Use `$pages->find()` instead
-	 *
-	 * @param string|null $key
-	 * @return \Kirby\Cms\Page|null
 	 */
-	public function findByKey(string|null $key = null)
+	public function findByKey(string|null $key = null): Page|null
 	{
 		if ($key === null) {
 			return null;
@@ -224,7 +246,7 @@ class Pages extends Collection
 		$key = trim($key, '/');
 
 		// strip extensions from the id
-		if (strpos($key, '.') !== false) {
+		if (str_contains($key, '.') === true) {
 			$info = pathinfo($key);
 
 			if ($info['dirname'] !== '.') {
@@ -239,17 +261,21 @@ class Pages extends Collection
 			return $page;
 		}
 
-		// try to find the page by its (translated) URI by stepping through the page tree
+		$kirby     = App::instance();
+		$multiLang = $kirby->multilang();
+
+		// try to find the page by its (translated) URI
+		// by stepping through the page tree
 		$start = $this->parent instanceof Page ? $this->parent->id() : '';
-		if ($page = $this->findByKeyRecursive($key, $start, App::instance()->multilang())) {
+		if ($page = $this->findByKeyRecursive($key, $start, $multiLang)) {
 			return $page;
 		}
 
 		// for secondary languages, try the full translated URI
 		// (for collections without parent that won't have a result above)
 		if (
-			App::instance()->multilang() === true &&
-			App::instance()->language()->isDefault() === false &&
+			$multiLang === true &&
+			$kirby->language()->isDefault() === false &&
 			$page = $this->findBy('uri', $key)
 		) {
 			return $page;
@@ -260,23 +286,29 @@ class Pages extends Collection
 
 	/**
 	 * Finds a child or child of a child recursively
-	 *
-	 * @return mixed
 	 */
-	protected function findByKeyRecursive(string $id, string $startAt = null, bool $multiLang = false)
-	{
+	protected function findByKeyRecursive(
+		string $id,
+		string|null $startAt = null,
+		bool $multiLang = false
+	): Page|null {
 		$path       = explode('/', $id);
 		$item       = null;
 		$query      = $startAt;
 
 		foreach ($path as $key) {
-			$collection = $item ? $item->children() : $this;
-			$query = ltrim($query . '/' . $key, '/');
-			$item  = $collection->get($query) ?? null;
+			$collection = $item?->children() ?? $this;
+			$query      = ltrim($query . '/' . $key, '/');
+			$item       = $collection->get($query) ?? null;
 
-			if ($item === null && $multiLang === true && !App::instance()->language()->isDefault()) {
+			if (
+				$item === null &&
+				$multiLang === true &&
+				App::instance()->language()->isDefault() === false
+			) {
 				if (count($path) > 1 || $collection->parent()) {
-					// either the desired path is definitely not a slug, or collection is the children of another collection
+					// either the desired path is definitely not a slug,
+					// or collection is the children of another collection
 					$item = $collection->findBy('slug', $key);
 				} else {
 					// desired path _could_ be a slug or a "top level" uri
@@ -294,10 +326,8 @@ class Pages extends Collection
 
 	/**
 	 * Finds the currently open page
-	 *
-	 * @return \Kirby\Cms\Page|null
 	 */
-	public function findOpen()
+	public function findOpen(): Page|null
 	{
 		return $this->findBy('isOpen', true);
 	}
@@ -305,12 +335,8 @@ class Pages extends Collection
 	/**
 	 * Custom getter that is able to find
 	 * extension pages
-	 *
-	 * @param string $key
-	 * @param mixed $default
-	 * @return \Kirby\Cms\Page|null
 	 */
-	public function get($key, $default = null)
+	public function get(string $key, mixed $default = null): Page|null
 	{
 		if ($key === null) {
 			return null;
@@ -325,10 +351,8 @@ class Pages extends Collection
 
 	/**
 	 * Returns all images of all children
-	 *
-	 * @return \Kirby\Cms\Files
 	 */
-	public function images()
+	public function images(): Files
 	{
 		return $this->files()->filter('type', 'image');
 	}
@@ -336,20 +360,17 @@ class Pages extends Collection
 	/**
 	 * Create a recursive flat index of all
 	 * pages and subpages, etc.
-	 *
-	 * @param bool $drafts
-	 * @return \Kirby\Cms\Pages
 	 */
-	public function index(bool $drafts = false)
+	public function index(bool $drafts = false): static
 	{
 		// get object property by cache mode
 		$index = $drafts === true ? $this->indexWithDrafts : $this->index;
 
-		if ($index instanceof self) {
+		if ($index instanceof Pages) {
 			return $index;
 		}
 
-		$index = new Pages([]);
+		$index = new static([]);
 
 		foreach ($this->data as $pageKey => $page) {
 			$index->data[$pageKey] = $page;
@@ -371,20 +392,16 @@ class Pages extends Collection
 
 	/**
 	 * Returns all listed pages in the collection
-	 *
-	 * @return \Kirby\Cms\Pages
 	 */
-	public function listed()
+	public function listed(): static
 	{
 		return $this->filter('isListed', '==', true);
 	}
 
 	/**
 	 * Returns all unlisted pages in the collection
-	 *
-	 * @return \Kirby\Cms\Pages
 	 */
-	public function unlisted()
+	public function unlisted(): static
 	{
 		return $this->filter('isUnlisted', '==', true);
 	}
@@ -392,10 +409,9 @@ class Pages extends Collection
 	/**
 	 * Include all given items in the collection
 	 *
-	 * @param mixed ...$args
 	 * @return $this|static
 	 */
-	public function merge(...$args)
+	public function merge(string|Pages|Page|array ...$args): static
 	{
 		// merge multiple arguments at once
 		if (count($args) > 1) {
@@ -416,9 +432,9 @@ class Pages extends Collection
 		}
 
 		// merge an entire collection
-		if ($args[0] instanceof self) {
-			$collection = clone $this;
-			$collection->data = array_merge($collection->data, $args[0]->data);
+		if ($args[0] instanceof Pages) {
+			$collection       = clone $this;
+			$collection->data = [...$collection->data, ...$args[0]->data];
 			return $collection;
 		}
 
@@ -448,10 +464,9 @@ class Pages extends Collection
 	 * Filter all pages by excluding the given template
 	 * @since 3.3.0
 	 *
-	 * @param string|array $templates
-	 * @return \Kirby\Cms\Pages
+	 * @return $this|static
 	 */
-	public function notTemplate($templates)
+	public function notTemplate(string|array|null $templates): static
 	{
 		if (empty($templates) === true) {
 			return $this;
@@ -461,27 +476,21 @@ class Pages extends Collection
 			$templates = [$templates];
 		}
 
-		return $this->filter(function ($page) use ($templates) {
-			return !in_array($page->intendedTemplate()->name(), $templates);
-		});
+		return $this->filter(
+			fn ($page) => in_array($page->intendedTemplate()->name(), $templates, true) === false
+		);
 	}
 
 	/**
 	 * Returns an array with all page numbers
-	 *
-	 * @return array
 	 */
 	public function nums(): array
 	{
 		return $this->pluck('num');
 	}
 
-	/*
-	 * Returns all listed and unlisted pages in the collection
-	 *
-	 * @return \Kirby\Cms\Pages
-	 */
-	public function published()
+	// Returns all listed and unlisted pages in the collection
+	public function published(): static
 	{
 		return $this->filter('isDraft', '==', false);
 	}
@@ -489,10 +498,9 @@ class Pages extends Collection
 	/**
 	 * Filter all pages by the given template
 	 *
-	 * @param string|array $templates
-	 * @return \Kirby\Cms\Pages
+	 * @return $this|static
 	 */
-	public function template($templates)
+	public function template(string|array|null $templates): static
 	{
 		if (empty($templates) === true) {
 			return $this;
@@ -502,17 +510,15 @@ class Pages extends Collection
 			$templates = [$templates];
 		}
 
-		return $this->filter(function ($page) use ($templates) {
-			return in_array($page->intendedTemplate()->name(), $templates);
-		});
+		return $this->filter(
+			fn ($page) => in_array($page->intendedTemplate()->name(), $templates, true)
+		);
 	}
 
 	/**
 	 * Returns all video files of all children
-	 *
-	 * @return \Kirby\Cms\Files
 	 */
-	public function videos()
+	public function videos(): Files
 	{
 		return $this->files()->filter('type', 'video');
 	}

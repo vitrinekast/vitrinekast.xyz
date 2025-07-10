@@ -3,13 +3,16 @@
 namespace Kirby\Cms;
 
 use Closure;
+use Kirby\Content\Field;
 use Kirby\Exception\DuplicateException;
+use Kirby\Filesystem\Asset;
 use Kirby\Filesystem\Dir;
 use Kirby\Filesystem\F;
 use Kirby\Filesystem\Mime;
 use Kirby\Form\Field as FormField;
 use Kirby\Image\Image;
-use Kirby\Panel\Panel;
+use Kirby\Plugin\License;
+use Kirby\Plugin\Plugin;
 use Kirby\Text\KirbyTag;
 use Kirby\Toolkit\A;
 use Kirby\Toolkit\Collection as ToolkitCollection;
@@ -28,23 +31,20 @@ trait AppPlugins
 {
 	/**
 	 * A list of all registered plugins
-	 *
-	 * @var array
 	 */
-	protected static $plugins = [];
+	protected static array $plugins = [];
 
 	/**
 	 * The extension registry
-	 *
-	 * @var array
 	 */
-	protected $extensions = [
+	protected array $extensions = [
 		// load options first to make them available for the rest
 		'options' => [],
 
 		// other plugin types
 		'api' => [],
 		'areas' => [],
+		'assetMethods' => [],
 		'authChallenges' => [],
 		'blockMethods' => [],
 		'blockModels' => [],
@@ -59,6 +59,7 @@ trait AppPlugins
 		'collectionMethods' => [],
 		'fieldMethods' => [],
 		'fileMethods' => [],
+		'filePreviews' => [],
 		'fileTypes' => [],
 		'filesMethods' => [],
 		'fields' => [],
@@ -75,6 +76,8 @@ trait AppPlugins
 		'sections' => [],
 		'siteMethods' => [],
 		'snippets' => [],
+		'structureMethods' => [],
+		'structureObjectMethods' => [],
 		'tags' => [],
 		'templates' => [],
 		'thirdParty' => [],
@@ -88,21 +91,18 @@ trait AppPlugins
 	/**
 	 * Flag when plugins have been loaded
 	 * to not load them again
-	 *
-	 * @var bool
 	 */
-	protected $pluginsAreLoaded = false;
+	protected bool $pluginsAreLoaded = false;
 
 	/**
 	 * Register all given extensions
 	 *
-	 * @internal
-	 * @param array $extensions
-	 * @param \Kirby\Cms\Plugin $plugin|null The plugin which defined those extensions
-	 * @return array
+	 * @param \Kirby\Plugin\Plugin|null $plugin The plugin which defined those extensions
 	 */
-	public function extend(array $extensions, Plugin $plugin = null): array
-	{
+	public function extend(
+		array $extensions,
+		Plugin|null $plugin = null
+	): array {
 		foreach ($this->extensions as $type => $registered) {
 			if (isset($extensions[$type]) === true) {
 				$this->{'extend' . $type}($extensions[$type], $plugin);
@@ -114,18 +114,19 @@ trait AppPlugins
 
 	/**
 	 * Registers API extensions
-	 *
-	 * @param array|bool $api
-	 * @return array
 	 */
-	protected function extendApi($api): array
+	protected function extendApi(array|bool $api): array
 	{
 		if (is_array($api) === true) {
 			if (($api['routes'] ?? []) instanceof Closure) {
 				$api['routes'] = $api['routes']($this);
 			}
 
-			return $this->extensions['api'] = A::merge($this->extensions['api'], $api, A::MERGE_APPEND);
+			return $this->extensions['api'] = A::merge(
+				$this->extensions['api'],
+				$api,
+				A::MERGE_APPEND
+			);
 		}
 
 		return $this->extensions['api'];
@@ -133,9 +134,6 @@ trait AppPlugins
 
 	/**
 	 * Registers additional custom Panel areas
-	 *
-	 * @param array $areas
-	 * @return array
 	 */
 	protected function extendAreas(array $areas): array
 	{
@@ -148,153 +146,172 @@ trait AppPlugins
 	}
 
 	/**
+	 * Registers additional asset methods
+	 */
+	protected function extendAssetMethods(array $methods): array
+	{
+		return $this->extensions['assetMethods'] = Asset::$methods = [
+			...Asset::$methods,
+			...$methods
+		];
+	}
+
+	/**
 	 * Registers additional authentication challenges
-	 *
-	 * @param array $challenges
-	 * @return array
 	 */
 	protected function extendAuthChallenges(array $challenges): array
 	{
-		return $this->extensions['authChallenges'] = Auth::$challenges = array_merge(Auth::$challenges, $challenges);
+		return $this->extensions['authChallenges'] = Auth::$challenges = [
+			...Auth::$challenges,
+			...$challenges
+		];
 	}
 
 	/**
 	 * Registers additional block methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendBlockMethods(array $methods): array
 	{
-		return $this->extensions['blockMethods'] = Block::$methods = array_merge(Block::$methods, $methods);
+		return $this->extensions['blockMethods'] = Block::$methods = [
+			...Block::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional block models
-	 *
-	 * @param array $models
-	 * @return array
 	 */
 	protected function extendBlockModels(array $models): array
 	{
-		return $this->extensions['blockModels'] = Block::$models = array_merge(Block::$models, $models);
+		return $this->extensions['blockModels'] = Block::extendModels($models);
 	}
 
 	/**
 	 * Registers additional blocks methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendBlocksMethods(array $methods): array
 	{
-		return $this->extensions['blockMethods'] = Blocks::$methods = array_merge(Blocks::$methods, $methods);
+		return $this->extensions['blockMethods'] = Blocks::$methods = [
+			...Blocks::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional blueprints
-	 *
-	 * @param array $blueprints
-	 * @return array
 	 */
 	protected function extendBlueprints(array $blueprints): array
 	{
-		return $this->extensions['blueprints'] = array_merge($this->extensions['blueprints'], $blueprints);
+		return $this->extensions['blueprints'] = [
+			...$this->extensions['blueprints'],
+			...$blueprints
+		];
 	}
 
 	/**
 	 * Registers additional cache types
-	 *
-	 * @param array $cacheTypes
-	 * @return array
 	 */
 	protected function extendCacheTypes(array $cacheTypes): array
 	{
-		return $this->extensions['cacheTypes'] = array_merge($this->extensions['cacheTypes'], $cacheTypes);
+		return $this->extensions['cacheTypes'] = [
+			...$this->extensions['cacheTypes'],
+			...$cacheTypes
+		];
 	}
 
 	/**
 	 * Registers additional CLI commands
-	 *
-	 * @param array $commands
-	 * @return array
 	 */
 	protected function extendCommands(array $commands): array
 	{
-		return $this->extensions['commands'] = array_merge($this->extensions['commands'], $commands);
+		return $this->extensions['commands'] = [
+			...$this->extensions['commands'],
+			...$commands
+		];
 	}
 
 	/**
 	 * Registers additional collection filters
-	 *
-	 * @param array $filters
-	 * @return array
 	 */
 	protected function extendCollectionFilters(array $filters): array
 	{
-		return $this->extensions['collectionFilters'] = ToolkitCollection::$filters = array_merge(ToolkitCollection::$filters, $filters);
+		return $this->extensions['collectionFilters'] = ToolkitCollection::$filters = [
+			...ToolkitCollection::$filters,
+			...$filters
+		];
 	}
 
 	/**
 	 * Registers additional collection methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendCollectionMethods(array $methods): array
 	{
-		return $this->extensions['collectionMethods'] = Collection::$methods = array_merge(Collection::$methods, $methods);
+		return $this->extensions['collectionMethods'] = Collection::$methods = [
+			...Collection::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional collections
-	 *
-	 * @param array $collections
-	 * @return array
 	 */
 	protected function extendCollections(array $collections): array
 	{
-		return $this->extensions['collections'] = array_merge($this->extensions['collections'], $collections);
+		return $this->extensions['collections'] = [
+			...$this->extensions['collections'],
+			...$collections
+		];
 	}
 
 	/**
 	 * Registers core components
-	 *
-	 * @param array $components
-	 * @return array
 	 */
 	protected function extendComponents(array $components): array
 	{
-		return $this->extensions['components'] = array_merge($this->extensions['components'], $components);
+		return $this->extensions['components'] = [
+			...$this->extensions['components'],
+			...$components
+		];
 	}
 
 	/**
 	 * Registers additional controllers
-	 *
-	 * @param array $controllers
-	 * @return array
 	 */
 	protected function extendControllers(array $controllers): array
 	{
-		return $this->extensions['controllers'] = array_merge($this->extensions['controllers'], $controllers);
+		return $this->extensions['controllers'] = [
+			...$this->extensions['controllers'],
+			...$controllers
+		];
 	}
 
 	/**
 	 * Registers additional file methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendFileMethods(array $methods): array
 	{
-		return $this->extensions['fileMethods'] = File::$methods = array_merge(File::$methods, $methods);
+		return $this->extensions['fileMethods'] = File::$methods = [
+			...File::$methods,
+			...$methods
+		];
+	}
+
+	/**
+	 * Registers additional file preview handlers
+	 * @since 5.0.0
+	 */
+	protected function extendFilePreviews(array $previews): array
+	{
+		return $this->extensions['filePreviews'] = [
+			...$previews,
+			// make sure new previews go first, so that custom
+			// handler can override core default previews
+			...$this->extensions['filePreviews'],
+		];
 	}
 
 	/**
 	 * Registers additional custom file types and mimes
-	 *
-	 * @param array $fileTypes
-	 * @return array
 	 */
 	protected function extendFileTypes(array $fileTypes): array
 	{
@@ -311,26 +328,36 @@ trait AppPlugins
 					F::$types[$type] = [];
 				}
 
-				if (in_array($extension, F::$types[$type]) === false) {
+				if (in_array($extension, F::$types[$type], true) === false) {
 					F::$types[$type][] = $extension;
 				}
 			}
 
 			if ($mime !== null) {
+				// if `Mime::$types[$extension]` is not already an array,
+				// make it one and append the new MIME type
+				// unless it's already in the list
 				if (array_key_exists($extension, Mime::$types) === true) {
-					// if `Mime::$types[$extension]` is not already an array, make it one
-					// and append the new MIME type unless it's already in the list
-					Mime::$types[$extension] = array_unique(array_merge((array)Mime::$types[$extension], (array)$mime));
+					Mime::$types[$extension] = array_unique([
+						...(array)Mime::$types[$extension],
+						...(array)$mime
+					]);
 				} else {
 					Mime::$types[$extension] = $mime;
 				}
 			}
 
-			if ($resizable === true && in_array($extension, Image::$resizableTypes) === false) {
+			if (
+				$resizable === true &&
+				in_array($extension, Image::$resizableTypes, true) === false
+			) {
 				Image::$resizableTypes[] = $extension;
 			}
 
-			if ($viewable === true && in_array($extension, Image::$viewableTypes) === false) {
+			if (
+				$viewable === true &&
+				in_array($extension, Image::$viewableTypes, true) === false
+			) {
 				Image::$viewableTypes[] = $extension;
 			}
 		}
@@ -345,42 +372,39 @@ trait AppPlugins
 
 	/**
 	 * Registers additional files methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendFilesMethods(array $methods): array
 	{
-		return $this->extensions['filesMethods'] = Files::$methods = array_merge(Files::$methods, $methods);
+		return $this->extensions['filesMethods'] = Files::$methods = [
+			...Files::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional field methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendFieldMethods(array $methods): array
 	{
-		return $this->extensions['fieldMethods'] = Field::$methods = array_merge(Field::$methods, array_change_key_case($methods));
+		return $this->extensions['fieldMethods'] = Field::$methods = [
+			...Field::$methods,
+			...array_change_key_case($methods)
+		];
 	}
 
 	/**
 	 * Registers Panel fields
-	 *
-	 * @param array $fields
-	 * @return array
 	 */
 	protected function extendFields(array $fields): array
 	{
-		return $this->extensions['fields'] = FormField::$types = array_merge(FormField::$types, $fields);
+		return $this->extensions['fields'] = FormField::$types = [
+			...FormField::$types,
+			...$fields
+		];
 	}
 
 	/**
 	 * Registers hooks
-	 *
-	 * @param array $hooks
-	 * @return array
 	 */
 	protected function extendHooks(array $hooks): array
 	{
@@ -401,295 +425,304 @@ trait AppPlugins
 
 	/**
 	 * Registers markdown component
-	 *
-	 * @param Closure $markdown
-	 * @return Closure
 	 */
-	protected function extendMarkdown(Closure $markdown)
+	protected function extendMarkdown(Closure $markdown): Closure
 	{
 		return $this->extensions['markdown'] = $markdown;
 	}
 
 	/**
 	 * Registers additional layout methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendLayoutMethods(array $methods): array
 	{
-		return $this->extensions['layoutMethods'] = Layout::$methods = array_merge(Layout::$methods, $methods);
+		return $this->extensions['layoutMethods'] = Layout::$methods = [
+			...Layout::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional layout column methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendLayoutColumnMethods(array $methods): array
 	{
-		return $this->extensions['layoutColumnMethods'] = LayoutColumn::$methods = array_merge(LayoutColumn::$methods, $methods);
+		return $this->extensions['layoutColumnMethods'] = LayoutColumn::$methods = [
+			...LayoutColumn::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional layouts methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendLayoutsMethods(array $methods): array
 	{
-		return $this->extensions['layoutsMethods'] = Layouts::$methods = array_merge(Layouts::$methods, $methods);
+		return $this->extensions['layoutsMethods'] = Layouts::$methods = [
+			...Layouts::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional options
-	 *
-	 * @param array $options
-	 * @param \Kirby\Cms\Plugin|null $plugin
-	 * @return array
 	 */
-	protected function extendOptions(array $options, Plugin $plugin = null): array
-	{
+	protected function extendOptions(
+		array $options,
+		Plugin|null $plugin = null
+	): array {
 		if ($plugin !== null) {
 			$options = [$plugin->prefix() => $options];
 		}
 
-		return $this->extensions['options'] = $this->options = A::merge($options, $this->options, A::MERGE_REPLACE);
+		return $this->extensions['options'] = $this->options = A::merge(
+			$options,
+			$this->options,
+			A::MERGE_REPLACE
+		);
 	}
 
 	/**
 	 * Registers additional page methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendPageMethods(array $methods): array
 	{
-		return $this->extensions['pageMethods'] = Page::$methods = array_merge(Page::$methods, $methods);
+		return $this->extensions['pageMethods'] = Page::$methods = [
+			...Page::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional pages methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendPagesMethods(array $methods): array
 	{
-		return $this->extensions['pagesMethods'] = Pages::$methods = array_merge(Pages::$methods, $methods);
+		return $this->extensions['pagesMethods'] = Pages::$methods = [
+			...Pages::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional page models
-	 *
-	 * @param array $models
-	 * @return array
 	 */
 	protected function extendPageModels(array $models): array
 	{
-		return $this->extensions['pageModels'] = Page::$models = array_merge(Page::$models, $models);
+		return $this->extensions['pageModels'] = Page::extendModels($models);
 	}
 
 	/**
 	 * Registers pages
-	 *
-	 * @param array $pages
-	 * @return array
 	 */
 	protected function extendPages(array $pages): array
 	{
-		return $this->extensions['pages'] = array_merge($this->extensions['pages'], $pages);
+		return $this->extensions['pages'] = [
+			...$this->extensions['pages'],
+			...$pages
+		];
 	}
 
 	/**
 	 * Registers additional permissions
-	 *
-	 * @param array $permissions
-	 * @param \Kirby\Cms\Plugin|null $plugin
-	 * @return array
 	 */
-	protected function extendPermissions(array $permissions, Plugin $plugin = null): array
-	{
+	protected function extendPermissions(
+		array $permissions,
+		Plugin|null $plugin = null
+	): array {
 		if ($plugin !== null) {
 			$permissions = [$plugin->prefix() => $permissions];
 		}
 
-		return $this->extensions['permissions'] = Permissions::$extendedActions = array_merge(Permissions::$extendedActions, $permissions);
+		return $this->extensions['permissions'] = Permissions::$extendedActions = [
+			...Permissions::$extendedActions,
+			...$permissions
+		];
 	}
 
 	/**
 	 * Registers additional routes
-	 *
-	 * @param array|\Closure $routes
-	 * @return array
 	 */
-	protected function extendRoutes($routes): array
+	protected function extendRoutes(array|Closure $routes): array
 	{
 		if ($routes instanceof Closure) {
 			$routes = $routes($this);
 		}
 
-		return $this->extensions['routes'] = array_merge($this->extensions['routes'], $routes);
+		return $this->extensions['routes'] = [
+			...$this->extensions['routes'],
+			...$routes
+		];
 	}
 
 	/**
 	 * Registers Panel sections
-	 *
-	 * @param array $sections
-	 * @return array
 	 */
 	protected function extendSections(array $sections): array
 	{
-		return $this->extensions['sections'] = Section::$types = array_merge(Section::$types, $sections);
+		return $this->extensions['sections'] = Section::$types = [
+			...Section::$types,
+			...$sections
+		];
 	}
 
 	/**
 	 * Registers additional site methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendSiteMethods(array $methods): array
 	{
-		return $this->extensions['siteMethods'] = Site::$methods = array_merge(Site::$methods, $methods);
+		return $this->extensions['siteMethods'] = Site::$methods = [
+			...Site::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers SmartyPants component
-	 *
-	 * @param \Closure $smartypants
-	 * @return \Closure
 	 */
-	protected function extendSmartypants(Closure $smartypants)
+	protected function extendSmartypants(Closure $smartypants): Closure
 	{
 		return $this->extensions['smartypants'] = $smartypants;
 	}
 
 	/**
 	 * Registers additional snippets
-	 *
-	 * @param array $snippets
-	 * @return array
 	 */
 	protected function extendSnippets(array $snippets): array
 	{
-		return $this->extensions['snippets'] = array_merge($this->extensions['snippets'], $snippets);
+		return $this->extensions['snippets'] = [
+			...$this->extensions['snippets'],
+			...$snippets
+		];
+	}
+
+	/**
+	 * Registers additional structure methods
+	 */
+	protected function extendStructureMethods(array $methods): array
+	{
+		return $this->extensions['structureMethods'] = Structure::$methods = [
+			...Structure::$methods,
+			...$methods
+		];
+	}
+
+	/**
+	 * Registers additional structure object methods
+	 */
+	protected function extendStructureObjectMethods(array $methods): array
+	{
+		return $this->extensions['structureObjectMethods'] = StructureObject::$methods = [
+			...StructureObject::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional KirbyTags
-	 *
-	 * @param array $tags
-	 * @return array
 	 */
 	protected function extendTags(array $tags): array
 	{
-		return $this->extensions['tags'] = KirbyTag::$types = array_merge(KirbyTag::$types, array_change_key_case($tags));
+		return $this->extensions['tags'] = KirbyTag::$types = [
+			...KirbyTag::$types,
+			...array_change_key_case($tags)
+		];
 	}
 
 	/**
 	 * Registers additional templates
-	 *
-	 * @param array $templates
-	 * @return array
 	 */
 	protected function extendTemplates(array $templates): array
 	{
-		return $this->extensions['templates'] = array_merge($this->extensions['templates'], $templates);
+		return $this->extensions['templates'] = [
+			...$this->extensions['templates'],
+			...$templates
+		];
 	}
 
 	/**
 	 * Registers translations
-	 *
-	 * @param array $translations
-	 * @return array
 	 */
 	protected function extendTranslations(array $translations): array
 	{
-		return $this->extensions['translations'] = array_replace_recursive($this->extensions['translations'], $translations);
+		return $this->extensions['translations'] = array_replace_recursive(
+			$this->extensions['translations'],
+			$translations
+		);
 	}
 
 	/**
 	 * Add third party extensions to the registry
 	 * so they can be used as plugins for plugins
 	 * for example.
-	 *
-	 * @param array $extensions
-	 * @return array
 	 */
 	protected function extendThirdParty(array $extensions): array
 	{
-		return $this->extensions['thirdParty'] = array_replace_recursive($this->extensions['thirdParty'], $extensions);
+		return $this->extensions['thirdParty'] = array_replace_recursive(
+			$this->extensions['thirdParty'],
+			$extensions
+		);
 	}
 
 	/**
 	 * Registers additional user methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendUserMethods(array $methods): array
 	{
-		return $this->extensions['userMethods'] = User::$methods = array_merge(User::$methods, $methods);
+		return $this->extensions['userMethods'] = User::$methods = [
+			...User::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional user models
-	 *
-	 * @param array $models
-	 * @return array
 	 */
 	protected function extendUserModels(array $models): array
 	{
-		return $this->extensions['userModels'] = User::$models = array_merge(User::$models, $models);
+		return $this->extensions['userModels'] = User::extendModels($models);
 	}
 
 	/**
 	 * Registers additional users methods
-	 *
-	 * @param array $methods
-	 * @return array
 	 */
 	protected function extendUsersMethods(array $methods): array
 	{
-		return $this->extensions['usersMethods'] = Users::$methods = array_merge(Users::$methods, $methods);
+		return $this->extensions['usersMethods'] = Users::$methods = [
+			...Users::$methods,
+			...$methods
+		];
 	}
 
 	/**
 	 * Registers additional custom validators
-	 *
-	 * @param array $validators
-	 * @return array
 	 */
 	protected function extendValidators(array $validators): array
 	{
-		return $this->extensions['validators'] = V::$validators = array_merge(V::$validators, $validators);
+		return $this->extensions['validators'] = V::$validators = [
+			...V::$validators,
+			...$validators
+		];
 	}
 
 	/**
 	 * Returns a given extension by type and name
 	 *
-	 * @internal
 	 * @param string $type i.e. `'hooks'`
 	 * @param string $name i.e. `'page.delete:before'`
-	 * @param mixed $fallback
-	 * @return mixed
 	 */
-	public function extension(string $type, string $name, $fallback = null)
-	{
+	public function extension(
+		string $type,
+		string $name,
+		mixed $fallback = null
+	): mixed {
 		return $this->extensions($type)[$name] ?? $fallback;
 	}
 
 	/**
 	 * Returns the extensions registry
-	 *
-	 * @internal
-	 * @param string|null $type
-	 * @return array
 	 */
-	public function extensions(string $type = null)
+	public function extensions(string|null $type = null): array
 	{
 		if ($type === null) {
 			return $this->extensions;
@@ -703,7 +736,7 @@ trait AppPlugins
 	 * This is only used for models for now, but
 	 * could be extended later
 	 */
-	protected function extensionsFromFolders()
+	protected function extensionsFromFolders(): void
 	{
 		$models = [];
 
@@ -726,10 +759,8 @@ trait AppPlugins
 	 * Register extensions that could be located in
 	 * the options array. I.e. hooks and routes can be
 	 * setup from the config.
-	 *
-	 * @return void
 	 */
-	protected function extensionsFromOptions()
+	protected function extensionsFromOptions(): void
 	{
 		// register routes and hooks from options
 		$this->extend([
@@ -741,10 +772,8 @@ trait AppPlugins
 
 	/**
 	 * Apply all plugin extensions
-	 *
-	 * @return void
 	 */
-	protected function extensionsFromPlugins()
+	protected function extensionsFromPlugins(): void
 	{
 		// register all their extensions
 		foreach ($this->plugins() as $plugin) {
@@ -758,22 +787,22 @@ trait AppPlugins
 
 	/**
 	 * Apply all passed extensions
-	 *
-	 * @param array $props
-	 * @return void
 	 */
-	protected function extensionsFromProps(array $props)
+	protected function extensionsFromProps(array $props): void
 	{
 		$this->extend($props);
 	}
 
 	/**
 	 * Apply all default extensions
-	 *
-	 * @return void
 	 */
-	protected function extensionsFromSystem()
+	protected function extensionsFromSystem(): void
 	{
+		// Always start with fresh fields and sections
+		// from the core and add plugins on top of that
+		FormField::$types = [];
+		Section::$types   = [];
+
 		// mixins
 		FormField::$mixins = $this->core->fieldMixins();
 		Section::$mixins   = $this->core->sectionMixins();
@@ -789,8 +818,9 @@ trait AppPlugins
 		$this->extendCacheTypes($this->core->cacheTypes());
 		$this->extendComponents($this->core->components());
 		$this->extendBlueprints($this->core->blueprints());
-		$this->extendFields($this->core->fields());
 		$this->extendFieldMethods($this->core->fieldMethods());
+		$this->extendFields($this->core->fields());
+		$this->extendFilePreviews($this->core->filePreviews());
 		$this->extendSections($this->core->sections());
 		$this->extendSnippets($this->core->snippets());
 		$this->extendTags($this->core->kirbyTags());
@@ -800,9 +830,6 @@ trait AppPlugins
 	/**
 	 * Checks if a native component was extended
 	 * @since 3.7.0
-	 *
-	 * @param string $component
-	 * @return bool
 	 */
 	public function isNativeComponent(string $component): bool
 	{
@@ -812,11 +839,8 @@ trait AppPlugins
 	/**
 	 * Returns the native implementation
 	 * of a core component
-	 *
-	 * @param string $component
-	 * @return \Closure|false
 	 */
-	public function nativeComponent(string $component)
+	public function nativeComponent(string $component): Closure|false
 	{
 		return $this->core->components()[$component] ?? false;
 	}
@@ -824,25 +848,37 @@ trait AppPlugins
 	/**
 	 * Kirby plugin factory and getter
 	 *
-	 * @param string $name
 	 * @param array|null $extends If null is passed it will be used as getter. Otherwise as factory.
-	 * @return \Kirby\Cms\Plugin|null
 	 * @throws \Kirby\Exception\DuplicateException
 	 */
-	public static function plugin(string $name, array $extends = null)
-	{
+	public static function plugin(
+		string $name,
+		array|null $extends = null,
+		array $info = [],
+		string|null $root = null,
+		string|null $version = null,
+		Closure|string|array|null $license = null,
+	): Plugin|null {
 		if ($extends === null) {
 			return static::$plugins[$name] ?? null;
 		}
 
-		// get the correct root for the plugin
-		$extends['root'] = $extends['root'] ?? dirname(debug_backtrace()[0]['file']);
+		$plugin = new Plugin(
+			name:    $name,
+			extends: $extends,
+			info:    $info,
+			license: $license,
+			// TODO: Remove fallback to $extends in v7
+			root:    $root ?? $extends['root'] ?? dirname(debug_backtrace()[0]['file']),
+			version: $version
+		);
 
-		$plugin = new Plugin($name, $extends);
-		$name   = $plugin->name();
+		$name = $plugin->name();
 
 		if (isset(static::$plugins[$name]) === true) {
-			throw new DuplicateException('The plugin "' . $name . '" has already been registered');
+			throw new DuplicateException(
+				message: 'The plugin "' . $name . '" has already been registered'
+			);
 		}
 
 		return static::$plugins[$name] = $plugin;
@@ -852,11 +888,9 @@ trait AppPlugins
 	 * Loads and returns all plugins in the site/plugins directory
 	 * Loading only happens on the first call.
 	 *
-	 * @internal
 	 * @param array|null $plugins Can be used to overwrite the plugins registry
-	 * @return array
 	 */
-	public function plugins(array $plugins = null): array
+	public function plugins(array|null $plugins = null): array
 	{
 		// overwrite the existing plugins registry
 		if ($plugins !== null) {
@@ -888,7 +922,10 @@ trait AppPlugins
 		$loaded = [];
 
 		foreach (Dir::read($root) as $dirname) {
-			if (in_array(substr($dirname, 0, 1), ['.', '_']) === true) {
+			if (
+				str_starts_with($dirname, '.') ||
+				str_starts_with($dirname, '_')
+			) {
 				continue;
 			}
 
@@ -909,7 +946,11 @@ trait AppPlugins
 				// register as anonymous plugin (without actual extensions)
 				// to be picked up by the Panel\Document class when
 				// rendering the Panel view
-				static::plugin('plugins/' . $dirname, ['root' => $dir]);
+				static::plugin(
+					name: 'plugins/' . $dirname,
+					extends: [],
+					root: $dir
+				);
 			} else {
 				continue;
 			}

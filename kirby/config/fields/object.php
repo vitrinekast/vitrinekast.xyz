@@ -47,7 +47,7 @@ return [
 		},
 		'fields' => function () {
 			if (empty($this->fields) === true) {
-				throw new Exception('Please provide some fields for the object');
+				return [];
 			}
 
 			return $this->form()->fields()->toArray();
@@ -91,13 +91,13 @@ return [
 				$name  = array_key_first($errors);
 				$error = $errors[$name];
 
-				throw new InvalidArgumentException([
-					'key'  => 'object.validation',
-					'data' => [
+				throw new InvalidArgumentException(
+					key: 'object.validation',
+					data: [
 						'label'   => $error['label'] ?? $name,
 						'message' => implode("\n", $error['message'])
 					]
-				]);
+				);
 			}
 		}
 	]

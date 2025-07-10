@@ -26,7 +26,7 @@ return [
 							'type'      => 'slug',
 							'required'  => true,
 							'icon'      => 'title',
-							'allow'     => '@._-',
+							'allow'     => 'a-z0-9@._-',
 							'after'     => '.' . $file->extension(),
 							'preselect' => true
 						]
@@ -40,17 +40,12 @@ return [
 		},
 		'submit' => function (string $path, string $filename) {
 			$file     = Find::file($path, $filename);
-			$renamed  = $file->changeName($file->kirby()->request()->get('name'));
+			$name     = $file->kirby()->request()->get('name');
+			$renamed  = $file->changeName($name);
 			$oldUrl   = $file->panel()->url(true);
 			$newUrl   = $renamed->panel()->url(true);
 			$response = [
-				'event' => 'file.changeName',
-				'dispatch' => [
-					'content/move' => [
-						$oldUrl,
-						$newUrl
-					]
-				],
+				'event' => 'file.changeName'
 			];
 
 			// check for a necessary redirect after the filename has changed
@@ -96,6 +91,44 @@ return [
 		}
 	],
 
+	'changeTemplate' => [
+		'load' => function (string $path, string $filename) {
+			$file 		= Find::file($path, $filename);
+			$blueprints = $file->blueprints();
+
+			return [
+				'component' => 'k-form-dialog',
+				'props' => [
+					'fields' => [
+						'warning' => [
+							'type'  => 'info',
+							'theme' => 'notice',
+							'text'  => I18n::translate('file.changeTemplate.notice')
+						],
+						'template' => Field::template($blueprints, [
+							'required' => true
+						])
+					],
+					'theme' => 'notice',
+					'submitButton' => I18n::translate('change'),
+					'value' => [
+						'template' => $file->template()
+					]
+				]
+			];
+		},
+		'submit' => function (string $path, string $filename) {
+			$file     = Find::file($path, $filename);
+			$template = $file->kirby()->request()->get('template');
+
+			$file->changeTemplate($template);
+
+			return [
+				'event' => 'file.changeTemplate',
+			];
+		}
+	],
+
 	'delete' => [
 		'load' => function (string $path, string $filename) {
 			$file = Find::file($path, $filename);
@@ -124,9 +157,9 @@ return [
 
 			return [
 				'event'    => 'file.delete',
-				'dispatch' => ['content/remove' => [$url]],
 				'redirect' => $redirect
 			];
 		}
 	],
+
 ];

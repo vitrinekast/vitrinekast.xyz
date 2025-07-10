@@ -16,20 +16,14 @@ use Throwable;
  */
 trait AppUsers
 {
-	/**
-	 * Cache for the auth auth layer
-	 *
-	 * @var Auth
-	 */
-	protected $auth;
+	protected Auth|null $auth = null;
+	protected User|string|null $user = null;
+	protected Users|null $users = null;
 
 	/**
 	 * Returns the Authentication layer class
-	 *
-	 * @internal
-	 * @return \Kirby\Cms\Auth
 	 */
-	public function auth()
+	public function auth(): Auth
 	{
 		return $this->auth ??= new Auth($this);
 	}
@@ -48,8 +42,10 @@ trait AppUsers
 	 *               if called with callback: Return value from the callback
 	 * @throws \Throwable
 	 */
-	public function impersonate(string|null $who = null, Closure|null $callback = null)
-	{
+	public function impersonate(
+		string|null $who = null,
+		Closure|null $callback = null
+	): mixed {
 		$auth = $this->auth();
 
 		$userBefore = $auth->currentUserFromImpersonation();
@@ -66,17 +62,43 @@ trait AppUsers
 		} finally {
 			// ensure that the impersonation is *always* reset
 			// to the original value, even if an error occurred
-			$auth->impersonate($userBefore !== null ? $userBefore->id() : null);
+			$auth->impersonate($userBefore?->id());
 		}
+	}
+
+	/**
+	 * Returns all user roles
+	 */
+	public function roles(): Roles
+	{
+		return $this->roles ??= Roles::load($this->root('roles'));
+	}
+
+	/**
+	 * Returns a specific user role by id
+	 * or the role of the current user if no id is given
+	 *
+	 * @param bool $allowImpersonation If set to false, only the role of the
+	 *                                 actually logged in user will be returned
+	 *                                 (when `$id` is passed as `null`)
+	 */
+	public function role(
+		string|null $id = null,
+		bool $allowImpersonation = true
+	): Role|null {
+		if ($id !== null) {
+			return $this->roles()->find($id);
+		}
+
+		return $this->user(null, $allowImpersonation)?->role();
 	}
 
 	/**
 	 * Set the currently active user id
 	 *
-	 * @param \Kirby\Cms\User|string $user
-	 * @return \Kirby\Cms\App
+	 * @return $this
 	 */
-	protected function setUser($user = null)
+	protected function setUser(User|string|null $user = null): static
 	{
 		$this->user = $user;
 		return $this;
@@ -85,15 +107,12 @@ trait AppUsers
 	/**
 	 * Create your own set of app users
 	 *
-	 * @param array|null $users
-	 * @return \Kirby\Cms\App
+	 * @return $this
 	 */
-	protected function setUsers(array $users = null)
+	protected function setUsers(array|null $users = null): static
 	{
 		if ($users !== null) {
-			$this->users = Users::factory($users, [
-				'kirby' => $this
-			]);
+			$this->users = Users::factory($users);
 		}
 
 		return $this;
@@ -103,14 +122,14 @@ trait AppUsers
 	 * Returns a specific user by id
 	 * or the current user if no id is given
 	 *
-	 * @param string|null $id
 	 * @param bool $allowImpersonation If set to false, only the actually
 	 *                                 logged in user will be returned
 	 *                                 (when `$id` is passed as `null`)
-	 * @return \Kirby\Cms\User|null
 	 */
-	public function user(string|null $id = null, bool $allowImpersonation = true)
-	{
+	public function user(
+		string|null $id = null,
+		bool $allowImpersonation = true
+	): User|null {
 		if ($id !== null) {
 			return $this->users()->find($id);
 		}
@@ -128,15 +147,11 @@ trait AppUsers
 
 	/**
 	 * Returns all users
-	 *
-	 * @return \Kirby\Cms\Users
 	 */
-	public function users()
+	public function users(): Users
 	{
-		if ($this->users instanceof Users) {
-			return $this->users;
-		}
-
-		return $this->users = Users::load($this->root('accounts'), ['kirby' => $this]);
+		return $this->users ??= Users::load(
+			$this->root('accounts'),
+		);
 	}
 }

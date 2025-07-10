@@ -5,9 +5,9 @@ namespace Kirby\Cms\System;
 use Composer\Semver\Semver;
 use Exception;
 use Kirby\Cms\App;
-use Kirby\Cms\Plugin;
 use Kirby\Exception\Exception as KirbyException;
 use Kirby\Http\Remote;
+use Kirby\Plugin\Plugin;
 use Kirby\Toolkit\I18n;
 use Kirby\Toolkit\Str;
 
@@ -26,7 +26,7 @@ class UpdateStatus
 	/**
 	 * Host to request the update data from
 	 */
-	public static string $host = 'https://assets.getkirby.com';
+	public static string $host = 'https://getkirby.com';
 
 	/**
 	 * Marker that stores whether a previous remote
@@ -102,15 +102,15 @@ class UpdateStatus
 	/**
 	 * Returns the Panel icon for the status value
 	 *
-	 * @return string 'check'|'alert'|'info'
+	 * @return string 'check'|'alert'|'info'|'question'
 	 */
 	public function icon(): string
 	{
 		return match ($this->status()) {
-			'up-to-date', 'not-vulnerable' => 'check',
+			'up-to-date', 'not-vulnerable'        => 'check',
 			'security-update', 'security-upgrade' => 'alert',
-			'update', 'upgrade' => 'info',
-			default => 'question'
+			'update', 'upgrade'                   => 'info',
+			default                               => 'question'
 		};
 	}
 
@@ -158,7 +158,9 @@ class UpdateStatus
 		// collect all matching custom messages
 		$filters = [
 			'kirby' => $this->app->version(),
-			'php'   => phpversion()
+			// some PHP version strings contain extra info that makes them
+			// invalid so we need to strip it off
+			'php'   => preg_replace('/^([^~+-]+).*$/', '$1', phpversion())
 		];
 
 		if ($type === 'plugin') {
@@ -206,6 +208,20 @@ class UpdateStatus
 			];
 		}
 
+		// add special message for end-of-life PHP versions
+		$phpMajor = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
+		$phpEol   = $this->data['php'][$phpMajor] ?? null;
+		if (is_string($phpEol) === true && $eolTime = strtotime($phpEol)) {
+			// the timestamp is available and valid, now check if it is in the past
+			if ($eolTime < time()) {
+				$messages[] = [
+					'text' => I18n::template('system.issues.eol.php', null, ['release' => $phpMajor]),
+					'link' => 'https://getkirby.com/security/php-end-of-life',
+					'icon' => 'bell'
+				];
+			}
+		}
+
 		return $this->messages = $messages;
 	}
 
@@ -236,10 +252,10 @@ class UpdateStatus
 	public function theme(): string
 	{
 		return match ($this->status()) {
-			'up-to-date', 'not-vulnerable' => 'positive',
+			'up-to-date', 'not-vulnerable'        => 'positive',
 			'security-update', 'security-upgrade' => 'negative',
-			'update', 'upgrade' => 'info',
-			default => 'notice'
+			'update', 'upgrade'                   => 'info',
+			default                               => 'passive'
 		};
 	}
 
@@ -334,14 +350,10 @@ class UpdateStatus
 		try {
 			return Semver::satisfies($version, $constraint);
 		} catch (Exception $e) {
-			$package = $this->packageName();
-			$message = 'Error comparing version constraint for ' . $package . ' ' . $reason . ': ' . $e->getMessage();
-
-			$exception = new KirbyException([
-				'fallback' => $message,
-				'previous' => $e
-			]);
-			$this->exceptions[] = $exception;
+			$this->exceptions[] = new KirbyException(
+				previous: $e,
+				fallback: 'Error comparing version constraint for ' . $this->packageName() . ' ' . $reason . ': ' . $e->getMessage(),
+			);
 
 			return false;
 		}
@@ -362,7 +374,9 @@ class UpdateStatus
 			foreach ($filters as $key => $version) {
 				if (isset($item[$key]) !== true) {
 					$package = $this->packageName();
-					$this->exceptions[] = new KirbyException('Missing constraint ' . $key . ' for ' . $package . ' ' . $reason);
+					$this->exceptions[] = new KirbyException(
+						'Missing constraint ' . $key . ' for ' . $package . ' ' . $reason
+					);
 
 					return false;
 				}
@@ -374,6 +388,46 @@ class UpdateStatus
 
 			return true;
 		});
+	}
+
+	/**
+	 * Finds the maximum possible major update
+	 * that is included with the current license
+	 *
+	 * @return string|null Version number of the update or
+	 *                     `null` if no free update is possible
+	 */
+	protected function findMaximumFreeUpdate(): string|null
+	{
+		// get the timestamp of included updates
+		$renewal = $this->app->system()->license()->renewal();
+
+		if ($renewal === null || $this->data === null) {
+			return null;
+		}
+
+		foreach ($this->data['versions'] ?? [] as $entry) {
+			$initialRelease = $entry['initialRelease'] ?? null;
+			$latest         = $entry['latest'] ?? '';
+
+			// skip entries of irrelevant releases
+			if (
+				is_string($initialRelease) !== true ||
+				version_compare($latest, $this->currentVersion, '<=') === true
+			) {
+				continue;
+			}
+
+			$timestamp = strtotime($initialRelease);
+
+			// update is free if the initial release was before the
+			// license renewal date
+			if (is_int($timestamp) === true && $timestamp < $renewal) {
+				return $latest;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -491,7 +545,9 @@ class UpdateStatus
 		// before we request the data, ensure we have a writable cache;
 		// this reduces strain on the CDN from repeated requests
 		if ($cache->enabled() === false) {
-			$this->exceptions[] = new KirbyException('Cannot check for updates without a working "updates" cache');
+			$this->exceptions[] = new KirbyException(
+				message: 'Cannot check for updates without a working "updates" cache'
+			);
 
 			return null;
 		}
@@ -500,7 +556,7 @@ class UpdateStatus
 		// we collect it below for debugging
 		try {
 			if (static::$timedOut === true) {
-				throw new Exception('Previous remote request timed out'); // @codeCoverageIgnore
+				throw new Exception(message: 'Previous remote request timed out'); // @codeCoverageIgnore
 			}
 
 			$response = Remote::get(
@@ -510,22 +566,22 @@ class UpdateStatus
 
 			// allow status code HTTP 200 or 0 (e.g. for the file:// protocol)
 			if (in_array($response->code(), [0, 200], true) !== true) {
-				throw new Exception('HTTP error ' . $response->code()); // @codeCoverageIgnore
+				throw new Exception(message: 'HTTP error ' . $response->code()); // @codeCoverageIgnore
 			}
 
 			$data = $response->json();
 
 			if (is_array($data) !== true) {
-				throw new Exception('Invalid JSON data');
+				throw new Exception(message: 'Invalid JSON data');
 			}
 		} catch (Exception $e) {
 			$package = $this->packageName();
 			$message = 'Could not load update data for ' . $package . ': ' . $e->getMessage();
 
-			$exception = new KirbyException([
-				'fallback' => $message,
-				'previous' => $e
-			]);
+			$exception = new KirbyException(
+				fallback: $message,
+				previous: $e
+			);
 			$this->exceptions[] = $exception;
 
 			// if the request timed out, prevent additional
@@ -639,13 +695,26 @@ class UpdateStatus
 			];
 		}
 
-		// check if free updates are possible from the current version
+		// check if updates within the same major version are possible
 		$latest = $versionEntry['latest'] ?? null;
 		if (is_string($latest) === true && $latest !== $this->currentVersion) {
 			return $this->targetData = [
 				'status'  => 'update',
 				'url'     => $this->urlFor($latest, 'changes'),
 				'version' => $latest
+			];
+		}
+
+		// check if the license includes updates to a newer major version
+		if ($version = $this->findMaximumFreeUpdate()) {
+			// extract the part before the first dot
+			// to find the major release page URL
+			preg_match('/^(\w+)\./', $version, $matches);
+
+			return $this->targetData = [
+				'status'  => 'update',
+				'url'     => $this->urlFor($matches[1] . '.0', 'changes'),
+				'version' => $version
 			];
 		}
 

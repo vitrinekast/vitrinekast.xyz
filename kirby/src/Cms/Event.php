@@ -3,8 +3,10 @@
 namespace Kirby\Cms;
 
 use Closure;
+use Kirby\Content\ImmutableMemoryStorage;
 use Kirby\Exception\InvalidArgumentException;
 use Kirby\Toolkit\Controller;
+use Stringable;
 
 /**
  * The Event object is created whenever the `$kirby->trigger()`
@@ -19,55 +21,36 @@ use Kirby\Toolkit\Controller;
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
  */
-class Event
+class Event implements Stringable
 {
-	/**
-	 * The full event name
-	 * (e.g. `page.create:after`)
-	 *
-	 * @var string
-	 */
-	protected $name;
-
 	/**
 	 * The event type
 	 * (e.g. `page` in `page.create:after`)
-	 *
-	 * @var string
 	 */
-	protected $type;
+	protected string $type;
 
 	/**
 	 * The event action
 	 * (e.g. `create` in `page.create:after`)
-	 *
-	 * @var string|null
 	 */
-	protected $action;
+	protected string|null $action;
 
 	/**
 	 * The event state
 	 * (e.g. `after` in `page.create:after`)
-	 *
-	 * @var string|null
 	 */
-	protected $state;
-
-	/**
-	 * The event arguments
-	 *
-	 * @var array
-	 */
-	protected $arguments = [];
+	protected string|null $state;
 
 	/**
 	 * Class constructor
 	 *
-	 * @param string $name Full event name
+	 * @param string $name Full event name (e.g. `page.create:after`)
 	 * @param array $arguments Associative array of named event arguments
 	 */
-	public function __construct(string $name, array $arguments = [])
-	{
+	public function __construct(
+		protected string $name,
+		protected array $arguments = []
+	) {
 		// split the event name into `$type.$action:$state`
 		// $action and $state are optional;
 		// if there is more than one dot, $type will be greedy
@@ -83,20 +66,15 @@ class Event
 
 	/**
 	 * Magic caller for event arguments
-	 *
-	 * @param string $method
-	 * @param array $arguments
-	 * @return mixed
 	 */
-	public function __call(string $method, array $arguments = [])
+	public function __call(string $method, array $arguments = []): mixed
 	{
 		return $this->argument($method);
 	}
 
 	/**
 	 * Improved `var_dump` output
-	 *
-	 * @return array
+	 * @codeCoverageIgnore
 	 */
 	public function __debugInfo(): array
 	{
@@ -106,8 +84,6 @@ class Event
 	/**
 	 * Makes it possible to simply echo
 	 * or stringify the entire object
-	 *
-	 * @return string
 	 */
 	public function __toString(): string
 	{
@@ -117,8 +93,6 @@ class Event
 	/**
 	 * Returns the action of the event (e.g. `create`)
 	 * or `null` if the event name does not include an action
-	 *
-	 * @return string|null
 	 */
 	public function action(): string|null
 	{
@@ -127,19 +101,14 @@ class Event
 
 	/**
 	 * Returns a specific event argument
-	 *
-	 * @param string $name
-	 * @return mixed
 	 */
-	public function argument(string $name)
+	public function argument(string $name): mixed
 	{
 		return $this->arguments[$name] ?? null;
 	}
 
 	/**
 	 * Returns the arguments of the event
-	 *
-	 * @return array
 	 */
 	public function arguments(): array
 	{
@@ -151,14 +120,14 @@ class Event
 	 * the hook's return value
 	 *
 	 * @param object|null $bind Optional object to bind to the hook function
-	 * @param \Closure $hook
-	 * @return mixed
 	 */
-	public function call(object|null $bind, Closure $hook)
+	public function call(object|null $bind, Closure $hook): mixed
 	{
-		// collect the list of possible hook arguments
-		$data = $this->arguments();
-		$data['event'] = $this;
+		// collect the list of possible event arguments
+		$data = [
+			...$this->arguments(),
+			'event' => $this
+		];
 
 		// magically call the hook with the arguments it requested
 		$hook = new Controller($hook);
@@ -167,8 +136,6 @@ class Event
 
 	/**
 	 * Returns the full name of the event
-	 *
-	 * @return string
 	 */
 	public function name(): string
 	{
@@ -178,13 +145,16 @@ class Event
 	/**
 	 * Returns the full list of possible wildcard
 	 * event names based on the current event name
-	 *
-	 * @return array
 	 */
 	public function nameWildcards(): array
 	{
-		// if the event is already a wildcard event, no further variation is possible
-		if ($this->type === '*' || $this->action === '*' || $this->state === '*') {
+		// if the event is already a wildcard event,
+		// no further variation is possible
+		if (
+			$this->type === '*' ||
+			$this->action === '*' ||
+			$this->state === '*'
+		) {
 			return [];
 		}
 
@@ -228,8 +198,6 @@ class Event
 
 	/**
 	 * Returns the state of the event (e.g. `after`)
-	 *
-	 * @return string|null
 	 */
 	public function state(): string|null
 	{
@@ -238,8 +206,6 @@ class Event
 
 	/**
 	 * Returns the event data as array
-	 *
-	 * @return array
 	 */
 	public function toArray(): array
 	{
@@ -251,8 +217,6 @@ class Event
 
 	/**
 	 * Returns the event name as string
-	 *
-	 * @return string
 	 */
 	public function toString(): string
 	{
@@ -261,8 +225,6 @@ class Event
 
 	/**
 	 * Returns the type of the event (e.g. `page`)
-	 *
-	 * @return string
 	 */
 	public function type(): string
 	{
@@ -272,16 +234,43 @@ class Event
 	/**
 	 * Updates a given argument with a new value
 	 *
-	 * @internal
-	 * @param string $name
-	 * @param mixed $value
-	 * @return void
+	 * @unstable
 	 * @throws \Kirby\Exception\InvalidArgumentException
 	 */
 	public function updateArgument(string $name, $value): void
 	{
 		if (array_key_exists($name, $this->arguments) !== true) {
-			throw new InvalidArgumentException('The argument ' . $name . ' does not exist');
+			throw new InvalidArgumentException(
+				message: 'The argument ' . $name . ' does not exist'
+			);
+		}
+
+		// no new value has been supplied by the apply hook
+		if ($value === null) {
+
+			// To support legacy model modification
+			// in hooks without return values, we need to
+			// check the state of the updated argument.
+			// If the argument is an instance of ModelWithContent
+			// and the storage is an instance of ImmutableMemoryStorage,
+			// we can replace the argument with its clone to achieve
+			// the same effect as if the hook returned the modified model.
+			$state = $this->arguments[$name];
+
+			if ($state instanceof ModelWithContent) {
+				$storage = $state->storage();
+
+				if (
+					$storage instanceof ImmutableMemoryStorage &&
+					$storage->nextModel() !== null
+				) {
+					$this->arguments[$name] = $storage->nextModel();
+				}
+			}
+
+			// Otherwise, there's no need to update the argument
+			// if no new value is provided
+			return;
 		}
 
 		$this->arguments[$name] = $value;

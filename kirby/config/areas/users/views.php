@@ -2,6 +2,7 @@
 
 use Kirby\Cms\App;
 use Kirby\Cms\Find;
+use Kirby\Panel\Ui\Buttons\ViewButtons;
 use Kirby\Toolkit\Escape;
 
 return [
@@ -18,7 +19,12 @@ return [
 			return [
 				'component' => 'k-users-view',
 				'props'     => [
-					'role' => function () use ($kirby, $roles, $role) {
+					'buttons' => fn () =>
+						ViewButtons::view('users')
+							->defaults('create')
+							->bind(['role' => $role])
+							->render(),
+					'role' => function () use ($roles, $role) {
 						if ($role) {
 							return $roles[$role] ?? null;
 						}
@@ -31,6 +37,10 @@ return [
 							$users = $users->role($role);
 						}
 
+						// sort users alphabetically
+						$users = $users->sortBy('username', 'asc');
+
+						// paginate
 						$users = $users->paginate([
 							'limit' => 20,
 							'page'  => $kirby->request()->get('page')

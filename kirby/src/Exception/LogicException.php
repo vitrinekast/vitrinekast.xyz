@@ -3,7 +3,6 @@
 namespace Kirby\Exception;
 
 /**
- * LogicException
  * Thrown for invalid requests that can't work out
  *
  * @package   Kirby Exception
@@ -14,7 +13,7 @@ namespace Kirby\Exception;
  */
 class LogicException extends Exception
 {
-	protected static $defaultKey = 'logic';
-	protected static $defaultFallback = 'This task cannot be finished';
-	protected static $defaultHttpCode = 400;
+	protected static string $defaultKey = 'logic';
+	protected static string $defaultFallback = 'This task cannot be finished';
+	protected static int $defaultHttpCode = 400;
 }

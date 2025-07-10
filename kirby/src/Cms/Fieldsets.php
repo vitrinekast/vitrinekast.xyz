@@ -16,15 +16,22 @@ use Kirby\Toolkit\Str;
  * @link      https://getkirby.com
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
+ *
+ * @extends \Kirby\Cms\Items<\Kirby\Cms\Fieldset>
  */
 class Fieldsets extends Items
 {
 	public const ITEM_CLASS = Fieldset::class;
 
-	protected static function createFieldsets($params)
+	/**
+	 * All registered fieldsets methods
+	 */
+	public static array $methods = [];
+
+	protected static function createFieldsets(array $params): array
 	{
 		$fieldsets = [];
-		$groups = [];
+		$groups    = [];
 
 		foreach ($params as $type => $fieldset) {
 			if (is_int($type) === true && is_string($fieldset)) {
@@ -48,7 +55,7 @@ class Fieldsets extends Items
 			// extract groups
 			if ($fieldset['type'] === 'group') {
 				$result    = static::createFieldsets($fieldset['fieldsets'] ?? []);
-				$fieldsets = array_merge($fieldsets, $result['fieldsets']);
+				$fieldsets = [...$fieldsets, ...$result['fieldsets']];
 				$label     = $fieldset['label'] ?? Str::ucfirst($type);
 
 				$groups[$type] = [
@@ -68,8 +75,10 @@ class Fieldsets extends Items
 		];
 	}
 
-	public static function factory(array $items = null, array $params = [])
-	{
+	public static function factory(
+		array|null $items = null,
+		array $params = []
+	): static {
 		$items ??= App::instance()->option('blocks.fieldsets', [
 			'code'     => 'blocks/code',
 			'gallery'  => 'blocks/gallery',
@@ -85,7 +94,10 @@ class Fieldsets extends Items
 
 		$result = static::createFieldsets($items);
 
-		return parent::factory($result['fieldsets'], ['groups' => $result['groups']] + $params);
+		return parent::factory(
+			$result['fieldsets'],
+			['groups' => $result['groups']] + $params
+		);
 	}
 
 	public function groups(): array

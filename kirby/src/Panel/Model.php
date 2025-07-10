@@ -4,9 +4,10 @@ namespace Kirby\Panel;
 
 use Closure;
 use Kirby\Cms\File as CmsFile;
+use Kirby\Cms\Language;
 use Kirby\Cms\ModelWithContent;
 use Kirby\Filesystem\Asset;
-use Kirby\Form\Form;
+use Kirby\Form\Fields;
 use Kirby\Http\Uri;
 use Kirby\Toolkit\A;
 
@@ -22,19 +23,24 @@ use Kirby\Toolkit\A;
  */
 abstract class Model
 {
-	protected ModelWithContent $model;
-
-	public function __construct(ModelWithContent $model)
-	{
-		$this->model = $model;
+	public function __construct(
+		protected ModelWithContent $model
+	) {
 	}
 
 	/**
+	 * Returns header button names which should be displayed
+	 */
+	abstract public function buttons(): array;
+
+	/**
 	 * Get the content values for the model
+	 *
+	 * @deprecated 5.0.0 Use `self::versions()` instead
 	 */
 	public function content(): array
 	{
-		return Form::for($this->model)->values();
+		return $this->versions()['changes'];
 	}
 
 	/**
@@ -65,7 +71,7 @@ abstract class Model
 	 *
 	 * @param string|null $type (`auto`|`kirbytext`|`markdown`)
 	 */
-	public function dragTextType(string|null $type = null): string
+	public function dragTextType(string|null $type = 'auto'): string
 	{
 		$type ??= 'auto';
 
@@ -85,15 +91,15 @@ abstract class Model
 	public function dropdownOption(): array
 	{
 		return [
-			'icon' => 'page',
-			'link' => $this->url(),
-			'text' => $this->model->id(),
+			'icon'  => 'page',
+			'image' => $this->image(['back' => 'black']),
+			'link'  => $this->url(true),
+			'text'  => $this->model->id(),
 		];
 	}
 
 	/**
 	 * Returns the Panel image definition
-	 * @internal
 	 */
 	public function image(
 		string|array|false|null $settings = [],
@@ -104,59 +110,49 @@ abstract class Model
 			return null;
 		}
 
+		// switched off from blueprint,
+		// only if not overwritten by $settings
+		$blueprint = $this->model->blueprint()->image();
+
+		if ($blueprint === false) {
+			if (empty($settings) === true) {
+				return null;
+			}
+
+			$blueprint = null;
+		}
+
+		// convert string blueprint settings to proper array
+		if (is_string($blueprint) === true) {
+			$blueprint = ['query' => $blueprint];
+		}
+
 		// skip image thumbnail if option
 		// is explicitly set to show the icon
 		if ($settings === 'icon') {
-			$settings = [
-				'query' => false
-			];
-		} elseif (is_string($settings) === true) {
-			// convert string settings to proper array
-			$settings = [
-				'query' => $settings
-			];
+			$settings = ['query' => false];
+		}
+
+		// convert string settings to proper array
+		if (is_string($settings) === true) {
+			$settings = ['query' => $settings];
 		}
 
 		// merge with defaults and blueprint option
-		$settings = array_merge(
-			$this->imageDefaults(),
-			$settings ?? [],
-			$this->model->blueprint()->image() ?? [],
-		);
+		$settings = [
+			...$this->imageDefaults(),
+			...$settings ?? [],
+			...$blueprint ?? [],
+		];
 
 		if ($image = $this->imageSource($settings['query'] ?? null)) {
 			// main url
 			$settings['url'] = $image->url();
 
-			// only create srcsets for resizable files
 			if ($image->isResizable() === true) {
-				$settings['src'] = static::imagePlaceholder();
-
-				$sizes = match ($layout) {
-					'cards'    => [352, 864, 1408],
-					'cardlets' => [96, 192],
-					default    => [38, 76]
-				};
-
-				if (
-					($settings['cover'] ?? false) === false ||
-					$layout === 'cards'
-				) {
-					$settings['srcset'] = $image->srcset($sizes);
-				} else {
-					$settings['srcset'] = $image->srcset([
-						'1x' => [
-							'width'  => $sizes[0],
-							'height' => $sizes[0],
-							'crop'   => 'center'
-						],
-						'2x' => [
-							'width'  => $sizes[1],
-							'height' => $sizes[1],
-							'crop'   => 'center'
-						]
-					]);
-				}
+				// only create srcsets for resizable files
+				$settings['src']    = static::imagePlaceholder();
+				$settings['srcset'] = $this->imageSrcset($image, $layout, $settings);
 			} elseif ($image->isViewable() === true) {
 				$settings['src'] = $image->url();
 			}
@@ -183,14 +179,12 @@ abstract class Model
 			'back'  => 'pattern',
 			'color' => 'gray-500',
 			'cover' => false,
-			'icon'  => 'page',
-			'ratio' => '3/2',
+			'icon'  => 'page'
 		];
 	}
 
 	/**
 	 * Data URI placeholder string for Panel image
-	 * @internal
 	 */
 	public static function imagePlaceholder(): string
 	{
@@ -199,7 +193,6 @@ abstract class Model
 
 	/**
 	 * Returns the image file object based on provided query
-	 * @internal
 	 */
 	protected function imageSource(
 		string|null $query = null
@@ -218,28 +211,96 @@ abstract class Model
 	}
 
 	/**
-	 * Checks for disabled dropdown options according
-	 * to the given permissions
+	 * Provides the correct srcset string based on
+	 * the layout and settings
 	 */
-	public function isDisabledDropdownOption(string $action, array $options, array $permissions): bool
-	{
-		$option = $options[$action] ?? true;
-		return $permissions[$action] === false || $option === false || $option === 'false';
+	protected function imageSrcset(
+		CmsFile|Asset $image,
+		string $layout,
+		array $settings
+	): string|null {
+		// depending on layout type, set different sizes
+		// to have multiple options for the srcset attribute
+		$sizes = match ($layout) {
+			'cards'    => [352, 864, 1408],
+			'cardlets' => [96, 192],
+			default    => [38, 76]
+		};
+
+		// no additional modfications needed if `cover: false`
+		if (($settings['cover'] ?? false) === false) {
+			return $image->srcset($sizes);
+		}
+
+		// for card layouts with `cover: true` provide
+		// crops based on the card ratio
+		if ($layout === 'cards') {
+			$ratio = $settings['ratio'] ?? '1/1';
+
+			if (is_numeric($ratio) === false) {
+				$ratio = explode('/', $ratio);
+				$ratio = $ratio[0] / $ratio[1];
+			}
+
+			return $image->srcset([
+				$sizes[0] . 'w' => [
+					'width'  => $sizes[0],
+					'height' => round($sizes[0] / $ratio),
+					'crop'   => true
+				],
+				$sizes[1] . 'w' => [
+					'width'  => $sizes[1],
+					'height' => round($sizes[1] / $ratio),
+					'crop'   => true
+				],
+				$sizes[2] . 'w' => [
+					'width'  => $sizes[2],
+					'height' => round($sizes[2] / $ratio),
+					'crop'   => true
+				]
+			]);
+		}
+
+		// for list and cardlets with `cover: true`
+		// provide square crops in two resolutions
+		return $image->srcset([
+			'1x' => [
+				'width'  => $sizes[0],
+				'height' => $sizes[0],
+				'crop'   => true
+			],
+			'2x' => [
+				'width'  => $sizes[1],
+				'height' => $sizes[1],
+				'crop'   => true
+			]
+		]);
 	}
 
 	/**
-	 * Returns lock info for the Panel
-	 *
-	 * @return array|false array with lock info,
-	 *                     false if locking is not supported
+	 * Checks for disabled dropdown options according
+	 * to the given permissions
 	 */
-	public function lock(): array|false
-	{
-		if ($lock = $this->model->lock()) {
-			return $lock->toArray();
-		}
+	public function isDisabledDropdownOption(
+		string $action,
+		array $options,
+		array $permissions
+	): bool {
+		$option = $options[$action] ?? true;
 
-		return false;
+		return
+			$permissions[$action] === false ||
+			$option === false ||
+			$option === 'false';
+	}
+
+	/**
+	 * Returns the corresponding model object
+	 * @since 5.0.0
+	 */
+	public function model(): ModelWithContent
+	{
+		return $this->model;
 	}
 
 	/**
@@ -253,9 +314,9 @@ abstract class Model
 	{
 		$options = $this->model->permissions()->toArray();
 
-		if ($this->model->isLocked()) {
+		if ($this->model->lock()->isLocked() === true) {
 			foreach ($options as $key => $value) {
-				if (in_array($key, $unlock)) {
+				if (in_array($key, $unlock, true)) {
 					continue;
 				}
 
@@ -287,26 +348,35 @@ abstract class Model
 			'link'     => $this->url(true),
 			'sortable' => true,
 			'text'     => $this->model->toSafeString($params['text'] ?? false),
-			'uuid'     => $this->model->uuid()?->toString() ?? $this->model->id(),
+			'uuid'     => $this->model->uuid()?->toString()
 		];
 	}
 
 	/**
-	 * Returns the data array for the
-	 * view's component props
-	 * @internal
+	 * Returns the data array for the view's component props
 	 */
 	public function props(): array
 	{
 		$blueprint = $this->model->blueprint();
+		$link      = $this->url(true);
 		$request   = $this->model->kirby()->request();
 		$tabs      = $blueprint->tabs();
 		$tab       = $blueprint->tab($request->get('tab')) ?? $tabs[0] ?? null;
+		$versions  = $this->versions();
 
 		$props = [
-			'lock'        => $this->lock(),
+			'api'         => $link,
+			'buttons'     => fn () => $this->buttons(),
+			'id'          => $this->model->id(),
+			'link'        => $link,
+			'lock'        => $this->model->lock()->toArray(),
 			'permissions' => $this->model->permissions()->toArray(),
 			'tabs'        => $tabs,
+			'uuid'        => fn () => $this->model->uuid()?->toString(),
+			'versions'    => [
+				'latest'  => (object)$versions['latest'],
+				'changes' => (object)$versions['changes']
+			]
 		];
 
 		// only send the tab if it exists
@@ -320,33 +390,31 @@ abstract class Model
 	}
 
 	/**
-	 * Returns link url and tooltip
-	 * for model (e.g. used for prev/next
-	 * navigation)
-	 * @internal
+	 * Returns link url and title
+	 * for model (e.g. used for prev/next navigation)
 	 */
-	public function toLink(string $tooltip = 'title'): array
+	public function toLink(string $title = 'title'): array
 	{
 		return [
 			'link'    => $this->url(true),
-			'tooltip' => (string)$this->model->{$tooltip}()
+			'title'   => $title = (string)$this->model->{$title}()
 		];
 	}
 
 	/**
-	 * Returns link url and tooltip
+	 * Returns link url and title
 	 * for optional sibling model and
 	 * preserves tab selection
-	 *
-	 * @internal
 	 */
-	protected function toPrevNextLink(ModelWithContent|null $model = null, string $tooltip = 'title'): array|null
-	{
+	protected function toPrevNextLink(
+		ModelWithContent|null $model = null,
+		string $title = 'title'
+	): array|null {
 		if ($model === null) {
 			return null;
 		}
 
-		$data = $model->panel()->toLink($tooltip);
+		$data = $model->panel()->toLink($title);
 
 		if ($tab = $model->kirby()->request()->get('tab')) {
 			$uri = new Uri($data['link'], [
@@ -362,8 +430,6 @@ abstract class Model
 	/**
 	 * Returns the url to the editing view
 	 * in the Panel
-	 *
-	 * @internal
 	 */
 	public function url(bool $relative = false): string
 	{
@@ -375,10 +441,37 @@ abstract class Model
 	}
 
 	/**
-	 * Returns the data array for
-	 * this model's Panel view
+	 * Creates an array with two versions of the content:
+	 * `latest` and `changes`.
 	 *
-	 * @internal
+	 * The content is passed through the Fields class
+	 * to ensure that the content is in the correct format
+	 * for the Panel. If there's no `changes` version, the `latest`
+	 * version is used for both.
+	 */
+	public function versions(): array
+	{
+		$language = Language::ensure('current');
+		$fields   = Fields::for($this->model, $language);
+
+		$latestVersion  = $this->model->version('latest');
+		$changesVersion = $this->model->version('changes');
+
+		$latestContent  = $latestVersion->content($language)->toArray();
+		$changesContent = $latestContent;
+
+		if ($changesVersion->exists($language) === true) {
+			$changesContent = $changesVersion->content($language)->toArray();
+		}
+
+		return [
+			'latest'  => $fields->reset()->fill($latestContent)->toFormValues(),
+			'changes' => $fields->reset()->fill($changesContent)->toFormValues()
+		];
+	}
+
+	/**
+	 * Returns the data array for this model's Panel view
 	 */
 	abstract public function view(): array;
 }

@@ -19,11 +19,11 @@ use Kirby\Toolkit\Str;
  */
 class FileSessionStore extends SessionStore
 {
-	protected $path;
+	protected string $path;
 
 	// state of the session files
-	protected $handles  = [];
-	protected $isLocked = [];
+	protected array $handles  = [];
+	protected array $isLocked = [];
 
 	/**
 	 * Creates a new instance of the file session store
@@ -39,14 +39,14 @@ class FileSessionStore extends SessionStore
 		$this->path = realpath($path);
 
 		// make sure it is usable for storage
-		if (!is_writable($this->path)) {
-			throw new Exception([
-				'key'       => 'session.filestore.dirNotWritable',
-				'data'      => ['path' => $this->path],
-				'fallback'  => 'The session storage directory "' . $path . '" is not writable',
-				'translate' => false,
-				'httpCode'  => 500
-			]);
+		if (is_writable($this->path) === false) {
+			throw new Exception(
+				key: 'session.filestore.dirNotWritable',
+				data: ['path' => $this->path],
+				fallback: 'The session storage directory "' . $path . '" is not writable',
+				translate: false,
+				httpCode: 500
+			);
 		}
 	}
 
@@ -64,8 +64,7 @@ class FileSessionStore extends SessionStore
 		clearstatcache();
 		do {
 			// use helper from the abstract SessionStore class
-			$id = static::generateId();
-
+			$id   = static::generateId();
 			$name = $this->name($expiryTime, $id);
 			$path = $this->path($name);
 		} while (file_exists($path));
@@ -74,9 +73,10 @@ class FileSessionStore extends SessionStore
 		touch($path);
 		$this->lock($expiryTime, $id);
 
-		// ensure that no other thread already wrote to the same file, otherwise try again
-		// very unlikely scenario!
+		// ensure that no other thread already wrote to the same file,
+		// otherwise try again (very unlikely scenario!)
 		$contents = $this->get($expiryTime, $id);
+
 		if ($contents !== '') {
 			// @codeCoverageIgnoreStart
 			$this->unlock($expiryTime, $id);
@@ -111,14 +111,13 @@ class FileSessionStore extends SessionStore
 	 *
 	 * @param int $expiryTime Timestamp
 	 * @param string $id Session ID
-	 * @return void
 	 */
-	public function lock(int $expiryTime, string $id)
+	public function lock(int $expiryTime, string $id): void
 	{
 		$name = $this->name($expiryTime, $id);
 
 		// check if the file is already locked
-		if (isset($this->isLocked[$name])) {
+		if (isset($this->isLocked[$name]) === true) {
 			return;
 		}
 
@@ -126,19 +125,19 @@ class FileSessionStore extends SessionStore
 		$handle = $this->handle($name);
 		$result = flock($handle, LOCK_EX);
 
-		// make a note that the file is now locked
-		if ($result === true) {
-			$this->isLocked[$name] = true;
-		} else {
-			// @codeCoverageIgnoreStart
-			throw new Exception([
-				'key'       => 'session.filestore.unexpectedFilesystemError',
-				'fallback'  => 'Unexpected file system error',
-				'translate' => false,
-				'httpCode'  => 500
-			]);
-			// @codeCoverageIgnoreEnd
+		// @codeCoverageIgnoreStart
+		if ($result !== true) {
+			throw new Exception(
+				key: 'session.filestore.unexpectedFilesystemError',
+				fallback: 'Unexpected file system error',
+				translate: false,
+				httpCode: 500
+			);
 		}
+		// @codeCoverageIgnoreEnd
+
+		// make a note that the file is now locked
+		$this->isLocked[$name] = true;
 	}
 
 	/**
@@ -148,14 +147,13 @@ class FileSessionStore extends SessionStore
 	 *
 	 * @param int $expiryTime Timestamp
 	 * @param string $id Session ID
-	 * @return void
 	 */
-	public function unlock(int $expiryTime, string $id)
+	public function unlock(int $expiryTime, string $id): void
 	{
 		$name = $this->name($expiryTime, $id);
 
 		// check if the file is already unlocked or doesn't exist
-		if (!isset($this->isLocked[$name])) {
+		if (isset($this->isLocked[$name]) === false) {
 			return;
 		}
 
@@ -168,19 +166,19 @@ class FileSessionStore extends SessionStore
 		$handle = $this->handle($name);
 		$result = flock($handle, LOCK_UN);
 
-		// make a note that the file is no longer locked
-		if ($result === true) {
-			unset($this->isLocked[$name]);
-		} else {
-			// @codeCoverageIgnoreStart
-			throw new Exception([
-				'key'       => 'session.filestore.unexpectedFilesystemError',
-				'fallback'  => 'Unexpected file system error',
-				'translate' => false,
-				'httpCode'  => 500
-			]);
-			// @codeCoverageIgnoreEnd
+		// @codeCoverageIgnoreStart
+		if ($result !== true) {
+			throw new Exception(
+				key: 'session.filestore.unexpectedFilesystemError',
+				fallback: 'Unexpected file system error',
+				translate: false,
+				httpCode: 500
+			);
 		}
+		// @codeCoverageIgnoreEnd
+
+		// make a note that the file is no longer locked
+		unset($this->isLocked[$name]);
 	}
 
 	/**
@@ -190,7 +188,6 @@ class FileSessionStore extends SessionStore
 	 *
 	 * @param int $expiryTime Timestamp
 	 * @param string $id Session ID
-	 * @return string
 	 */
 	public function get(int $expiryTime, string $id): string
 	{
@@ -198,19 +195,20 @@ class FileSessionStore extends SessionStore
 		$path   = $this->path($name);
 		$handle = $this->handle($name);
 
-		// set read lock to prevent other threads from corrupting the data while we read it
-		// only if we don't already have a write lock, which is even better
-		if (!isset($this->isLocked[$name])) {
+		// set read lock to prevent other threads from corrupting
+		// the data while we read it; only if we don't already have
+		// a write lock, which is even better
+		if (isset($this->isLocked[$name]) === false) {
 			$result = flock($handle, LOCK_SH);
 
 			if ($result !== true) {
 				// @codeCoverageIgnoreStart
-				throw new Exception([
-					'key'       => 'session.filestore.unexpectedFilesystemError',
-					'fallback'  => 'Unexpected file system error',
-					'translate' => false,
-					'httpCode'  => 500
-				]);
+				throw new Exception(
+					key: 'session.filestore.unexpectedFilesystemError',
+					fallback: 'Unexpected file system error',
+					translate: false,
+					httpCode: 500
+				);
 				// @codeCoverageIgnoreEnd
 			}
 		}
@@ -227,17 +225,17 @@ class FileSessionStore extends SessionStore
 		}
 
 		// remove the shared lock if we set one above
-		if (!isset($this->isLocked[$name])) {
+		if (isset($this->isLocked[$name]) === false) {
 			$result = flock($handle, LOCK_UN);
 
 			if ($result !== true) {
 				// @codeCoverageIgnoreStart
-				throw new Exception([
-					'key'       => 'session.filestore.unexpectedFilesystemError',
-					'fallback'  => 'Unexpected file system error',
-					'translate' => false,
-					'httpCode'  => 500
-				]);
+				throw new Exception(
+					key: 'session.filestore.unexpectedFilesystemError',
+					fallback: 'Unexpected file system error',
+					translate: false,
+					httpCode: 500
+				);
 				// @codeCoverageIgnoreEnd
 			}
 		}
@@ -254,46 +252,46 @@ class FileSessionStore extends SessionStore
 	 * @param int $expiryTime Timestamp
 	 * @param string $id Session ID
 	 * @param string $data Session data to write
-	 * @return void
 	 */
-	public function set(int $expiryTime, string $id, string $data)
+	public function set(int $expiryTime, string $id, string $data): void
 	{
 		$name   = $this->name($expiryTime, $id);
 		$handle = $this->handle($name);
 
 		// validate that we have an exclusive lock already
-		if (!isset($this->isLocked[$name])) {
-			throw new LogicException([
-				'key'       => 'session.filestore.notLocked',
-				'data'      => ['name' => $name],
-				'fallback'  => 'Cannot write to session "' . $name . '", because it is not locked',
-				'translate' => false,
-				'httpCode'  => 500
-			]);
+		if (isset($this->isLocked[$name]) === false) {
+			throw new LogicException(
+				key: 'session.filestore.notLocked',
+				data: ['name' => $name],
+				fallback: 'Cannot write to session "' . $name . '", because it is not locked',
+				translate: false,
+				httpCode: 500
+			);
 		}
 
 		// delete all file contents first
 		if (rewind($handle) !== true || ftruncate($handle, 0) !== true) {
 			// @codeCoverageIgnoreStart
-			throw new Exception([
-				'key'       => 'session.filestore.unexpectedFilesystemError',
-				'fallback'  => 'Unexpected file system error',
-				'translate' => false,
-				'httpCode'  => 500
-			]);
+			throw new Exception(
+				key: 'session.filestore.unexpectedFilesystemError',
+				fallback: 'Unexpected file system error',
+				translate: false,
+				httpCode: 500
+			);
 			// @codeCoverageIgnoreEnd
 		}
 
 		// write the new contents
 		$result = fwrite($handle, $data);
-		if (!is_int($result) || $result === 0) {
+
+		if (is_int($result) === false || $result === 0) {
 			// @codeCoverageIgnoreStart
-			throw new Exception([
-				'key'       => 'session.filestore.unexpectedFilesystemError',
-				'fallback'  => 'Unexpected file system error',
-				'translate' => false,
-				'httpCode'  => 500
-			]);
+			throw new Exception(
+				key: 'session.filestore.unexpectedFilesystemError',
+				fallback: 'Unexpected file system error',
+				translate: false,
+				httpCode: 500
+			);
 			// @codeCoverageIgnoreEnd
 		}
 	}
@@ -305,9 +303,8 @@ class FileSessionStore extends SessionStore
 	 *
 	 * @param int $expiryTime Timestamp
 	 * @param string $id Session ID
-	 * @return void
 	 */
-	public function destroy(int $expiryTime, string $id)
+	public function destroy(int $expiryTime, string $id): void
 	{
 		$name = $this->name($expiryTime, $id);
 		$path = $this->path($name);
@@ -327,12 +324,12 @@ class FileSessionStore extends SessionStore
 		// file still exists, delete it
 		if (@F::unlink($path) !== true) {
 			// @codeCoverageIgnoreStart
-			throw new Exception([
-				'key'       => 'session.filestore.unexpectedFilesystemError',
-				'fallback'  => 'Unexpected file system error',
-				'translate' => false,
-				'httpCode'  => 500
-			]);
+			throw new Exception(
+				key: 'session.filestore.unexpectedFilesystemError',
+				fallback: 'Unexpected file system error',
+				translate: false,
+				httpCode: 500
+			);
 			// @codeCoverageIgnoreEnd
 		}
 	}
@@ -341,10 +338,8 @@ class FileSessionStore extends SessionStore
 	 * Deletes all expired sessions
 	 *
 	 * Needs to throw an Exception on error.
-	 *
-	 * @return void
 	 */
-	public function collectGarbage()
+	public function collectGarbage(): void
 	{
 		$iterator = new FilesystemIterator($this->path);
 
@@ -394,18 +389,17 @@ class FileSessionStore extends SessionStore
 	 *
 	 * @param int $expiryTime Timestamp
 	 * @param string $id Session ID
-	 * @return string
 	 */
 	protected function name(int $expiryTime, string $id): string
 	{
-		return $expiryTime . '.' . $id;
+		// protect against path traversal
+		return $expiryTime . '.' . basename($id);
 	}
 
 	/**
 	 * Returns the full path to the session file
 	 *
 	 * @param string $name Combined name
-	 * @return string
 	 */
 	protected function path(string $name): string
 	{
@@ -420,35 +414,38 @@ class FileSessionStore extends SessionStore
 	 */
 	protected function handle(string $name)
 	{
-		// always verify that the file still exists, even if we already have a handle;
-		// ensures thread-safeness for recently deleted sessions, see $this->destroy()
+		// always verify that the file still exists, even if we
+		// already have a handle; ensures thread-safeness for
+		// recently deleted sessions, see $this->destroy()
 		$path = $this->path($name);
 		clearstatcache();
-		if (!is_file($path)) {
-			throw new NotFoundException([
-				'key'       => 'session.filestore.notFound',
-				'data'      => ['name' => $name],
-				'fallback'  => 'Session file "' . $name . '" does not exist',
-				'translate' => false,
-				'httpCode'  => 404
-			]);
+
+		if (is_file($path) === false) {
+			throw new NotFoundException(
+				key: 'session.filestore.notFound',
+				data: ['name' => $name],
+				fallback: 'Session file "' . $name . '" does not exist',
+				translate: false,
+				httpCode: 404
+			);
 		}
 
 		// return from cache
-		if (isset($this->handles[$name])) {
+		if (isset($this->handles[$name]) === true) {
 			return $this->handles[$name];
 		}
 
 		// open a new handle
 		$handle = @fopen($path, 'r+b');
-		if (!is_resource($handle)) {
-			throw new Exception([
-				'key'       => 'session.filestore.notOpened',
-				'data'      => ['name' => $name],
-				'fallback'  => 'Session file "' . $name . '" could not be opened',
-				'translate' => false,
-				'httpCode'  => 500
-			]);
+
+		if (is_resource($handle) === false) {
+			throw new Exception(
+				key: 'session.filestore.notOpened',
+				data: ['name' => $name],
+				fallback: 'Session file "' . $name . '" could not be opened',
+				translate: false,
+				httpCode: 500
+			);
 		}
 
 		return $this->handles[$name] = $handle;
@@ -458,26 +455,25 @@ class FileSessionStore extends SessionStore
 	 * Closes an open file handle
 	 *
 	 * @param string $name Combined name
-	 * @return void
 	 */
-	protected function closeHandle(string $name)
+	protected function closeHandle(string $name): void
 	{
-		if (!isset($this->handles[$name])) {
+		if (isset($this->handles[$name]) === false) {
 			return;
 		}
-		$handle = $this->handles[$name];
 
+		$handle = $this->handles[$name];
 		unset($this->handles[$name]);
 		$result = fclose($handle);
 
 		if ($result !== true) {
 			// @codeCoverageIgnoreStart
-			throw new Exception([
-				'key'       => 'session.filestore.unexpectedFilesystemError',
-				'fallback'  => 'Unexpected file system error',
-				'translate' => false,
-				'httpCode'  => 500
-			]);
+			throw new Exception(
+				key: 'session.filestore.unexpectedFilesystemError',
+				fallback: 'Unexpected file system error',
+				translate: false,
+				httpCode: 500
+			);
 			// @codeCoverageIgnoreEnd
 		}
 	}

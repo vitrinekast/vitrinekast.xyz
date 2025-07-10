@@ -1,9 +1,9 @@
 {
 	"name": "getkirby/cms",
-	"description": "The Kirby 3 core",
+	"description": "The Kirby core",
 	"license": "proprietary",
 	"type": "kirby-cms",
-	"version": "3.9.1",
+	"version": "5.0.1",
 	"keywords": [
 		"kirby",
 		"cms",
@@ -24,7 +24,7 @@
 		"source": "https://github.com/getkirby/kirby"
 	},
 	"require": {
-		"php": ">=8.0.0 <8.3.0",
+		"php": "~8.2.0 || ~8.3.0 || ~8.4.0",
 		"ext-SimpleXML": "*",
 		"ext-ctype": "*",
 		"ext-curl": "*",
@@ -36,15 +36,17 @@
 		"ext-libxml": "*",
 		"ext-mbstring": "*",
 		"ext-openssl": "*",
-		"claviska/simpleimage": "3.7.2",
-		"composer/semver": "3.3.2",
-		"filp/whoops": "2.14.6",
+		"christian-riesen/base32": "1.6.0",
+		"claviska/simpleimage": "4.2.1",
+		"composer/semver": "3.4.3",
+		"filp/whoops": "2.18.3",
 		"getkirby/composer-installer": "^1.2.1",
-		"laminas/laminas-escaper": "2.12.0",
+		"laminas/laminas-escaper": "2.17.0",
 		"michelf/php-smartypants": "1.8.1",
-		"phpmailer/phpmailer": "6.7.1",
-		"symfony/polyfill-intl-idn": "1.27.0",
-		"symfony/polyfill-mbstring": "1.27.0"
+		"phpmailer/phpmailer": "6.10.0",
+		"symfony/polyfill-intl-idn": "1.32.0",
+		"symfony/polyfill-mbstring": "1.32.0",
+		"symfony/yaml": "7.3.1"
 	},
 	"replace": {
 		"symfony/polyfill-php72": "*"
@@ -56,6 +58,8 @@
 		"ext-fileinfo": "Improved mime type detection for files",
 		"ext-intl": "Improved i18n number formatting",
 		"ext-memcached": "Support for the Memcached cache driver",
+		"ext-redis": "Support for the Redis cache driver",
+		"ext-sodium": "Support for the crypto class and more robust session handling",
 		"ext-zip": "Support for ZIP archive file functions",
 		"ext-zlib": "Sanitization and validation for svgz files"
 	},
@@ -77,7 +81,7 @@
 		},
 		"optimize-autoloader": true,
 		"platform": {
-			"php": "8.0.0"
+			"php": "8.2.0"
 		},
 		"platform-check": false
 	},
@@ -91,13 +95,13 @@
 		"analyze": [
 			"@analyze:composer",
 			"@analyze:psalm",
-			"@analyze:phpcpd",
 			"@analyze:phpmd"
 		],
 		"analyze:composer": "composer validate --strict --no-check-version --no-check-all",
-		"analyze:phpcpd": "phpcpd --fuzzy --exclude tests --exclude vendor .",
 		"analyze:phpmd": "phpmd . ansi phpmd.xml.dist --exclude 'dependencies/*,tests/*,vendor/*'",
 		"analyze:psalm": "psalm",
+		"bench": "phpbench run --report=aggregate --ref baseline",
+		"bench:baseline": "phpbench run --report=aggregate --tag baseline",
 		"build": "./scripts/build",
 		"ci": [
 			"@fix",
@@ -105,8 +109,8 @@
 			"@test"
 		],
 		"fix": "php-cs-fixer fix",
-		"test": "phpunit --stderr",
-		"test:coverage": "phpunit --stderr --coverage-html=tests/coverage",
+		"test": "phpunit",
+		"test:coverage": "XDEBUG_MODE=coverage phpunit --coverage-html=tests/coverage",
 		"zip": "composer archive --format=zip --file=dist"
 	}
 }

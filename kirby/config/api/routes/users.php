@@ -1,11 +1,14 @@
 <?php
 
+use Kirby\Exception\Exception;
 use Kirby\Filesystem\F;
+use Kirby\Toolkit\Str;
 
 /**
  * User Routes
  */
 return [
+	// @codeCoverageIgnoreStart
 	[
 		'pattern' => 'users',
 		'method'  => 'GET',
@@ -79,10 +82,27 @@ return [
 		],
 		'method'  => 'POST',
 		'action'  => function (string $id) {
-			$this->user($id)->avatar()?->delete();
-
 			return $this->upload(
 				function ($source, $filename) use ($id) {
+					$type = F::type($filename);
+					if ($type !== 'image') {
+						throw new Exception(
+							key: 'file.type.invalid',
+							data: compact('type')
+						);
+					}
+
+					$mime = F::mime($source);
+					if (Str::startsWith($mime, 'image/') !== true) {
+						throw new Exception(
+							key: 'file.mime.invalid',
+							data: compact('mime')
+						);
+					}
+
+					// delete the old avatar
+					$this->user($id)->avatar()?->delete();
+
 					$props = [
 						'filename' => 'profile.' . F::extension($filename),
 						'template' => 'avatar',
@@ -164,7 +184,23 @@ return [
 		],
 		'method'  => 'PATCH',
 		'action'  => function (string $id) {
-			return $this->user($id)->changePassword($this->requestBody('password'));
+			$user = $this->user($id);
+
+			// validate password of acting user unless they have logged in to reset it;
+			// always validate password of acting user when changing password of other users
+			if ($this->session()->get('kirby.resetPassword') !== true || $this->user()->is($user) !== true) {
+				$this->user()->validatePassword($this->requestBody('currentPassword'));
+			}
+
+			$result = $user->changePassword($this->requestBody('password'));
+
+			// if we changed the password of the current user…
+			if ($user->isLoggedIn() === true) {
+				// …don't allow additional resets (now the password is known again)
+				$this->session()->remove('kirby.resetPassword');
+			}
+
+			return $result;
 		}
 	],
 	[
@@ -183,7 +219,19 @@ return [
 			'users/(:any)/roles',
 		],
 		'action'  => function (string $id) {
-			return $this->user($id)->roles();
+			$kirby   = $this->kirby();
+			$purpose = $kirby->request()->get('purpose');
+			return $this->user($id)->roles($purpose);
+		}
+	],
+	[
+		'pattern' => [
+			'(account)/fields/(:any)/(:all?)',
+			'users/(:any)/fields/(:any)/(:all?)',
+		],
+		'method'  => 'ALL',
+		'action'  => function (string $id, string $fieldName, string|null $path = null) {
+			return $this->fieldApi($this->user($id), $fieldName, $path);
 		}
 	],
 	[
@@ -200,12 +248,13 @@ return [
 	],
 	[
 		'pattern' => [
-			'(account)/fields/(:any)/(:all?)',
-			'users/(:any)/fields/(:any)/(:all?)',
+			'(account)/sections/(:any)/(:all?)',
+			'users/(:any)/sections/(:any)/(:all?)',
 		],
 		'method'  => 'ALL',
-		'action'  => function (string $id, string $fieldName, string $path = null) {
-			return $this->fieldApi($this->user($id), $fieldName, $path);
+		'action'  => function (string $id, string $sectionName, string|null $path = null) {
+			return $this->sectionApi($this->user($id), $sectionName, $path);
 		}
 	],
+	// @codeCoverageIgnoreEnd
 ];

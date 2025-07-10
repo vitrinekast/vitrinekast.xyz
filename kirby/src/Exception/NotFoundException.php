@@ -3,7 +3,6 @@
 namespace Kirby\Exception;
 
 /**
- * NotFoundException
  * Thrown when something was not found
  *
  * @package   Kirby Exception
@@ -14,7 +13,7 @@ namespace Kirby\Exception;
  */
 class NotFoundException extends Exception
 {
-	protected static $defaultKey = 'notFound';
-	protected static $defaultFallback = 'Not found';
-	protected static $defaultHttpCode = 404;
+	protected static string $defaultKey = 'notFound';
+	protected static string $defaultFallback = 'Not found';
+	protected static int $defaultHttpCode = 404;
 }

@@ -16,32 +16,17 @@ use Kirby\Filesystem\F;
  * @link      https://getkirby.com
  * @copyright Bastian Allgeier
  * @license   https://getkirby.com/license
+ *
+ * @extends \Kirby\Cms\Collection<\Kirby\Cms\Translation>
  */
 class Translations extends Collection
 {
 	/**
-	 * @param string $code
-	 * @return void
+	 * All registered translations methods
 	 */
-	public function start(string $code): void
-	{
-		F::move($this->parent->contentFile('', true), $this->parent->contentFile($code, true));
-	}
+	public static array $methods = [];
 
-	/**
-	 * @param string $code
-	 * @return void
-	 */
-	public function stop(string $code): void
-	{
-		F::move($this->parent->contentFile($code, true), $this->parent->contentFile('', true));
-	}
-
-	/**
-	 * @param array $translations
-	 * @return static
-	 */
-	public static function factory(array $translations)
+	public static function factory(array $translations): static
 	{
 		$collection = new static();
 
@@ -53,12 +38,7 @@ class Translations extends Collection
 		return $collection;
 	}
 
-	/**
-	 * @param string $root
-	 * @param array $inject
-	 * @return static
-	 */
-	public static function load(string $root, array $inject = [])
+	public static function load(string $root, array $inject = []): static
 	{
 		$collection = new static();
 
@@ -68,7 +48,11 @@ class Translations extends Collection
 			}
 
 			$locale      = F::name($filename);
-			$translation = Translation::load($locale, $root . '/' . $filename, $inject[$locale] ?? []);
+			$translation = Translation::load(
+				$locale,
+				$root . '/' . $filename,
+				$inject[$locale] ?? []
+			);
 
 			$collection->data[$locale] = $translation;
 		}

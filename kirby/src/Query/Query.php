@@ -9,6 +9,7 @@ use Kirby\Cms\File;
 use Kirby\Cms\Page;
 use Kirby\Cms\Site;
 use Kirby\Cms\User;
+use Kirby\Image\QrCode;
 use Kirby\Toolkit\I18n;
 
 /**
@@ -51,7 +52,7 @@ class Query
 	/**
 	 * Creates a new Query object
 	 */
-	public static function factory(string $query): static
+	public static function factory(string|null $query): static
 	{
 		return new static(query: $query);
 	}
@@ -79,7 +80,7 @@ class Query
 
 		// merge data with default entries
 		if (is_array($data) === true) {
-			$data = array_merge(static::$entries, $data);
+			$data = [...static::$entries, ...$data];
 		}
 
 		// direct data array access via key
@@ -117,7 +118,11 @@ Query::$entries['file'] = function (string $id): File|null {
 };
 
 Query::$entries['page'] = function (string $id): Page|null {
-	return App::instance()->site()->find($id);
+	return App::instance()->page($id);
+};
+
+Query::$entries['qr'] = function (string $data): QrCode {
+	return new QrCode($data);
 };
 
 Query::$entries['site'] = function (): Site {
@@ -126,12 +131,12 @@ Query::$entries['site'] = function (): Site {
 
 Query::$entries['t'] = function (
 	string $key,
-	string|array $fallback = null,
-	string $locale = null
+	string|array|null $fallback = null,
+	string|null $locale = null
 ): string|null {
 	return I18n::translate($key, $fallback, $locale);
 };
 
-Query::$entries['user'] = function (string $id = null): User|null {
+Query::$entries['user'] = function (string|null $id = null): User|null {
 	return App::instance()->user($id);
 };

@@ -3,6 +3,7 @@
 namespace Kirby\Panel;
 
 use Closure;
+use Kirby\Api\Upload;
 use Kirby\Cms\App;
 use Kirby\Cms\Url as CmsUrl;
 use Kirby\Cms\User;
@@ -11,7 +12,9 @@ use Kirby\Exception\NotFoundException;
 use Kirby\Exception\PermissionException;
 use Kirby\Http\Response;
 use Kirby\Http\Router;
+use Kirby\Http\Uri;
 use Kirby\Http\Url;
+use Kirby\Toolkit\A;
 use Kirby\Toolkit\Str;
 use Kirby\Toolkit\Tpl;
 use Throwable;
@@ -34,7 +37,7 @@ class Panel
 	/**
 	 * Normalize a panel area
 	 */
-	public static function area(string $id, array|string $area): array
+	public static function area(string $id, array $area): array
 	{
 		$area['id']                = $id;
 		$area['label']           ??= $id;
@@ -59,9 +62,15 @@ class Panel
 		$areas  = $kirby->load()->areas();
 
 		// the system is not ready
-		if ($system->isOk() === false || $system->isInstalled() === false) {
+		if (
+			$system->isOk() === false ||
+			$system->isInstalled() === false
+		) {
 			return [
-				'installation' => static::area('installation', $areas['installation']),
+				'installation' => static::area(
+					'installation',
+					$areas['installation']
+				),
 			];
 		}
 
@@ -69,7 +78,6 @@ class Panel
 		if (!$user) {
 			return [
 				'logout' => static::area('logout', $areas['logout']),
-
 				// login area last because it defines a fallback route
 				'login'  => static::area('login', $areas['login']),
 			];
@@ -84,29 +92,27 @@ class Panel
 			unset($areas['languages']);
 		}
 
-		$menu = $kirby->option('panel.menu', [
-			'site',
-			'languages',
-			'users',
-			'system',
-		]);
-
 		$result = [];
 
-		// add the sorted areas
-		foreach ($menu as $id) {
-			if ($area = ($areas[$id] ?? null)) {
-				$result[$id] = static::area($id, $area);
-				unset($areas[$id]);
-			}
-		}
-
-		// add the remaining areas
 		foreach ($areas as $id => $area) {
 			$result[$id] = static::area($id, $area);
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Collect all registered buttons from areas
+	 * @since 5.0.0
+	 */
+	public static function buttons(): array
+	{
+		return array_merge(...array_values(
+			A::map(
+				Panel::areas(),
+				fn ($area) => $area['buttons'] ?? []
+			)
+		));
 	}
 
 	/**
@@ -118,7 +124,9 @@ class Panel
 	): bool {
 		// a user has to be logged in
 		if ($user === null) {
-			throw new PermissionException(['key' => 'access.panel']);
+			throw new PermissionException(
+				key: 'access.panel'
+			);
 		}
 
 		// get all access permissions for the user role
@@ -126,7 +134,9 @@ class Panel
 
 		// check for general panel access
 		if (($permissions['panel'] ?? true) !== true) {
-			throw new PermissionException(['key' => 'access.panel']);
+			throw new PermissionException(
+				key: 'access.panel'
+			);
 		}
 
 		// don't check if the area is not defined
@@ -141,12 +151,29 @@ class Panel
 
 		// no access
 		if ($permissions[$areaId] !== true) {
-			throw new PermissionException(['key' => 'access.view']);
+			throw new PermissionException(
+				key: 'access.view'
+			);
 		}
 
 		return true;
 	}
 
+	/**
+	 * Garbage collection which runs with a probability
+	 * of 10% on each Panel request
+	 *
+	 * @since 5.0.0
+	 * @codeCoverageIgnore
+	 */
+	protected static function garbage(): void
+	{
+		// run garbage collection with a chance of 10%;
+		if (mt_rand(1, 10000) <= 0.1 * 10000) {
+			// clean up leftover upload chunks
+			Upload::cleanTmpDir();
+		}
+	}
 
 	/**
 	 * Redirect to a Panel url
@@ -184,7 +211,9 @@ class Panel
 		$request = App::instance()->request();
 
 		if ($request->method() === 'GET') {
-			return (bool)($request->get('_json') ?? $request->header('X-Fiber'));
+			return
+				(bool)($request->get('_json') ??
+				$request->header('X-Fiber'));
 		}
 
 		return false;
@@ -199,7 +228,7 @@ class Panel
 		$request = App::instance()->request();
 
 		return Response::json($data, $code, $request->get('_pretty'), [
-			'X-Fiber' => 'true',
+			'X-Fiber'       => 'true',
 			'Cache-Control' => 'no-store, private'
 		]);
 	}
@@ -241,7 +270,9 @@ class Panel
 
 		// interpret missing/empty results as not found
 		if ($result === null || $result === false) {
-			$result = new NotFoundException('The data could not be found');
+			$result = new NotFoundException(
+				message: 'The data could not be found'
+			);
 
 		// interpret strings as errors
 		} elseif (is_string($result) === true) {
@@ -251,7 +282,9 @@ class Panel
 		// handle different response types (view, dialog, ...)
 		return match ($options['type'] ?? null) {
 			'dialog'   => Dialog::response($result, $options),
+			'drawer'   => Drawer::response($result, $options),
 			'dropdown' => Dropdown::response($result, $options),
+			'request'  => Request::response($result, $options),
 			'search'   => Search::response($result, $options),
 			default    => View::response($result, $options)
 		};
@@ -267,6 +300,9 @@ class Panel
 		if ($kirby->option('panel') === false) {
 			return null;
 		}
+
+		// run garbage collection
+		static::garbage();
 
 		// set the translation for Panel UI before
 		// gathering areas and routes, so that the
@@ -290,7 +326,10 @@ class Panel
 			// call the route action to check the result
 			try {
 				// trigger hook
-				$route = $kirby->apply('panel.route:before', compact('route', 'path', 'method'), 'route');
+				$route = $kirby->apply(
+					'panel.route:before',
+					compact('route', 'path', 'method')
+				);
 
 				// check for access before executing area routes
 				if ($auth !== false) {
@@ -309,7 +348,11 @@ class Panel
 				'type'  => $type
 			]);
 
-			return $kirby->apply('panel.route:after', compact('route', 'path', 'method', 'response'), 'response');
+			return $kirby->apply(
+				'panel.route:after',
+				compact('route', 'path', 'method', 'response'),
+				'response'
+			);
 		});
 	}
 
@@ -335,13 +378,15 @@ class Panel
 
 		// register all routes from areas
 		foreach ($areas as $areaId => $area) {
-			$routes = array_merge(
-				$routes,
-				static::routesForViews($areaId, $area),
-				static::routesForSearches($areaId, $area),
-				static::routesForDialogs($areaId, $area),
-				static::routesForDropdowns($areaId, $area),
-			);
+			$routes = [
+				...$routes,
+				...static::routesForViews($areaId, $area),
+				...static::routesForSearches($areaId, $area),
+				...static::routesForDialogs($areaId, $area),
+				...static::routesForDrawers($areaId, $area),
+				...static::routesForDropdowns($areaId, $area),
+				...static::routesForRequests($areaId, $area),
+			];
 		}
 
 		// if the Panel is already installed and/or the
@@ -361,7 +406,7 @@ class Panel
 		// catch all route
 		$routes[] = [
 			'pattern' => '(:all)',
-			'action'  => fn () => 'The view could not be found'
+			'action'  => fn (string $pattern) => 'Could not find Panel view for route: ' . $pattern
 		];
 
 		return $routes;
@@ -375,25 +420,38 @@ class Panel
 		$dialogs = $area['dialogs'] ?? [];
 		$routes  = [];
 
-		foreach ($dialogs as $key => $dialog) {
-			// create the full pattern with dialogs prefix
-			$pattern = 'dialogs/' . trim(($dialog['pattern'] ?? $key), '/');
-
-			// load event
-			$routes[] = [
-				'pattern' => $pattern,
-				'type'    => 'dialog',
-				'area'    => $areaId,
-				'action'  => $dialog['load'] ?? fn () => 'The load handler for your dialog is missing'
+		foreach ($dialogs as $dialogId => $dialog) {
+			$routes = [
+				...$routes,
+				...Dialog::routes(
+					id: $dialogId,
+					areaId: $areaId,
+					prefix: 'dialogs',
+					options: $dialog
+				)
 			];
+		}
 
-			// submit event
-			$routes[] = [
-				'pattern' => $pattern,
-				'type'    => 'dialog',
-				'area'    => $areaId,
-				'method'  => 'POST',
-				'action'  => $dialog['submit'] ?? fn () => 'Your dialog does not define a submit handler'
+		return $routes;
+	}
+
+	/**
+	 * Extract all routes from an area
+	 */
+	public static function routesForDrawers(string $areaId, array $area): array
+	{
+		$drawers = $area['drawers'] ?? [];
+		$routes  = [];
+
+		foreach ($drawers as $drawerId => $drawer) {
+			$routes = [
+				...$routes,
+				...Drawer::routes(
+					id: $drawerId,
+					areaId: $areaId,
+					prefix: 'drawers',
+					options: $drawer
+				)
 			];
 		}
 
@@ -408,27 +466,31 @@ class Panel
 		$dropdowns = $area['dropdowns'] ?? [];
 		$routes    = [];
 
-		foreach ($dropdowns as $name => $dropdown) {
-			// Handle shortcuts for dropdowns. The name is the pattern
-			// and options are defined in a Closure
-			if ($dropdown instanceof Closure) {
-				$dropdown = [
-					'pattern' => $name,
-					'action'  => $dropdown
-				];
-			}
-
-			// create the full pattern with dropdowns prefix
-			$pattern = 'dropdowns/' . trim(($dropdown['pattern'] ?? $name), '/');
-
-			// load event
-			$routes[] = [
-				'pattern' => $pattern,
-				'type'    => 'dropdown',
-				'area'    => $areaId,
-				'method'  => 'GET|POST',
-				'action'  => $dropdown['options'] ?? $dropdown['action']
+		foreach ($dropdowns as $dropdownId => $dropdown) {
+			$routes = [
+				...$routes,
+				...Dropdown::routes(
+					id: $dropdownId,
+					areaId: $areaId,
+					prefix: 'dropdowns',
+					options: $dropdown
+				)
 			];
+		}
+
+		return $routes;
+	}
+
+	/**
+	 * Extract all routes from an area
+	 */
+	public static function routesForRequests(string $areaId, array $area): array
+	{
+		$routes = $area['requests'] ?? [];
+
+		foreach ($routes as $key => $route) {
+			$routes[$key]['area'] = $areaId;
+			$routes[$key]['type'] = 'request';
 		}
 
 		return $routes;
@@ -452,9 +514,13 @@ class Panel
 				'type'    => 'search',
 				'area'    => $areaId,
 				'action'  => function () use ($params) {
-					$request = App::instance()->request();
+					$kirby   = App::instance();
+					$request = $kirby->request();
+					$query   = $request->get('query');
+					$limit   = (int)$request->get('limit', $kirby->option('panel.search.limit', 10));
+					$page    = (int)$request->get('page', 1);
 
-					return $params['query']($request->get('query'));
+					return $params['query']($query, $limit, $page);
 				}
 			];
 		}
@@ -473,7 +539,18 @@ class Panel
 		foreach ($views as $view) {
 			$view['area'] = $areaId;
 			$view['type'] = 'view';
-			$routes[] = $view;
+
+			$when = $view['when'] ?? null;
+			unset($view['when']);
+
+			// enable the route by default, but if there is a
+			// when condition closure, it must return `true`
+			if (
+				$when instanceof Closure === false ||
+				$when($view, $area) === true
+			) {
+				$routes[] = $view;
+			}
 		}
 
 		return $routes;
@@ -536,22 +613,29 @@ class Panel
 	 * Creates an absolute Panel URL
 	 * independent of the Panel slug config
 	 */
-	public static function url(string|null $url = null): string
+	public static function url(string|null $url = null, array $options = []): string
 	{
-		$slug = App::instance()->option('panel.slug', 'panel');
-
 		// only touch relative paths
 		if (Url::isAbsolute($url) === false) {
-			$path = trim($url, '/');
+			$kirby = App::instance();
+			$slug  = $kirby->option('panel.slug', 'panel');
+			$path  = trim($url ?? '', '/');
 
+			$baseUri  = new Uri($kirby->url());
+			$basePath = trim($baseUri->path()->toString(), '/');
+
+			// removes base path if relative path contains it
+			if (empty($basePath) === false && Str::startsWith($path, $basePath) === true) {
+				$path = Str::after($path, $basePath);
+			}
 			// add the panel slug prefix if it it's not
 			// included in the path yet
-			if (Str::startsWith($path, $slug . '/') === false) {
+			elseif (Str::startsWith($path, $slug . '/') === false) {
 				$path = $slug . '/' . $path;
 			}
 
 			// create an absolute URL
-			$url = CmsUrl::to($path);
+			$url = CmsUrl::to($path, $options);
 		}
 
 		return $url;

@@ -4,7 +4,7 @@ namespace Kirby\Toolkit;
 
 use Countable;
 use Exception;
-use Kirby\Cms\Field;
+use Kirby\Content\Field;
 use Kirby\Exception\InvalidArgumentException;
 use Kirby\Http\Idn;
 use Kirby\Uuid\Uuid;
@@ -32,11 +32,17 @@ class V
 	 * and returns an array with all error messages.
 	 * The array will be empty if the input is valid
 	 */
-	public static function errors($input, array $rules, array $messages = []): array
-	{
+	public static function errors(
+		$input,
+		array $rules,
+		array $messages = []
+	): array {
 		$errors = static::value($input, $rules, $messages, false);
 
-		return $errors === true ? [] : $errors;
+		return match ($errors) {
+			true    => [],
+			default => $errors
+		};
 	}
 
 	/**
@@ -44,8 +50,11 @@ class V
 	 * checks if the data is invalid
 	 * @since 3.7.0
 	 */
-	public static function invalid(array $data = [], array $rules = [], array $messages = []): array
-	{
+	public static function invalid(
+		array $data = [],
+		array $rules = [],
+		array $messages = []
+	): array {
 		$errors = [];
 
 		foreach ($rules as $field => $validations) {
@@ -87,7 +96,8 @@ class V
 						continue;
 					}
 				} else {
-					// If a field is not required and not filled, no validation should be done.
+					// If a field is not required and not filled,
+					// no validation should be done.
 					continue;
 				}
 
@@ -108,8 +118,10 @@ class V
 	 * and the arguments. This is used mainly internally
 	 * to create error messages
 	 */
-	public static function message(string $validatorName, ...$params): string|null
-	{
+	public static function message(
+		string $validatorName,
+		...$params
+	): string|null {
 		$validatorName  = strtolower($validatorName);
 		$translationKey = 'error.validation.' . $validatorName;
 		$validators     = array_change_key_case(static::$validators);
@@ -126,22 +138,23 @@ class V
 			$value = $params[$index] ?? null;
 
 			if (is_array($value) === true) {
-				try {
-					foreach ($value as $key => $item) {
-						if (is_array($item) === true) {
-							$value[$key] = implode('|', $item);
-						}
+				foreach ($value as $key => $item) {
+					if (is_array($item) === true) {
+						$value[$key] = A::implode($item, '|');
 					}
-					$value = implode(', ', $value);
-				} catch (Throwable) {
-					$value = '-';
 				}
+
+				$value = implode(', ', $value);
 			}
 
 			$arguments[$parameter->getName()] = $value;
 		}
 
-		return I18n::template($translationKey, 'The "' . $validatorName . '" validation failed', $arguments);
+		return I18n::template(
+			$translationKey,
+			'The "' . $validatorName . '" validation failed',
+			$arguments
+		);
 	}
 
 	/**
@@ -157,33 +170,41 @@ class V
 	 * a set of rules, using all registered
 	 * validators
 	 */
-	public static function value($value, array $rules, array $messages = [], bool $fail = true): bool|array
-	{
+	public static function value(
+		$value,
+		array $rules,
+		array $messages = [],
+		bool $fail = true
+	): bool|array {
 		$errors = [];
 
-		foreach ($rules as $validatorName => $validatorOptions) {
-			if (is_int($validatorName)) {
-				$validatorName    = $validatorOptions;
-				$validatorOptions = [];
+		foreach ($rules as $validator => $options) {
+			if (is_int($validator) === true) {
+				$validator = $options;
+				$options   = [];
 			}
 
-			if (is_array($validatorOptions) === false) {
-				$validatorOptions = [$validatorOptions];
+			if (is_array($options) === false) {
+				$options = [$options];
 			}
 
-			$validatorName = strtolower($validatorName);
+			$validator = strtolower($validator);
 
-			if (static::$validatorName($value, ...$validatorOptions) === false) {
-				$message = $messages[$validatorName] ?? static::message($validatorName, $value, ...$validatorOptions);
-				$errors[$validatorName] = $message;
+			if (static::$validator($value, ...$options) === false) {
+				$errors[$validator] =
+					$messages[$validator] ??
+					static::message($validator, $value, ...$options);
 
 				if ($fail === true) {
-					throw new Exception($message);
+					throw new Exception($errors[$validator]);
 				}
 			}
 		}
 
-		return empty($errors) === true ? true : $errors;
+		return match ($errors) {
+			[]      => true,
+			default => $errors
+		};
 	}
 
 	/**
@@ -193,29 +214,29 @@ class V
 	 */
 	public static function input(array $input, array $rules): bool
 	{
-		foreach ($rules as $fieldName => $fieldRules) {
-			$fieldValue = $input[$fieldName] ?? null;
+		foreach ($rules as $field => $rules) {
+			$value = $input[$field] ?? null;
 
 			// first check for required fields
 			if (
-				($fieldRules['required'] ?? false) === true &&
-				$fieldValue === null
+				($rules['required'] ?? false) === true &&
+				$value === null
 			) {
-				throw new Exception(sprintf('The "%s" field is missing', $fieldName));
+				throw new Exception(sprintf('The "%s" field is missing', $field));
 			}
 
 			// remove the required rule
-			unset($fieldRules['required']);
+			unset($rules['required']);
 
 			// skip validation for empty fields
-			if ($fieldValue === null) {
+			if ($value === null) {
 				continue;
 			}
 
 			try {
-				static::value($fieldValue, $fieldRules);
+				static::value($value, $rules);
 			} catch (Exception $e) {
-				throw new Exception(sprintf($e->getMessage() . ' for field "%s"', $fieldName));
+				throw new Exception(sprintf($e->getMessage() . ' for field "%s"', $field));
 			}
 		}
 
@@ -275,6 +296,14 @@ V::$validators = [
 	},
 
 	/**
+	 * Checks with the callback sent by the user
+	 * It's ideal for one-time custom validations
+	 */
+	'callback' => function ($value, callable $callback): bool {
+		return $callback($value);
+	},
+
+	/**
 	 * Checks if the given string contains the given value
 	 */
 	'contains' => function ($value, $needle): bool {
@@ -289,7 +318,7 @@ V::$validators = [
 	 * Pass an operator as second argument and another date as
 	 * third argument to compare them.
 	 */
-	'date' => function (string|null $value, string $operator = null, string $test = null): bool {
+	'date' => function (string|null $value, string|null $operator = null, string|null $test = null): bool {
 		// make sure $value is a string
 		$value ??= '';
 
@@ -318,7 +347,9 @@ V::$validators = [
 			'>='  => $value >= $test,
 			'=='  => $value === $test,
 
-			default => throw new InvalidArgumentException('Invalid date comparison operator: "' . $operator . '". Allowed operators: "==", "!=", "<", "<=", ">", ">="')
+			default => throw new InvalidArgumentException(
+				message: 'Invalid date comparison operator: "' . $operator . '". Allowed operators: "==", "!=", "<", "<=", ">", ">="'
+			)
 		};
 	},
 
@@ -437,7 +468,7 @@ V::$validators = [
 	 * Checks if the value matches the given regular expression
 	 */
 	'match' => function ($value, string $pattern): bool {
-		return preg_match($pattern, $value) !== 0;
+		return preg_match($pattern, (string)$value) === 1;
 	},
 
 	/**
@@ -457,28 +488,28 @@ V::$validators = [
 	/**
 	 * Checks if the number of characters in the value equals or is below the given maximum
 	 */
-	'maxLength' => function (string $value = null, $max): bool {
+	'maxLength' => function (string|null $value, $max): bool {
 		return Str::length(trim($value)) <= $max;
 	},
 
 	/**
 	 * Checks if the number of characters in the value equals or is greater than the given minimum
 	 */
-	'minLength' => function (string $value = null, $min): bool {
+	'minLength' => function (string|null $value, $min): bool {
 		return Str::length(trim($value)) >= $min;
 	},
 
 	/**
 	 * Checks if the number of words in the value equals or is below the given maximum
 	 */
-	'maxWords' => function (string $value = null, $max): bool {
+	'maxWords' => function (string|null $value, $max): bool {
 		return V::max(explode(' ', trim($value)), $max) === true;
 	},
 
 	/**
 	 * Checks if the number of words in the value equals or is below the given maximum
 	 */
-	'minWords' => function (string $value = null, $min): bool {
+	'minWords' => function (string|null $value, $min): bool {
 		return V::min(explode(' ', trim($value)), $min) === true;
 	},
 
@@ -550,23 +581,19 @@ V::$validators = [
 			$value = $value->value();
 		}
 
-		if (is_numeric($value) === true) {
-			$count = $value;
-		} elseif (is_string($value) === true) {
-			$count = Str::length(trim($value));
-		} elseif (is_array($value) === true) {
-			$count = count($value);
-		} elseif (is_object($value) === true) {
-			if ($value instanceof Countable) {
-				$count = count($value);
-			} elseif (method_exists($value, 'count') === true) {
-				$count = $value->count();
-			} else {
-				throw new Exception('$value is an uncountable object');
-			}
-		} else {
-			throw new Exception('$value is of type without size');
-		}
+		$count = match (true) {
+			is_numeric($value) => $value,
+			is_string($value)  => Str::length(trim($value)),
+			is_array($value)   => count($value),
+			is_object($value)  => match (true) {
+				$value instanceof Countable    => count($value),
+				method_exists($value, 'count') => $value->count(),
+
+				default => throw new Exception('$value is an uncountable object')
+			},
+
+			default => throw new Exception('$value is of type without size')
+		};
 
 		return match ($operator) {
 			'<'     => $count < $size,
@@ -582,6 +609,13 @@ V::$validators = [
 	 */
 	'startsWith' => function (string $value, string $start): bool {
 		return Str::startsWith($value, $start);
+	},
+
+	/**
+	 * Checks for a valid unformatted telephone number
+	 */
+	'tel' => function ($value): bool {
+		return V::match($value, '!^[+]{0,1}[0-9]+$!');
 	},
 
 	/**
@@ -604,7 +638,7 @@ V::$validators = [
 	/**
 	 * Checks for a valid Uuid, optionally for specific model type
 	 */
-	'uuid' => function (string $value, string $type = null): bool {
+	'uuid' => function (string $value, string|null $type = null): bool {
 		return Uuid::is($value, $type);
 	}
 ];
