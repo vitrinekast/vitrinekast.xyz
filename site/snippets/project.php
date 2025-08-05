@@ -42,7 +42,7 @@
     <div class="col col--12">
         <article>
             <?php if ($cover) : ?>
-                
+
                 <figure class="<?= $blocks->first()->type() == 'video' ? 'd--print' : '' ?>">
                     <?php if ($cover->type() == "image") : ?>
                         <?php snippet('responsive-image', ['file' => $cover, 'base_size' => 1200, 'caption' => false, 'print_size' => 1800, 'class' => 'header__media spotlight media--corner']) ?>
@@ -85,7 +85,7 @@
 
                     <?php foreach ($files as $file) : ?>
 
-                        <?php if ($file->uuid() != $cover->uuid()) : ?>
+
                             <?php
                             $css_variables = "";
                             $print_size = 700;
@@ -119,7 +119,6 @@
                                     <a href="<?= $file->url() ?>"> <?= $file->filename() ?> </a>
                                 <?php endif; ?>
                             </li>
-                        <?php endif; ?>
                     <?php endforeach; ?>
                 </ul>
 
