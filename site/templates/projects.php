@@ -5,7 +5,6 @@ snippet('project-videos');
 $children = $page->children();
 
 ?>
-
 <main class='container container--full container--static front-page'>
     <header class='col col--12 flex'>
         <h1 class='h6'>
@@ -51,11 +50,11 @@ $children = $page->children();
 
 <?php if (count($children) !== 0) : ?>
     <div class="col col--12">
-        
+
             <?php foreach ($children as $child) : ?>
                 <?php snippet('project', ['project' => $child, 'looped' => true]); ?>
             <?php endforeach; ?>
-        
+
             </div>
 <?php endif; ?>
 

@@ -4,7 +4,7 @@
   "description": "",
   "main": "gulpFile.js",
   "scripts": {
-      "start": "gulp serve",
+      "start": "php -S localhost:8000 kirby/router.php",
       "release": "gulp --production --patch",
       "release-major": "gulp --production --major",
       "release-minor": "gulp --production --minor"

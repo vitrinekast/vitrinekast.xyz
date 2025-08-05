@@ -1,0 +1,27 @@
+title: Recipe
+preset: page
+
+status:
+  draft: true
+  listed: true
+
+fields:
+  BOM:
+    type: structure
+    fields:
+      ingredient:
+        type: select
+        options:
+          type: query
+          query:  site.children.template("components").limit(1).children
+          text: "{{ page.category }} - {{ page.name }}: {{ page.value }}"
+      amount:
+        type: number
+
+  body:
+    label: Body
+    type: textarea
+    size: large
+  paper_circuit:
+    label: Paper Circuit
+    type: text

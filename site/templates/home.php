@@ -1,7 +1,6 @@
 <?php snippet('header') ?>
 <?php snippet('project-videos'); ?>
 
-
 <main class='container container--full container--static'>
     <header class='col col--12 flex'>
         <h1 class='h6'>

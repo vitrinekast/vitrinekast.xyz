@@ -1,0 +1,12 @@
+title: Component
+
+fields:
+  name:
+    label: Name
+    type: text
+  amount:
+    label: Amount
+    type: number
+  category:
+    label: category
+    type: text
