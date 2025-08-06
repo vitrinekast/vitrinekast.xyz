@@ -1,20 +1,39 @@
-title: Default Page
-preset: page
-fields:
-  exclude_from_google:
-    label: Exclude this page from google?
-    type: toggle
-  hide_title:
-    label: Hide the big title?
-    type: toggle
-  text:
-    label: Body
-    type: textarea
-    size: large
-  description:
-    label: Description
-    type: blocks
-  hidden_text:
-    label: Hidden body
-    type: textarea
-    size: large
+title: Component library
+
+columns:
+  - width: 2/3
+    sections:
+      pages:
+        label: "Components for {{ page.title }}"
+        layout: table
+        columns:
+          category: true
+          name: true
+          value: true
+          status: false
+          amount:
+            width: '50px'
+      content:
+        type: fields
+        fields:
+          exclude_from_google:
+            label: Exclude this page from google?
+            type: toggle
+          hide_title:
+            label: Hide the big title?
+            type: toggle
+          text:
+            label: Body
+            type: textarea
+            size: large
+          description:
+            label: Description
+            type: blocks
+          hidden_text:
+            label: Hidden body
+            type: textarea
+            size: large
+    pages:
+  - width: 1/3
+    sections:
+      files: true

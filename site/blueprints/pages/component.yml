@@ -10,3 +10,6 @@ fields:
   category:
     label: category
     type: text
+  value:
+    label: value
+    type: text
